@@ -365,7 +365,7 @@ def foreman_dashboard():
     job_data = []
     for job in jobs:
         # Get unique workers who submitted time for this job in the date range
-        workers_query = db.session.query(User).join(TimeEntry).\
+        workers_query = db.session.query(User).join(TimeEntry, User.id == TimeEntry.user_id).\
             filter(
                 TimeEntry.job_id == job.id,
                 TimeEntry.date >= start_date,
@@ -546,7 +546,7 @@ def admin_dashboard():
     job_hours = db.session.query(
         Job.job_code,
         db.func.sum(TimeEntry.hours).label('total_hours')
-    ).join(TimeEntry).filter(
+    ).join(TimeEntry, Job.id == TimeEntry.job_id).filter(
         TimeEntry.date >= week_start,
         TimeEntry.date <= week_end
     ).group_by(Job.job_code).all()
@@ -555,7 +555,7 @@ def admin_dashboard():
     trade_hours = db.session.query(
         LaborActivity.trade_category,
         db.func.sum(TimeEntry.hours).label('total_hours')
-    ).join(TimeEntry).filter(
+    ).join(TimeEntry, LaborActivity.id == TimeEntry.labor_activity_id).filter(
         TimeEntry.date >= week_start,
         TimeEntry.date <= week_end
     ).group_by(LaborActivity.trade_category).all()
