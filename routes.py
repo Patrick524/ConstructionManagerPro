@@ -1101,6 +1101,7 @@ def generate_reports():
         # Generate report file
         if report_format == 'csv':
             # Use CSV report generator
+            # Generate CSV report
             csv_data = utils.generate_csv_report(data_dicts, columns)
             
             # Generate filename
@@ -1122,6 +1123,7 @@ def generate_reports():
             report_title = f"{report_titles.get(report_type, 'Report')} ({start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')})"
             
             # Use PDF report generator
+            # Generate PDF report
             pdf_buffer = utils.generate_pdf_report(data_dicts, columns, title=report_title)
             
             # Generate filename
@@ -1149,6 +1151,7 @@ def get_labor_activities(job_id):
     job = Job.query.get_or_404(job_id)
     activities = LaborActivity.query.filter_by(trade_category=job.trade_type).all()
     
+    # Return JSON response with labor activities for the job's trade type
     return jsonify([
         {'id': activity.id, 'name': activity.name}
         for activity in activities
@@ -1157,6 +1160,7 @@ def get_labor_activities(job_id):
 @app.route('/api/time_entries/<date>/<int:job_id>')
 @login_required
 def get_time_entries(date, job_id):
+    """API endpoint to get time entries for a specific date and job"""
     target_date = datetime.strptime(date, '%Y-%m-%d').date()
     
     entries = TimeEntry.query.filter(
@@ -1165,6 +1169,7 @@ def get_time_entries(date, job_id):
         TimeEntry.date == target_date
     ).all()
     
+    # Return JSON response with time entries
     return jsonify([
         {
             'id': entry.id,
