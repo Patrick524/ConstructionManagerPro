@@ -104,9 +104,18 @@
             <div class="card-body">
                 <form method="POST" action="{{ url_for('approve_timesheet', job_id=job.id, user_id=worker.id) }}">
                     {{ form.hidden_tag() }}
-                    {{ form.job_id() }}
-                    {{ form.user_id() }}
-                    {{ form.week_start() }}
+                    <div class="d-none">
+                        {{ form.job_id() }}
+                        {{ form.user_id() }}
+                        {{ form.week_start() }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Job:</strong> {{ job.job_code }} - {{ job.description }}<br>
+                        <strong>Worker:</strong> {{ worker.name }}<br>
+                        <strong>Week Starting:</strong> {{ week_start.strftime('%b %d, %Y') }}
+                    </div>
+                    <hr>
                     
                     {% if missing_days %}
                         <div class="alert alert-warning">

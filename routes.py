@@ -432,6 +432,9 @@ def approve_timesheet(job_id, user_id):
     job = Job.query.get_or_404(job_id)
     
     form = ApprovalForm()
+    # Populate the form dropdown options
+    form.job_id.choices = [(job.id, f"{job.job_code} - {job.description}")]
+    form.user_id.choices = [(worker.id, worker.name)]
     form.job_id.data = job_id
     form.user_id.data = user_id
     
