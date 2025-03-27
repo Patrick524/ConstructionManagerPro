@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Enter Time - Construction Timesheet{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="page-title">
+            <i class="far fa-clock text-primary me-2"></i>Enter Time
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="timesheet-form">
+            <form method="POST" action="{{ url_for('worker_timesheet') }}">
+                {{ form.hidden_tag() }}
+                
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <label for="date" class="form-label">Date</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="far fa-calendar"></i></span>
+                            {{ form.date(class="form-control") }}
+                        </div>
+                        {% if form.date.errors %}
+                            <div class="text-danger">
+                                {% for error in form.date.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="job_id" class="form-label">Job</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-briefcase"></i></span>
+                            {{ form.job_id(class="form-select") }}
+                        </div>
+                        {% if form.job_id.errors %}
+                            <div class="text-danger">
+                                {% for error in form.job_id.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Labor Activities & Hours</label>
+                    <div id="labor-activities-container">
+                        <div class="activity-entry" id="activity-entry-1">
+                            <div class="row">
+                                <div class="col-md-8 mb-3">
+                                    <label for="labor_activity_1" class="form-label">Labor Activity</label>
+                                    <select class="form-select" id="labor_activity_1" name="labor_activity_1">
+                                        <option value="">-- Select Activity --</option>
+                                        {% for activity in activities %}
+                                            <option value="{{ activity.id }}">{{ activity.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="hours_1" class="form-label">Hours</label>
+                                    <input type="number" class="form-control" id="hours_1" name="hours_1" min="0" max="12" step="0.5">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" id="add-activity" class="btn btn-sm btn-outline-secondary add-activity-btn">
+                        <i class="fas fa-plus"></i> Add Another Activity
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="notes" class="form-label">Notes (optional)</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Add any notes about this time entry..."></textarea>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save me-2"></i>Save Time Entry
+                    </button>
+                    <a href="{{ url_for('worker_history') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-history me-2"></i>View History
+                    </a>
+                </div>
+            </form>
+        </div>
+        
+        <div class="alert alert-info" role="alert">
+            <h4 class="alert-heading"><i class="fas fa-info-circle me-2"></i>How time entry works:</h4>
+            <p>Enter your hours for a single job per day. You can add multiple labor activities for the same job.</p>
+            <hr>
+            <p class="mb-0">Time can be edited until it is approved by your foreman at the end of the week.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/timesheet.js') }}"></script>
+{% endblock %}

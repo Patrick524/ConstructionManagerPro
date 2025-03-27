@@ -1,0 +1,189 @@
+/* Custom styles for the Construction Timesheet application */
+
+/* Common elements & utilities */
+.approved-badge {
+    background-color: var(--bs-success);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.pending-badge {
+    background-color: var(--bs-warning);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.locked-badge {
+    background-color: var(--bs-secondary);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.missing-badge {
+    background-color: var(--bs-danger);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+/* Trade-specific color coding */
+.trade-drywall {
+    border-left: 4px solid var(--bs-primary);
+}
+
+.trade-electrical {
+    border-left: 4px solid var(--bs-warning);
+}
+
+.trade-plumbing {
+    border-left: 4px solid var(--bs-info);
+}
+
+.trade-carpentry {
+    border-left: 4px solid var(--bs-success);
+}
+
+.trade-painting {
+    border-left: 4px solid var(--bs-purple);
+}
+
+.trade-masonry {
+    border-left: 4px solid var(--bs-orange);
+}
+
+.trade-other {
+    border-left: 4px solid var(--bs-secondary);
+}
+
+/* Common page structures */
+.page-title {
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--bs-gray-300);
+    padding-bottom: 1rem;
+}
+
+.section-title {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+/* Worker timesheet styles */
+.timesheet-form {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 0.5rem;
+    background-color: rgba(33, 37, 41, 0.03);
+}
+
+.activity-entry {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.25rem;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.add-activity-btn {
+    width: 100%;
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Foreman dashboard styles */
+.approval-card {
+    margin-bottom: 1.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.approval-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.approval-card-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--bs-gray-300);
+    font-weight: bold;
+}
+
+.approval-card-body {
+    padding: 1rem;
+}
+
+.approval-table {
+    margin-bottom: 0;
+}
+
+/* Admin styles */
+.dashboard-widget {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 0.5rem;
+    background-color: rgba(33, 37, 41, 0.03);
+    transition: all 0.2s ease-in-out;
+}
+
+.dashboard-widget:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.dashboard-widget-title {
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.dashboard-widget-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    color: var(--bs-primary);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+    
+    .btn {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .dashboard-widget-value {
+        font-size: 2rem;
+    }
+    
+    .dashboard-widget {
+        padding: 1rem;
+    }
+    
+    .activity-entry {
+        padding: 0.75rem;
+    }
+}
+
+/* High contrast mode for outdoor visibility */
+.high-contrast {
+    --bs-body-color: #000000;
+    --bs-body-bg: #ffffff;
+    --bs-primary: #0000ff;
+    --bs-secondary: #292929;
+    --bs-success: #008800;
+    --bs-info: #0066cc;
+    --bs-warning: #cc6600;
+    --bs-danger: #cc0000;
+    --bs-light: #f8f9fa;
+    --bs-dark: #212529;
+    
+    font-weight: bold;
+}

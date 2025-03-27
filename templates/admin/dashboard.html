@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Construction Timesheet{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="page-title">
+            <i class="fas fa-tachometer-alt text-primary me-2"></i>Admin Dashboard
+        </h1>
+    </div>
+    <div class="col-md-4">
+        <div class="d-flex justify-content-md-end align-items-center h-100">
+            <div class="btn-group" role="group">
+                <button id="prev-week" class="btn btn-outline-secondary">
+                    <i class="fas fa-chevron-left"></i> Previous Week
+                </button>
+                <button id="current-week" class="btn btn-outline-primary">
+                    Current Week
+                </button>
+                <button id="next-week" class="btn btn-outline-secondary">
+                    Next Week <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-info" role="alert" data-current-week-start="{{ week_start.strftime('%Y-%m-%d') }}">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="far fa-calendar-alt me-2"></i>
+                    <strong>Week of:</strong> {{ week_start.strftime('%b %d, %Y') }} - {{ week_end.strftime('%b %d, %Y') }}
+                </div>
+                <div>
+                    <input type="text" id="date-range-picker" class="form-control" placeholder="Select a different week">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Overview Widgets -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="dashboard-widget">
+            <h5 class="dashboard-widget-title">Active Jobs</h5>
+            <div class="dashboard-widget-value">{{ active_jobs_count }}</div>
+            <a href="{{ url_for('manage_jobs') }}" class="btn btn-sm btn-outline-primary">Manage Jobs</a>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="dashboard-widget">
+            <h5 class="dashboard-widget-title">Field Workers</h5>
+            <div class="dashboard-widget-value">{{ total_workers }}</div>
+            <a href="{{ url_for('manage_users') }}" class="btn btn-sm btn-outline-primary">Manage Users</a>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="dashboard-widget">
+            <h5 class="dashboard-widget-title">Weekly Hours</h5>
+            <div class="dashboard-widget-value">{{ weekly_hours }}</div>
+            <a href="{{ url_for('generate_reports') }}" class="btn btn-sm btn-outline-primary">View Reports</a>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="dashboard-widget">
+            <h5 class="dashboard-widget-title">Quick Actions</h5>
+            <div class="btn-group-vertical w-100">
+                <a href="{{ url_for('manage_jobs') }}?status=new" class="btn btn-sm btn-outline-primary mb-2">Add New Job</a>
+                <a href="{{ url_for('manage_activities') }}?status=new" class="btn btn-sm btn-outline-primary mb-2">Add Labor Activity</a>
+                <a href="{{ url_for('generate_reports') }}" class="btn btn-sm btn-outline-primary">Generate Reports</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">Hours by Job</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="job-hours-chart" height="250" 
+                        data-labels="{{ [item[0] for item in job_hours]|tojson }}" 
+                        data-values="{{ [item[1] for item in job_hours]|tojson }}"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">Hours by Trade</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="trade-hours-chart" height="250"
+                        data-labels="{{ [item[0]|capitalize for item in trade_hours]|tojson }}"
+                        data-values="{{ [item[1] for item in trade_hours]|tojson }}"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Approvals -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">Recent Timesheet Approvals</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Worker</th>
+                                <th>Job</th>
+                                <th>Week</th>
+                                <th>Approved By</th>
+                                <th>Approved At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if recent_approvals %}
+                                {% for approval in recent_approvals %}
+                                    <tr>
+                                        <td>{{ approval.worker.name }}</td>
+                                        <td>{{ approval.job.job_code }}</td>
+                                        <td>{{ approval.week_start.strftime('%b %d, %Y') }}</td>
+                                        <td>{{ approval.approver.name }}</td>
+                                        <td>{{ approval.approved_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                        <td>
+                                            <a href="{{ url_for('generate_reports') }}?report_type=employee_hours&user_id={{ approval.worker.id }}&start_date={{ approval.week_start.strftime('%Y-%m-%d') }}&end_date={{ (approval.week_start + timedelta(days=6)).strftime('%Y-%m-%d') }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-download me-1"></i> Export
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <i class="far fa-calendar-check fa-3x text-muted mb-3 d-block"></i>
+                                        <h5>No recent approvals</h5>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('generate_reports') }}" class="btn btn-primary">
+                    <i class="fas fa-chart-bar me-2"></i>All Reports
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

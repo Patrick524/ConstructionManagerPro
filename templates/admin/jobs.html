@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Jobs - Construction Timesheet{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="page-title">
+            <i class="fas fa-briefcase text-primary me-2"></i>Manage Jobs
+        </h1>
+    </div>
+    <div class="col-md-4">
+        <div class="d-flex justify-content-md-end align-items-center h-100">
+            <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#jobFormContainer">
+                <i class="fas fa-plus me-2"></i>{{ 'Update Job' if editing else 'Add New Job' }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="collapse {{ 'show' if editing or request.args.get('status') == 'new' else '' }}" id="jobFormContainer">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{{ 'Edit Job' if editing else 'Add New Job' }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('manage_jobs', edit=request.args.get('edit')) }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="job_code" class="form-label">Job Code</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-hashtag"></i></span>
+                                    {{ form.job_code(class="form-control", placeholder="Enter unique job code") }}
+                                </div>
+                                {% if form.job_code.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.job_code.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="trade_type" class="form-label">Primary Trade</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-hard-hat"></i></span>
+                                    {{ form.trade_type(class="form-select") }}
+                                </div>
+                                {% if form.trade_type.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.trade_type.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-align-left"></i></span>
+                                {{ form.description(class="form-control", placeholder="Enter job description") }}
+                            </div>
+                            {% if form.description.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.description.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="status" class="form-label">Status</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-toggle-on"></i></span>
+                                {{ form.status(class="form-select") }}
+                            </div>
+                            {% if form.status.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.status.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>{{ 'Update Job' if editing else 'Save Job' }}
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#jobFormContainer">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Job List</h5>
+                <div class="input-group input-group-sm" style="width: 250px;">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" id="jobSearch" placeholder="Search jobs...">
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="jobsTable">
+                        <thead>
+                            <tr>
+                                <th data-sort="job_code">Job Code <i class="fas fa-sort text-muted"></i></th>
+                                <th data-sort="description">Description <i class="fas fa-sort text-muted"></i></th>
+                                <th data-sort="trade_type">Trade <i class="fas fa-sort text-muted"></i></th>
+                                <th data-sort="status">Status <i class="fas fa-sort text-muted"></i></th>
+                                <th data-sort="created_at">Created <i class="fas fa-sort text-muted"></i></th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if jobs %}
+                                {% for job in jobs %}
+                                    <tr class="trade-{{ job.trade_type }}">
+                                        <td data-job_code="{{ job.job_code }}">{{ job.job_code }}</td>
+                                        <td data-description="{{ job.description }}">{{ job.description }}</td>
+                                        <td data-trade_type="{{ job.trade_type }}">
+                                            <span class="badge bg-{{ job.trade_type }}">{{ job.trade_type|capitalize }}</span>
+                                        </td>
+                                        <td data-status="{{ job.status }}">
+                                            <span class="badge bg-{{ 'success' if job.status == 'active' else 'secondary' if job.status == 'complete' else 'warning' }}">
+                                                {{ job.status|capitalize }}
+                                            </span>
+                                        </td>
+                                        <td data-created_at="{{ job.created_at.strftime('%Y%m%d%H%M%S') }}">
+                                            {{ job.created_at.strftime('%Y-%m-%d') }}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="{{ url_for('manage_jobs', edit=job.id) }}" class="btn btn-outline-primary">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </a>
+                                                <a href="{{ url_for('generate_reports') }}?report_type=job_labor&job_id={{ job.id }}" class="btn btn-outline-info">
+                                                    <i class="fas fa-chart-bar"></i> Report
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <i class="fas fa-briefcase fa-3x text-muted mb-3 d-block"></i>
+                                        <h5>No jobs found</h5>
+                                        <p class="mb-3">Start by adding your first job using the button above</p>
+                                        <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#jobFormContainer">
+                                            <i class="fas fa-plus me-2"></i>Add New Job
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Setup search functionality
+        const searchInput = document.getElementById('jobSearch');
+        const table = document.getElementById('jobsTable');
+        
+        if (searchInput && table) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const rows = table.querySelectorAll('tbody tr');
+                
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+                });
+            });
+        }
+        
+        // Setup sorting functionality
+        const headers = table.querySelectorAll('th[data-sort]');
+        
+        headers.forEach(header => {
+            header.addEventListener('click', function() {
+                const sortKey = this.dataset.sort;
+                const sortDirection = this.getAttribute('data-direction') === 'asc' ? 'desc' : 'asc';
+                
+                // Update all headers to remove sorting indicators
+                headers.forEach(h => {
+                    h.removeAttribute('data-direction');
+                    h.querySelector('i').className = 'fas fa-sort text-muted';
+                });
+                
+                // Update this header with sort direction
+                this.setAttribute('data-direction', sortDirection);
+                this.querySelector('i').className = `fas fa-sort-${sortDirection === 'asc' ? 'up' : 'down'}`;
+                
+                // Perform the sort
+                const rows = Array.from(table.querySelectorAll('tbody tr'));
+                
+                rows.sort((a, b) => {
+                    const aValue = a.querySelector(`td[data-${sortKey}]`)?.dataset[sortKey] || '';
+                    const bValue = b.querySelector(`td[data-${sortKey}]`)?.dataset[sortKey] || '';
+                    
+                    if (sortDirection === 'asc') {
+                        return aValue.localeCompare(bValue);
+                    } else {
+                        return bValue.localeCompare(aValue);
+                    }
+                });
+                
+                // Clear and re-add rows
+                const tbody = table.querySelector('tbody');
+                tbody.innerHTML = '';
+                rows.forEach(row => tbody.appendChild(row));
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Server Error - Construction Timesheet{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <div class="mt-5 mb-4">
+            <i class="fas fa-bug fa-5x text-danger"></i>
+        </div>
+        <h1 class="display-4">500</h1>
+        <h2 class="mb-4">Server Error</h2>
+        <p class="lead">Sorry, something went wrong on our end. Our team has been notified.</p>
+        <div class="mt-5">
+            <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-home me-2"></i>Back to Home
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

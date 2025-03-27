@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Labor Activities - Construction Timesheet{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="page-title">
+            <i class="fas fa-tasks text-primary me-2"></i>Manage Labor Activities
+        </h1>
+    </div>
+    <div class="col-md-4">
+        <div class="d-flex justify-content-md-end align-items-center h-100">
+            <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#activityFormContainer">
+                <i class="fas fa-plus me-2"></i>{{ 'Update Activity' if editing else 'Add Activity' }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="collapse {{ 'show' if editing or request.args.get('status') == 'new' else '' }}" id="activityFormContainer">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{{ 'Edit Labor Activity' if editing else 'Add Labor Activity' }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('manage_activities', edit=request.args.get('edit')) }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="name" class="form-label">Activity Name</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-clipboard-list"></i></span>
+                                    {{ form.name(class="form-control", placeholder="Enter activity name") }}
+                                </div>
+                                {% if form.name.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.name.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="trade_category" class="form-label">Trade Category</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-hard-hat"></i></span>
+                                    {{ form.trade_category(class="form-select") }}
+                                </div>
+                                {% if form.trade_category.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.trade_category.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>{{ 'Update Activity' if editing else 'Save Activity' }}
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#activityFormContainer">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Labor Activities by Trade</h5>
+                <div class="input-group input-group-sm" style="width: 250px;">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" id="activitySearch" placeholder="Search activities...">
+                </div>
+            </div>
+            <div class="card-body">
+                {% if activities_by_trade %}
+                    <ul class="nav nav-tabs mb-3" id="activityTabs" role="tablist">
+                        {% for trade, activities in activities_by_trade.items() %}
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link {{ 'active' if loop.first else '' }}" 
+                                        id="{{ trade }}-tab" 
+                                        data-bs-toggle="tab" 
+                                        data-bs-target="#{{ trade }}" 
+                                        type="button" 
+                                        role="tab" 
+                                        aria-controls="{{ trade }}" 
+                                        aria-selected="{{ 'true' if loop.first else 'false' }}">
+                                    {{ trade|capitalize }}
+                                    <span class="badge bg-secondary ms-1">{{ activities|length }}</span>
+                                </button>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="tab-content" id="activityTabContent">
+                        {% for trade, activities in activities_by_trade.items() %}
+                            <div class="tab-pane fade {{ 'show active' if loop.first else '' }}" 
+                                 id="{{ trade }}" 
+                                 role="tabpanel" 
+                                 aria-labelledby="{{ trade }}-tab">
+                                <div class="table-responsive">
+                                    <table class="table table-hover activity-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Created</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for activity in activities %}
+                                                <tr class="activity-row" data-search-text="{{ activity.name.lower() }} {{ trade.lower() }}">
+                                                    <td>{{ activity.name }}</td>
+                                                    <td>{{ activity.created_at.strftime('%Y-%m-%d') }}</td>
+                                                    <td>
+                                                        <a href="{{ url_for('manage_activities', edit=activity.id) }}" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-edit"></i> Edit
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-tasks fa-3x text-muted mb-3 d-block"></i>
+                        <h5>No labor activities found</h5>
+                        <p class="mb-3">Start by adding your first labor activity using the button above</p>
+                        <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#activityFormContainer">
+                            <i class="fas fa-plus me-2"></i>Add Labor Activity
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-info" role="alert">
+            <h5><i class="fas fa-info-circle me-2"></i>About Labor Activities</h5>
+            <p>Labor activities define the specific types of work that can be performed on a job. These are organized by trade category.</p>
+            <p class="mb-0">When workers log time, they'll select from activities that match the trade type of the job they're working on.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Setup search functionality
+        const searchInput = document.getElementById('activitySearch');
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const rows = document.querySelectorAll('.activity-row');
+                
+                rows.forEach(row => {
+                    const searchText = row.dataset.searchText || '';
+                    const isVisible = searchText.includes(searchTerm);
+                    row.style.display = isVisible ? '' : 'none';
+                });
+                
+                // If search is active, show all tabs
+                if (searchTerm) {
+                    document.querySelectorAll('.tab-pane').forEach(tab => {
+                        tab.classList.add('show', 'active');
+                    });
+                } else {
+                    // Restore normal tab behavior
+                    document.querySelectorAll('.tab-pane').forEach((tab, index) => {
+                        if (index === 0) {
+                            tab.classList.add('show', 'active');
+                        } else {
+                            tab.classList.remove('show', 'active');
+                        }
+                    });
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

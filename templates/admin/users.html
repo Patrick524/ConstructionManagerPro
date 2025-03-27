@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Users - Construction Timesheet{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="page-title">
+            <i class="fas fa-users text-primary me-2"></i>Manage Users
+        </h1>
+    </div>
+    <div class="col-md-4">
+        <div class="d-flex justify-content-md-end align-items-center h-100">
+            <a href="{{ url_for('register') }}" class="btn btn-primary">
+                <i class="fas fa-user-plus me-2"></i>Add New User
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="collapse {{ 'show' if editing else '' }}" id="userFormContainer">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Edit User</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('manage_users', edit=request.args.get('edit')) }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="name" class="form-label">Full Name</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                    {{ form.name(class="form-control", placeholder="Enter full name") }}
+                                </div>
+                                {% if form.name.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.name.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                    {{ form.email(class="form-control", placeholder="Enter email") }}
+                                </div>
+                                {% if form.email.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.email.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="role" class="form-label">Role</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-id-badge"></i></span>
+                                {{ form.role(class="form-select") }}
+                            </div>
+                            {% if form.role.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.role.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="password" class="form-label">New Password (leave blank to keep current)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                    {{ form.password(class="form-control", placeholder="Enter new password") }}
+                                </div>
+                                {% if form.password.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.password.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-4">
+                                <label for="confirm_password" class="form-label">Confirm New Password</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                    {{ form.confirm_password(class="form-control", placeholder="Confirm new password") }}
+                                </div>
+                                {% if form.confirm_password.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.confirm_password.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Update User
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#userFormContainer">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">User List</h5>
+                <div class="input-group input-group-sm" style="width: 250px;">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" id="userSearch" placeholder="Search users...">
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th data-sort="name">Name <i class="fas fa-sort text-muted"></i></th>
+                                <th data-sort="email">Email <i class="fas fa-sort text-muted"></i></th>
+                                <th data-sort="role">Role <i class="fas fa-sort text-muted"></i></th>
+                                <th data-sort="created_at">Created <i class="fas fa-sort text-muted"></i></th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if users %}
+                                {% for user in users %}
+                                    <tr>
+                                        <td data-name="{{ user.name }}">{{ user.name }}</td>
+                                        <td data-email="{{ user.email }}">{{ user.email }}</td>
+                                        <td data-role="{{ user.role }}">
+                                            <span class="badge bg-{{ 'primary' if user.role == 'admin' else 'success' if user.role == 'foreman' else 'secondary' }}">
+                                                {{ user.role|capitalize }}
+                                            </span>
+                                        </td>
+                                        <td data-created_at="{{ user.created_at.strftime('%Y%m%d%H%M%S') }}">
+                                            {{ user.created_at.strftime('%Y-%m-%d') }}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="{{ url_for('manage_users', edit=user.id) }}" class="btn btn-outline-primary">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </a>
+                                                {% if user.role == 'worker' %}
+                                                    <a href="{{ url_for('generate_reports') }}?report_type=employee_hours&user_id={{ user.id }}" class="btn btn-outline-info">
+                                                        <i class="fas fa-chart-bar"></i> Report
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <i class="fas fa-users fa-3x text-muted mb-3 d-block"></i>
+                                        <h5>No users found</h5>
+                                        <p class="mb-3">Start by adding your first user using the button above</p>
+                                        <a href="{{ url_for('register') }}" class="btn btn-primary">
+                                            <i class="fas fa-user-plus me-2"></i>Add New User
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Setup search functionality
+        const searchInput = document.getElementById('userSearch');
+        const table = document.getElementById('usersTable');
+        
+        if (searchInput && table) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const rows = table.querySelectorAll('tbody tr');
+                
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+                });
+            });
+        }
+        
+        // Setup sorting functionality
+        const headers = table.querySelectorAll('th[data-sort]');
+        
+        headers.forEach(header => {
+            header.addEventListener('click', function() {
+                const sortKey = this.dataset.sort;
+                const sortDirection = this.getAttribute('data-direction') === 'asc' ? 'desc' : 'asc';
+                
+                // Update all headers to remove sorting indicators
+                headers.forEach(h => {
+                    h.removeAttribute('data-direction');
+                    h.querySelector('i').className = 'fas fa-sort text-muted';
+                });
+                
+                // Update this header with sort direction
+                this.setAttribute('data-direction', sortDirection);
+                this.querySelector('i').className = `fas fa-sort-${sortDirection === 'asc' ? 'up' : 'down'}`;
+                
+                // Perform the sort
+                const rows = Array.from(table.querySelectorAll('tbody tr'));
+                
+                rows.sort((a, b) => {
+                    const aValue = a.querySelector(`td[data-${sortKey}]`)?.dataset[sortKey] || '';
+                    const bValue = b.querySelector(`td[data-${sortKey}]`)?.dataset[sortKey] || '';
+                    
+                    if (sortDirection === 'asc') {
+                        return aValue.localeCompare(bValue);
+                    } else {
+                        return bValue.localeCompare(aValue);
+                    }
+                });
+                
+                // Clear and re-add rows
+                const tbody = table.querySelector('tbody');
+                tbody.innerHTML = '';
+                rows.forEach(row => tbody.appendChild(row));
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Foreman Dashboard - Construction Timesheet{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="page-title">
+            <i class="fas fa-tachometer-alt text-primary me-2"></i>Foreman Dashboard
+        </h1>
+    </div>
+    <div class="col-md-4">
+        <div class="d-flex justify-content-md-end align-items-center h-100">
+            <div class="btn-group" role="group">
+                <button id="prev-week" class="btn btn-outline-secondary">
+                    <i class="fas fa-chevron-left"></i> Previous Week
+                </button>
+                <button id="current-week" class="btn btn-outline-primary">
+                    Current Week
+                </button>
+                <button id="next-week" class="btn btn-outline-secondary">
+                    Next Week <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-info" role="alert">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="far fa-calendar-alt me-2"></i>
+                    <strong>Week of:</strong> {{ start_date.strftime('%b %d, %Y') }} - {{ end_date.strftime('%b %d, %Y') }}
+                </div>
+                <div>
+                    <input type="text" id="date-range-picker" class="form-control" placeholder="Select a different week">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12" data-current-week-start="{{ start_date.strftime('%Y-%m-%d') }}">
+        {% if job_data %}
+            {% for job_item in job_data %}
+                <div class="card mb-4 approval-card trade-{{ job_item.job.trade_type }}">
+                    <div class="card-header approval-card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge trade-{{ job_item.job.trade_type }}">{{ job_item.job.trade_type|capitalize }}</span>
+                            {{ job_item.job.job_code }} - {{ job_item.job.description }}
+                        </div>
+                        <span class="badge bg-primary">{{ job_item.workers|length }} Workers</span>
+                    </div>
+                    
+                    <div class="card-body approval-card-body p-0">
+                        {% if job_item.workers %}
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0 approval-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Worker</th>
+                                            <th>Hours</th>
+                                            <th>Days</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for worker_data in job_item.workers %}
+                                            <tr>
+                                                <td>{{ worker_data.worker.name }}</td>
+                                                <td>{{ worker_data.total_hours }}</td>
+                                                <td>
+                                                    <div class="progress" style="height: 20px;">
+                                                        <div class="progress-bar bg-{{ 'success' if worker_data.has_all_days else 'warning' }}" 
+                                                            role="progressbar" 
+                                                            style="width: {{ (worker_data.days_with_entries / 7 * 100)|int }}%;" 
+                                                            aria-valuenow="{{ worker_data.days_with_entries }}" 
+                                                            aria-valuemin="0" 
+                                                            aria-valuemax="7">
+                                                            {{ worker_data.days_with_entries }}/7
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    {% if worker_data.is_approved %}
+                                                        <span class="badge bg-success">Approved</span>
+                                                    {% elif worker_data.has_all_days %}
+                                                        <span class="badge bg-primary">Ready for Approval</span>
+                                                    {% else %}
+                                                        <span class="badge bg-warning">Incomplete</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <a href="{{ url_for('approve_timesheet', job_id=job_item.job.id, user_id=worker_data.worker.id) }}" 
+                                                       class="btn btn-sm {{ 'btn-primary' if worker_data.has_all_days and not worker_data.is_approved else 'btn-outline-secondary' }}"
+                                                       {{ 'disabled' if worker_data.is_approved else '' }}>
+                                                        {% if worker_data.is_approved %}
+                                                            <i class="fas fa-check me-1"></i> Approved
+                                                        {% else %}
+                                                            <i class="fas fa-clipboard-check me-1"></i> Review & Approve
+                                                        {% endif %}
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center p-4">
+                                <i class="fas fa-users-slash fa-3x text-muted mb-3"></i>
+                                <h5>No workers have submitted time for this job this week</h5>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info" role="alert">
+                <div class="text-center p-4">
+                    <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+                    <h4>No active jobs found</h4>
+                    <p>There are no active jobs with time entries for this week.</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5><i class="fas fa-info-circle me-2"></i>Approval Information</h5>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-warning me-2">Incomplete</span>
+                            <span>Worker hasn't submitted time for all 7 days</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-primary me-2">Ready for Approval</span>
+                            <span>Worker has submitted time for all 7 days</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-success me-2">Approved</span>
+                            <span>Time has been approved and is now locked</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1">
+                            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                            Workers must submit time for all 7 days of the week before you can approve.
+                        </p>
+                        <p class="mb-0">
+                            <i class="fas fa-lock text-secondary me-2"></i>
+                            Once approved, time entries are locked and cannot be modified.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
