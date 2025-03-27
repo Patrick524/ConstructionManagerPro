@@ -130,10 +130,16 @@ def worker_weekly_timesheet():
         # Default empty list or all activities if no job selected
         form.labor_activity_id.choices = [(activity.id, activity.name) for activity in LaborActivity.query.all()]
     
+    # Default to current week if no week start provided
+    if not form.week_start.data:
+        today = date.today()
+        form.week_start.data = get_week_start(today)
+        
+    week_start = form.week_start.data
+    week_end = week_start + timedelta(days=6)
+    
     if form.validate_on_submit():
         # Check if any timesheet for this week is already approved/locked
-        week_start = form.week_start.data
-        week_end = week_start + timedelta(days=6)
         is_locked = WeeklyApprovalLock.query.filter_by(
             user_id=current_user.id,
             job_id=form.job_id.data,
@@ -201,6 +207,84 @@ def worker_weekly_timesheet():
     labor_activity_id = request.args.get('labor_activity_id')
     if labor_activity_id:
         form.labor_activity_id.data = int(labor_activity_id)
+    
+    # Load existing entries for this week with eager loading of labor_activity
+    if form.job_id.data and form.labor_activity_id.data:
+        existing_entries = TimeEntry.query.filter(
+            TimeEntry.user_id == current_user.id,
+            TimeEntry.job_id == form.job_id.data,
+            TimeEntry.labor_activity_id == form.labor_activity_id.data,
+            TimeEntry.date >= week_start,
+            TimeEntry.date <= week_end
+        ).options(db.joinedload(TimeEntry.labor_activity)).all()
+        
+        # If form is being loaded and there are existing entries, populate the form
+        if not form.is_submitted() and existing_entries:
+            # Find entries for each day and populate hours
+            for entry in existing_entries:
+                day_index = (entry.date - week_start).days
+                if day_index == 0:
+                    form.monday_hours.data = entry.hours
+                elif day_index == 1:
+                    form.tuesday_hours.data = entry.hours
+                elif day_index == 2:
+                    form.wednesday_hours.data = entry.hours
+                elif day_index == 3:
+                    form.thursday_hours.data = entry.hours
+                elif day_index == 4:
+                    form.friday_hours.data = entry.hours
+                elif day_index == 5:
+                    form.saturday_hours.data = entry.hours
+                elif day_index == 6:
+                    form.sunday_hours.data = entry.hours
+                
+            # Populate notes from any entry (they should be the same)
+            if existing_entries:
+                form.notes.data = existing_entries[0].notes
+    elif form.job_id.data:
+        # If just job_id is set but not labor_activity_id, try to find any entries for this job
+        # to determine which labor activity to show by default
+        job_entries = TimeEntry.query.filter(
+            TimeEntry.user_id == current_user.id,
+            TimeEntry.job_id == form.job_id.data,
+            TimeEntry.date >= week_start,
+            TimeEntry.date <= week_end
+        ).options(db.joinedload(TimeEntry.labor_activity)).all()
+        
+        # Group by labor_activity_id
+        entries_by_activity = {}
+        for entry in job_entries:
+            if entry.labor_activity_id not in entries_by_activity:
+                entries_by_activity[entry.labor_activity_id] = []
+            entries_by_activity[entry.labor_activity_id].append(entry)
+        
+        # If entries exist, set the labor_activity_id to the first group and populate form
+        if entries_by_activity and not form.is_submitted():
+            # Get the first activity and its entries
+            activity_id, entries = next(iter(entries_by_activity.items()))
+            form.labor_activity_id.data = activity_id
+            
+            # Find entries for each day and populate hours
+            for entry in entries:
+                day_index = (entry.date - week_start).days
+                if day_index == 0:
+                    form.monday_hours.data = entry.hours
+                elif day_index == 1:
+                    form.tuesday_hours.data = entry.hours
+                elif day_index == 2:
+                    form.wednesday_hours.data = entry.hours
+                elif day_index == 3:
+                    form.thursday_hours.data = entry.hours
+                elif day_index == 4:
+                    form.friday_hours.data = entry.hours
+                elif day_index == 5:
+                    form.saturday_hours.data = entry.hours
+                elif day_index == 6:
+                    form.sunday_hours.data = entry.hours
+            
+            # Populate notes from any entry (they should be the same)
+            if entries:
+                form.notes.data = entries[0].notes
     
     return render_template('worker/weekly_timesheet.html', form=form)
 
