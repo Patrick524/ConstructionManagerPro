@@ -89,8 +89,8 @@
             </div>
             <div class="card-body">
                 <canvas id="job-hours-chart" height="250" 
-                        data-labels="{{ [item[0] for item in job_hours]|tojson }}" 
-                        data-values="{{ [item[1] for item in job_hours]|tojson }}"></canvas>
+                        data-labels="{{ job_hours|map(attribute=0)|list|tojson }}" 
+                        data-values="{{ job_hours|map(attribute=1)|list|tojson }}"></canvas>
             </div>
         </div>
     </div>
@@ -102,8 +102,8 @@
             </div>
             <div class="card-body">
                 <canvas id="trade-hours-chart" height="250"
-                        data-labels="{{ [item[0]|capitalize for item in trade_hours]|tojson }}"
-                        data-values="{{ [item[1] for item in trade_hours]|tojson }}"></canvas>
+                        data-labels="{{ trade_hours|map(attribute=0)|map('capitalize')|list|tojson }}"
+                        data-values="{{ trade_hours|map(attribute=1)|list|tojson }}"></canvas>
             </div>
         </div>
     </div>
