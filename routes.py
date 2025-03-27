@@ -10,6 +10,7 @@ from models import User, Job, LaborActivity, TimeEntry, WeeklyApprovalLock
 from forms import (LoginForm, RegistrationForm, TimeEntryForm, ApprovalForm, JobForm,
                   LaborActivityForm, UserManagementForm, ReportForm, WeeklyTimesheetForm)
 import pandas as pd
+import utils
 
 # Context processor to provide the current datetime to all templates
 @app.context_processor
@@ -1094,24 +1095,44 @@ def generate_reports():
                   'job_description', 'activity', 'trade_category']
         df = pd.DataFrame(results, columns=columns)
         
+        # Convert DataFrame to list of dictionaries for report generation
+        data_dicts = df.to_dict('records')
+        
         # Generate report file
         if report_format == 'csv':
-            output = io.StringIO()
-            df.to_csv(output, index=False)
-            output.seek(0)
+            # Use CSV report generator
+            csv_data = utils.generate_csv_report(data_dicts, columns)
             
             # Generate filename
             filename = f"{report_type}_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.csv"
             
             return send_file(
-                io.BytesIO(output.getvalue().encode('utf-8')),
+                io.BytesIO(csv_data.encode('utf-8')),
                 mimetype='text/csv',
                 as_attachment=True,
                 download_name=filename
             )
-        else:  # PDF not directly implemented, could use a library like WeasyPrint
-            flash('PDF generation is not implemented in this version.', 'warning')
-            return redirect(url_for('generate_reports'))
+        else:  # PDF format
+            # Set appropriate report title based on type
+            report_titles = {
+                'payroll': 'Payroll Report',
+                'job_labor': 'Job Labor Report',
+                'employee_hours': 'Employee Hours Report'
+            }
+            report_title = f"{report_titles.get(report_type, 'Report')} ({start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')})"
+            
+            # Use PDF report generator
+            pdf_buffer = utils.generate_pdf_report(data_dicts, columns, title=report_title)
+            
+            # Generate filename
+            filename = f"{report_type}_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.pdf"
+            
+            return send_file(
+                pdf_buffer,
+                mimetype='application/pdf',
+                as_attachment=True,
+                download_name=filename
+            )
     
     # Default dates to current week
     if not form.start_date.data:

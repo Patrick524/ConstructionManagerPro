@@ -87,6 +87,107 @@ def generate_csv_report(data, columns):
     output.seek(0)
     return output.getvalue()
 
+def generate_pdf_report(data, columns, title="Report"):
+    """Generate a PDF report from a list of dictionaries."""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter, landscape
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet
+    
+    # Create a buffer for the PDF
+    buffer = io.BytesIO()
+    
+    # Create the PDF document with landscape orientation 
+    # (better for reports with many columns)
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(letter))
+    
+    # Get styles for paragraphs
+    styles = getSampleStyleSheet()
+    title_style = styles['Heading1']
+    
+    # Define Column Headers and their display names
+    header_map = {
+        'id': 'ID',
+        'date': 'Date',
+        'hours': 'Hours',
+        'approved': 'Approved',
+        'worker_name': 'Worker Name',
+        'job_code': 'Job Code',
+        'job_description': 'Job Description',
+        'activity': 'Activity',
+        'trade_category': 'Trade Category'
+    }
+    
+    # Format the data for the table
+    table_data = []
+    # Create header row with proper column names
+    header_row = [header_map.get(col, col.replace('_', ' ').title()) for col in columns]
+    table_data.append(header_row)
+    
+    # Add data rows
+    for row in data:
+        # Format any special types (dates, booleans)
+        formatted_row = []
+        for col in columns:
+            value = row.get(col, '')
+            # Format dates
+            if col == 'date' and isinstance(value, (datetime, date)):
+                value = value.strftime('%Y-%m-%d')
+            # Format booleans
+            elif col == 'approved':
+                value = 'Yes' if value else 'No'
+            formatted_row.append(value)
+        table_data.append(formatted_row)
+    
+    # Create the table
+    table = Table(table_data)
+    
+    # Style the table
+    style = TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 8),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ])
+    table.setStyle(style)
+    
+    # Add alternate row coloring
+    for i in range(1, len(table_data)):
+        if i % 2 == 0:
+            style = TableStyle([('BACKGROUND', (0, i), (-1, i), colors.white)])
+        else:
+            style = TableStyle([('BACKGROUND', (0, i), (-1, i), colors.lightgrey)])
+        table.setStyle(style)
+    
+    # Build the PDF document content
+    elements = []
+    
+    # Add title
+    elements.append(Paragraph(title, title_style))
+    elements.append(Spacer(1, 12))
+    
+    # Add timestamp
+    timestamp = Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", 
+                          styles['Normal'])
+    elements.append(timestamp)
+    elements.append(Spacer(1, 12))
+    
+    # Add the table
+    elements.append(table)
+    
+    # Build and return the PDF
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer
+
 def format_date(date_obj):
     """Format a date for display."""
     return date_obj.strftime('%Y-%m-%d')
