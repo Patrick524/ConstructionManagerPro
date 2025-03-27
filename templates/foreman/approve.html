@@ -121,7 +121,7 @@
                             <div class="form-check mb-3">
                                 {{ form.approve_all(class="form-check-input") }}
                                 <label class="form-check-label" for="approve_all">
-                                    Override and approve anyway (all 7 days required)
+                                    I confirm I want to approve this timesheet with missing entries
                                 </label>
                             </div>
                         </div>
@@ -132,7 +132,7 @@
                     {% endif %}
                     
                     <div class="d-grid gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary btn-lg" {{ 'disabled' if missing_days and not form.approve_all.data }}>
+                        <button type="submit" class="btn btn-primary btn-lg">
                             <i class="fas fa-clipboard-check me-2"></i>Approve Timesheet
                         </button>
                         <a href="{{ url_for('foreman_dashboard') }}" class="btn btn-outline-secondary">
@@ -149,7 +149,7 @@
                 <ul class="mb-0 mt-2">
                     <li>Approval locks the timesheet for editing</li>
                     <li>Admin will be notified after approval</li>
-                    <li>Timesheets require all 7 days to have entries</li>
+                    <li>You can approve timesheets with missing entries</li>
                     <li>Check for accurate hours and activities</li>
                 </ul>
             </div>
@@ -160,16 +160,6 @@
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Toggle the approval button based on the "approve all" checkbox
-        const approveAllCheckbox = document.getElementById('approve_all');
-        const submitButton = document.querySelector('button[type="submit"]');
-        
-        if (approveAllCheckbox && submitButton) {
-            approveAllCheckbox.addEventListener('change', function() {
-                submitButton.disabled = !this.checked;
-            });
-        }
-    });
+    // No validation script needed anymore - button always enabled
 </script>
 {% endblock %}

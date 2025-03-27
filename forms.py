@@ -57,8 +57,8 @@ class ApprovalForm(FlaskForm):
     week_start = DateField('Week Starting', validators=[DataRequired()])
     job_id = SelectField('Job', coerce=int, validators=[DataRequired()])
     user_id = SelectField('Worker', coerce=int, validators=[DataRequired()])
-    approve_all = BooleanField('Approve All Entries')
-    submit = SubmitField('Submit Approval')
+    approve_all = BooleanField('Approve All Entries', default=True)
+    submit = SubmitField('Approve Timesheet')
 
 class JobForm(FlaskForm):
     """Form for creating/editing jobs"""

@@ -468,9 +468,10 @@ def approve_timesheet(job_id, user_id):
     missing_days = all_days - days_with_entries
     
     if form.validate_on_submit():
-        if missing_days and not form.approve_all.data:
-            flash('Cannot approve incomplete week. Please ensure all 7 days have time entries, or check "Approve All Entries" to override.', 'danger')
-            return redirect(url_for('approve_timesheet', job_id=job_id, user_id=user_id))
+        # Show a notification about missing days, but still allow approval
+        if missing_days:
+            missing_day_list = ", ".join([d.strftime('%a %m/%d') for d in sorted(missing_days)])
+            flash(f'Note: Worker has no time entries for: {missing_day_list}', 'warning')
         
         # Approve all time entries
         for entry in entries:
