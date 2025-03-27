@@ -126,13 +126,7 @@
                                     <li>{{ day.strftime('%A, %b %d') }}</li>
                                 {% endfor %}
                             </ul>
-                            <hr>
-                            <div class="form-check mb-3">
-                                {{ form.approve_all(class="form-check-input") }}
-                                <label class="form-check-label" for="approve_all">
-                                    I confirm I want to approve this timesheet with missing entries
-                                </label>
-                            </div>
+                            <p class="mb-0"><small class="text-muted">You can still approve this timesheet.</small></p>
                         </div>
                     {% else %}
                         <div class="alert alert-success">
