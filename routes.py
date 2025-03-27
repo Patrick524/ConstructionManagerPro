@@ -503,13 +503,13 @@ def foreman_enter_time(job_id, user_id):
         flash(f'Time entries for {worker.name} on {job.job_code} successfully saved!', 'success')
         return redirect(url_for('foreman_dashboard'))
     
-    # Load existing entries for this week
+    # Load existing entries for this week with eager loading of labor_activity
     existing_entries = TimeEntry.query.filter(
         TimeEntry.user_id == user_id,
         TimeEntry.job_id == job_id,
         TimeEntry.date >= week_start,
         TimeEntry.date <= week_end
-    ).all()
+    ).options(db.joinedload(TimeEntry.labor_activity)).all()
     
     # If form is being loaded and there are existing entries, populate the form
     if not form.is_submitted() and existing_entries:

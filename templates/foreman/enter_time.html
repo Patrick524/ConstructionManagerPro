@@ -30,10 +30,24 @@
 </div>
 
 {% if existing_entries %}
-<div class="alert alert-warning" role="alert">
-    <i class="fas fa-exclamation-triangle me-2"></i>
-    <strong>Note:</strong> This worker already has {{ existing_entries|length }} time entries for this week. 
-    Your submission will update or add to the existing entries.
+<div class="alert alert-info" role="alert">
+    <i class="fas fa-info-circle me-2"></i>
+    <strong>Note:</strong> This worker already has {{ existing_entries|length }} time entries for this week.
+    <ul class="mb-0 mt-2">
+        {% set activities = {} %}
+        {% for entry in existing_entries %}
+            {% if entry.labor_activity.name not in activities %}
+                {% set _ = activities.update({entry.labor_activity.name: entry.labor_activity_id}) %}
+            {% endif %}
+        {% endfor %}
+        
+        {% for activity_name, activity_id in activities.items() %}
+            <li>
+                <strong>{{ activity_name }}</strong>: 
+                Submitting with this activity selected will replace all entries for this activity only.
+            </li>
+        {% endfor %}
+    </ul>
 </div>
 {% endif %}
 
