@@ -1098,43 +1098,108 @@ def generate_reports():
         # Convert DataFrame to list of dictionaries for report generation
         data_dicts = df.to_dict('records')
         
+        # Get common info for both formats
+        report_titles = {
+            'payroll': 'Payroll Report',
+            'job_labor': 'Job Labor Report',
+            'employee_hours': 'Employee Hours Report'
+        }
+        report_title = f"{report_titles.get(report_type, 'Report')} ({start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')})"
+        
+        # Determine file delivery method (download or email)
+        delivery_method = form.delivery_method.data
+
         # Generate report file
         if report_format == 'csv':
-            # Use CSV report generator
             # Generate CSV report
             csv_data = utils.generate_csv_report(data_dicts, columns)
             
             # Generate filename
             filename = f"{report_type}_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.csv"
             
-            return send_file(
-                io.BytesIO(csv_data.encode('utf-8')),
-                mimetype='text/csv',
-                as_attachment=True,
-                download_name=filename
-            )
+            # Check if we should email the report
+            if delivery_method == 'email':
+                recipient_email = form.recipient_email.data
+                
+                # Create email body
+                email_body = f"""
+                Please find attached the {report_title} you requested.
+                
+                Date Range: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}
+                Report Type: {report_titles.get(report_type, 'Report')}
+                
+                This is an automated email from the Construction Timesheet Management System.
+                """
+                
+                # Send email with CSV attachment
+                email_sent = utils.send_email_with_attachment(
+                    recipient_email=recipient_email,
+                    subject=f"Construction Timesheet: {report_title}",
+                    body=email_body,
+                    attachment_data=io.BytesIO(csv_data.encode('utf-8')),
+                    attachment_filename=filename,
+                    attachment_mimetype='text/csv'
+                )
+                
+                if email_sent:
+                    flash(f'Report successfully emailed to {recipient_email}', 'success')
+                else:
+                    flash('Failed to send email. Please check SMTP settings.', 'danger')
+                
+                return redirect(url_for('generate_reports'))
+            else:
+                # Download the file
+                return send_file(
+                    io.BytesIO(csv_data.encode('utf-8')),
+                    mimetype='text/csv',
+                    as_attachment=True,
+                    download_name=filename
+                )
         else:  # PDF format
-            # Set appropriate report title based on type
-            report_titles = {
-                'payroll': 'Payroll Report',
-                'job_labor': 'Job Labor Report',
-                'employee_hours': 'Employee Hours Report'
-            }
-            report_title = f"{report_titles.get(report_type, 'Report')} ({start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')})"
-            
-            # Use PDF report generator
             # Generate PDF report
             pdf_buffer = utils.generate_pdf_report(data_dicts, columns, title=report_title)
             
             # Generate filename
             filename = f"{report_type}_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.pdf"
             
-            return send_file(
-                pdf_buffer,
-                mimetype='application/pdf',
-                as_attachment=True,
-                download_name=filename
-            )
+            # Check if we should email the report
+            if delivery_method == 'email':
+                recipient_email = form.recipient_email.data
+                
+                # Create email body
+                email_body = f"""
+                Please find attached the {report_title} you requested.
+                
+                Date Range: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}
+                Report Type: {report_titles.get(report_type, 'Report')}
+                
+                This is an automated email from the Construction Timesheet Management System.
+                """
+                
+                # Send email with PDF attachment
+                email_sent = utils.send_email_with_attachment(
+                    recipient_email=recipient_email,
+                    subject=f"Construction Timesheet: {report_title}",
+                    body=email_body,
+                    attachment_data=pdf_buffer,
+                    attachment_filename=filename,
+                    attachment_mimetype='application/pdf'
+                )
+                
+                if email_sent:
+                    flash(f'Report successfully emailed to {recipient_email}', 'success')
+                else:
+                    flash('Failed to send email. Please check SMTP settings or credentials.', 'danger')
+                
+                return redirect(url_for('generate_reports'))
+            else:
+                # Download the file
+                return send_file(
+                    pdf_buffer,
+                    mimetype='application/pdf',
+                    as_attachment=True,
+                    download_name=filename
+                )
     
     # Default dates to current week
     if not form.start_date.data:

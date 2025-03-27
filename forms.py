@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField, FloatField
+from wtforms import StringField, PasswordField, SubmitField, SelectField, FloatField, EmailField
 from wtforms import TextAreaField, HiddenField, DateField, BooleanField, FieldList, FormField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, NumberRange
 from models import User, Job, LaborActivity
@@ -171,6 +171,11 @@ class ReportForm(FlaskForm):
         ('csv', 'CSV'),
         ('pdf', 'PDF')
     ], validators=[DataRequired()])
+    delivery_method = SelectField('Delivery Method', choices=[
+        ('download', 'Download'),
+        ('email', 'Email')
+    ], default='download', validators=[DataRequired()])
+    recipient_email = EmailField('Recipient Email (if emailing)')
     submit = SubmitField('Generate Report')
     
     def __init__(self, *args, **kwargs):
@@ -180,3 +185,8 @@ class ReportForm(FlaskForm):
                                for job in Job.query.all()]
         self.user_id.choices = [(0, 'All Employees')] + [(user.id, user.name) 
                                 for user in User.query.filter_by(role='worker').all()]
+                                
+    def validate_recipient_email(self, field):
+        """Validate recipient email when email delivery is selected"""
+        if self.delivery_method.data == 'email' and not field.data:
+            raise ValidationError('Email address is required when email delivery is selected.')

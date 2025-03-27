@@ -188,6 +188,70 @@ def generate_pdf_report(data, columns, title="Report"):
     buffer.seek(0)
     return buffer
 
+def send_email_with_attachment(recipient_email, subject, body, attachment_data=None, attachment_filename=None, attachment_mimetype=None):
+    """
+    Send an email with an optional attachment.
+    
+    Args:
+        recipient_email (str): The recipient's email address
+        subject (str): Email subject
+        body (str): Email body content (plain text)
+        attachment_data (BytesIO, optional): Binary attachment data
+        attachment_filename (str, optional): Name of the attachment file
+        attachment_mimetype (str, optional): MIME type of the attachment
+        
+    Returns:
+        bool: True if email was sent successfully, False otherwise
+    """
+    import smtplib
+    import os
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+    from email.mime.application import MIMEApplication
+    
+    # Get email configuration from environment variables
+    smtp_server = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
+    smtp_port = int(os.environ.get('SMTP_PORT', 587))
+    smtp_username = os.environ.get('SMTP_USERNAME')
+    smtp_password = os.environ.get('SMTP_PASSWORD')
+    sender_email = os.environ.get('SENDER_EMAIL', smtp_username)
+    
+    # Validate required credentials
+    if not smtp_username or not smtp_password:
+        print("Error: SMTP credentials not configured. Set SMTP_USERNAME and SMTP_PASSWORD environment variables.")
+        return False
+    
+    # Create the email message
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['To'] = recipient_email
+    msg['Subject'] = subject
+    
+    # Attach the body content
+    msg.attach(MIMEText(body, 'plain'))
+    
+    # Add attachment if provided
+    if attachment_data and attachment_filename:
+        attachment = MIMEApplication(attachment_data.read(), _subtype=attachment_mimetype.split('/')[-1])
+        attachment.add_header('Content-Disposition', 'attachment', filename=attachment_filename)
+        msg.attach(attachment)
+        # Reset file pointer in case the attachment needs to be used again
+        attachment_data.seek(0)
+    
+    try:
+        # Connect to the SMTP server
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()  # Secure the connection
+        server.login(smtp_username, smtp_password)
+        
+        # Send the email
+        server.send_message(msg)
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return False
+
 def format_date(date_obj):
     """Format a date for display."""
     return date_obj.strftime('%Y-%m-%d')

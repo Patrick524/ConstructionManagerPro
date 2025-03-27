@@ -84,7 +84,7 @@
                         </div>
                     </div>
                     
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label for="format" class="form-label">Output Format</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-file-export"></i></span>
@@ -92,8 +92,31 @@
                         </div>
                     </div>
                     
+                    <div class="mb-3">
+                        <label for="delivery_method" class="form-label">Delivery Method</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-paper-plane"></i></span>
+                            {{ form.delivery_method(class="form-select", id="delivery_method") }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4" id="email_recipient_field" style="display: none;">
+                        <label for="recipient_email" class="form-label">Recipient Email</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                            {{ form.recipient_email(class="form-control") }}
+                        </div>
+                        {% if form.recipient_email.errors %}
+                            <div class="text-danger">
+                                {% for error in form.recipient_email.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="generate_button">
                             <i class="fas fa-download me-2"></i>Generate Report
                         </button>
                     </div>
@@ -193,6 +216,29 @@
             // Initialize on page load
             updateFieldVisibility();
         }
+        
+        // Set up delivery method change handler
+        const deliveryMethodSelect = document.getElementById('delivery_method');
+        if (deliveryMethodSelect) {
+            deliveryMethodSelect.addEventListener('change', updateDeliveryFields);
+            // Initialize on page load
+            updateDeliveryFields();
+        }
+        
+        // Update button text based on delivery method
+        function updateDeliveryFields() {
+            const deliveryMethod = document.getElementById('delivery_method').value;
+            const emailField = document.getElementById('email_recipient_field');
+            const generateButton = document.getElementById('generate_button');
+            
+            if (deliveryMethod === 'email') {
+                emailField.style.display = 'block';
+                generateButton.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Email Report';
+            } else {
+                emailField.style.display = 'none';
+                generateButton.innerHTML = '<i class="fas fa-download me-2"></i>Download Report';
+            }
+        }
     });
     
     function selectReportType(type) {
@@ -225,6 +271,20 @@
             // employee_hours report
             jobField.style.display = 'none';
             userField.style.display = 'block';
+        }
+    }
+    
+    function updateDeliveryFields() {
+        const deliveryMethod = document.getElementById('delivery_method').value;
+        const emailField = document.getElementById('email_recipient_field');
+        const generateButton = document.getElementById('generate_button');
+        
+        if (deliveryMethod === 'email') {
+            emailField.style.display = 'block';
+            generateButton.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Email Report';
+        } else {
+            emailField.style.display = 'none';
+            generateButton.innerHTML = '<i class="fas fa-download me-2"></i>Download Report';
         }
     }
 </script>
