@@ -139,7 +139,7 @@
                                         <td>{{ approval.approver.name }}</td>
                                         <td>{{ approval.approved_at.strftime('%Y-%m-%d %H:%M') }}</td>
                                         <td>
-                                            <a href="{{ url_for('generate_reports') }}?report_type=employee_hours&user_id={{ approval.worker.id }}&start_date={{ approval.week_start.strftime('%Y-%m-%d') }}&end_date={{ (approval.week_start + timedelta(days=6)).strftime('%Y-%m-%d') }}" class="btn btn-sm btn-outline-primary">
+                                            <a href="{{ url_for('generate_reports') }}?report_type=employee_hours&user_id={{ approval.worker.id }}&start_date={{ approval.week_start.strftime('%Y-%m-%d') }}" class="btn btn-sm btn-outline-primary">
                                                 <i class="fas fa-download me-1"></i> Export
                                             </a>
                                         </td>
