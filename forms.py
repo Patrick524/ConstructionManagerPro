@@ -114,13 +114,13 @@ class WeeklyTimesheetForm(FlaskForm):
     week_start = DateField('Week Starting', validators=[DataRequired()])
     
     # Daily hours fields
-    monday_hours = FloatField('Monday', default=8.0, validators=[NumberRange(min=0, max=12)])
-    tuesday_hours = FloatField('Tuesday', default=8.0, validators=[NumberRange(min=0, max=12)])
-    wednesday_hours = FloatField('Wednesday', default=8.0, validators=[NumberRange(min=0, max=12)])
-    thursday_hours = FloatField('Thursday', default=8.0, validators=[NumberRange(min=0, max=12)]) 
-    friday_hours = FloatField('Friday', default=8.0, validators=[NumberRange(min=0, max=12)])
-    saturday_hours = FloatField('Saturday', default=0.0, validators=[NumberRange(min=0, max=12)])
-    sunday_hours = FloatField('Sunday', default=0.0, validators=[NumberRange(min=0, max=12)])
+    monday_hours = FloatField('Monday', validators=[NumberRange(min=0, max=12)])
+    tuesday_hours = FloatField('Tuesday', validators=[NumberRange(min=0, max=12)])
+    wednesday_hours = FloatField('Wednesday', validators=[NumberRange(min=0, max=12)])
+    thursday_hours = FloatField('Thursday', validators=[NumberRange(min=0, max=12)]) 
+    friday_hours = FloatField('Friday', validators=[NumberRange(min=0, max=12)])
+    saturday_hours = FloatField('Saturday', validators=[NumberRange(min=0, max=12)])
+    sunday_hours = FloatField('Sunday', validators=[NumberRange(min=0, max=12)])
     
     notes = TextAreaField('Notes for the Week')
     submit = SubmitField('Save Weekly Timesheet')
