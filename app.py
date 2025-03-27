@@ -18,7 +18,7 @@ login_manager = LoginManager()
 
 # Create the app
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET")
+app.secret_key = os.environ.get("SESSION_SECRET", "temporary_secret_key_for_development")
 
 # Configure the database
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
@@ -27,6 +27,11 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_pre_ping": True,
 }
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+# Session configuration
+app.config["SESSION_COOKIE_SECURE"] = False  # Set to True in production
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["PERMANENT_SESSION_LIFETIME"] = 3600  # Session expires after 1 hour
 
 # Initialize extensions with the app
 db.init_app(app)

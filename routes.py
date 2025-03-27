@@ -78,6 +78,9 @@ def login():
         else:
             flash('Login unsuccessful. Please check your email and password.', 'danger')
     
+    # Ensure that errors are displayed if the form is submitted but invalid
+    if request.method == 'POST' and not form.validate():
+        flash('Please check your input and try again.', 'warning')
     return render_template('login.html', form=form)
 
 @app.route('/register', methods=['GET', 'POST'])
