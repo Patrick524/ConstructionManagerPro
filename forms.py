@@ -1,8 +1,9 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, SelectField, FloatField
-from wtforms import TextAreaField, HiddenField, DateField, BooleanField
+from wtforms import TextAreaField, HiddenField, DateField, BooleanField, FieldList, FormField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, NumberRange
 from models import User, Job, LaborActivity
+from datetime import date, timedelta
 
 class LoginForm(FlaskForm):
     """Form for user login"""
@@ -107,6 +108,55 @@ class UserManagementForm(FlaskForm):
                                     validators=[EqualTo('password')])
     submit = SubmitField('Update User')
 
+class WeeklyTimesheetForm(FlaskForm):
+    """Form for weekly timesheet entry (more efficient interface)"""
+    job_id = SelectField('Job', coerce=int, validators=[DataRequired()])
+    labor_activity_id = SelectField('Labor Activity', coerce=int, validators=[DataRequired()])
+    week_start = DateField('Week Starting', validators=[DataRequired()])
+    
+    # Daily hours fields
+    monday_hours = FloatField('Monday', default=8.0, validators=[NumberRange(min=0, max=12)])
+    tuesday_hours = FloatField('Tuesday', default=8.0, validators=[NumberRange(min=0, max=12)])
+    wednesday_hours = FloatField('Wednesday', default=8.0, validators=[NumberRange(min=0, max=12)])
+    thursday_hours = FloatField('Thursday', default=8.0, validators=[NumberRange(min=0, max=12)]) 
+    friday_hours = FloatField('Friday', default=8.0, validators=[NumberRange(min=0, max=12)])
+    saturday_hours = FloatField('Saturday', default=0.0, validators=[NumberRange(min=0, max=12)])
+    sunday_hours = FloatField('Sunday', default=0.0, validators=[NumberRange(min=0, max=12)])
+    
+    notes = TextAreaField('Notes for the Week')
+    submit = SubmitField('Save Weekly Timesheet')
+    
+    def __init__(self, *args, **kwargs):
+        super(WeeklyTimesheetForm, self).__init__(*args, **kwargs)
+        # Populate job choices
+        self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
+                              for job in Job.query.filter_by(status='active').all()]
+        
+        # Default to current week's Monday if no date is provided
+        if not self.week_start.data:
+            today = date.today()
+            # Calculate the most recent Monday (current week's start)
+            self.week_start.data = today - timedelta(days=today.weekday())
+            
+    def get_total_hours(self):
+        """Calculate total hours for the week"""
+        total = 0
+        if self.monday_hours.data is not None:
+            total += self.monday_hours.data
+        if self.tuesday_hours.data is not None:
+            total += self.tuesday_hours.data
+        if self.wednesday_hours.data is not None:
+            total += self.wednesday_hours.data
+        if self.thursday_hours.data is not None:
+            total += self.thursday_hours.data
+        if self.friday_hours.data is not None:
+            total += self.friday_hours.data
+        if self.saturday_hours.data is not None:
+            total += self.saturday_hours.data
+        if self.sunday_hours.data is not None:
+            total += self.sunday_hours.data
+        return total
+        
 class ReportForm(FlaskForm):
     """Form for generating reports"""
     report_type = SelectField('Report Type', choices=[

@@ -8,7 +8,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db
 from models import User, Job, LaborActivity, TimeEntry, WeeklyApprovalLock
 from forms import (LoginForm, RegistrationForm, TimeEntryForm, ApprovalForm, JobForm,
-                  LaborActivityForm, UserManagementForm, ReportForm)
+                  LaborActivityForm, UserManagementForm, ReportForm, WeeklyTimesheetForm)
 import pandas as pd
 
 # Context processor to provide the current datetime to all templates
@@ -112,6 +112,104 @@ def logout():
     return redirect(url_for('login'))
 
 # Worker routes
+@app.route('/worker/weekly', methods=['GET', 'POST'])
+@login_required
+@worker_required
+def worker_weekly_timesheet():
+    """Weekly timesheet view allowing workers to enter time for an entire week at once"""
+    form = WeeklyTimesheetForm()
+    
+    # Check if we're loading a specific job's labor activities
+    job_id = request.args.get('job_id')
+    if job_id:
+        job = Job.query.get_or_404(job_id)
+        # Populate labor activities for this job's trade type
+        form.labor_activity_id.choices = [(activity.id, activity.name) 
+                                     for activity in LaborActivity.query.filter_by(trade_category=job.trade_type).all()]
+    else:
+        # Default empty list or all activities if no job selected
+        form.labor_activity_id.choices = [(activity.id, activity.name) for activity in LaborActivity.query.all()]
+    
+    if form.validate_on_submit():
+        # Check if any timesheet for this week is already approved/locked
+        week_start = form.week_start.data
+        week_end = week_start + timedelta(days=6)
+        is_locked = WeeklyApprovalLock.query.filter_by(
+            user_id=current_user.id,
+            job_id=form.job_id.data,
+            week_start=week_start
+        ).first()
+        
+        if is_locked:
+            flash('Cannot add or edit time entries for this week. It has already been approved.', 'danger')
+            return redirect(url_for('worker_weekly_timesheet'))
+            
+        # Create/update time entries for each day of the week that has hours
+        days_of_week = [
+            ('monday', form.monday_hours),
+            ('tuesday', form.tuesday_hours),
+            ('wednesday', form.wednesday_hours),
+            ('thursday', form.thursday_hours),
+            ('friday', form.friday_hours),
+            ('saturday', form.saturday_hours),
+            ('sunday', form.sunday_hours)
+        ]
+        
+        entries_created = 0
+        
+        for i, (day_name, hours_field) in enumerate(days_of_week):
+            if hours_field.data and hours_field.data > 0:
+                # Calculate the date for this day
+                entry_date = week_start + timedelta(days=i)
+                
+                # Check for existing entry
+                existing_entry = TimeEntry.query.filter_by(
+                    user_id=current_user.id,
+                    job_id=form.job_id.data,
+                    labor_activity_id=form.labor_activity_id.data,
+                    date=entry_date
+                ).first()
+                
+                if existing_entry:
+                    # Update existing entry
+                    existing_entry.hours = hours_field.data
+                    existing_entry.notes = form.notes.data
+                    existing_entry.approved = False  # Reset approval status
+                    existing_entry.approved_by = None
+                    existing_entry.approved_at = None
+                else:
+                    # Create new entry
+                    new_entry = TimeEntry(
+                        user_id=current_user.id,
+                        job_id=form.job_id.data,
+                        labor_activity_id=form.labor_activity_id.data,
+                        date=entry_date,
+                        hours=hours_field.data,
+                        notes=form.notes.data
+                    )
+                    db.session.add(new_entry)
+                    entries_created += 1
+        
+        db.session.commit()
+        
+        if entries_created > 0:
+            flash(f'Weekly timesheet saved successfully! Created {entries_created} time entries.', 'success')
+        else:
+            flash('Weekly timesheet updated successfully!', 'success')
+            
+        return redirect(url_for('worker_history'))
+    
+    # Get job_id from URL parameters if provided
+    if job_id and not form.job_id.data:
+        form.job_id.data = int(job_id)
+        
+    # If labor_activity_id is in the URL, use it
+    labor_activity_id = request.args.get('labor_activity_id')
+    if labor_activity_id:
+        form.labor_activity_id.data = int(labor_activity_id)
+    
+    return render_template('worker/weekly_timesheet.html', form=form)
+
 @app.route('/worker/timesheet', methods=['GET', 'POST'])
 @login_required
 @worker_required

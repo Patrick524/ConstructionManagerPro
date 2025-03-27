@@ -104,12 +104,30 @@
                         </div>
                         <h4>No time entries found for this week</h4>
                         <p class="text-muted">Use the button below to start entering your time</p>
-                        <a href="{{ url_for('worker_timesheet') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>Enter Time
-                        </a>
+                        <div class="btn-group">
+                            <a href="{{ url_for('worker_timesheet') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Daily Entry
+                            </a>
+                            <a href="{{ url_for('worker_weekly_timesheet') }}" class="btn btn-info">
+                                <i class="fas fa-calendar-week me-2"></i>Weekly Entry
+                            </a>
+                        </div>
                     </div>
                 {% endif %}
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12 text-center">
+        <div class="btn-group">
+            <a href="{{ url_for('worker_timesheet') }}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-1"></i> New Daily Entry
+            </a>
+            <a href="{{ url_for('worker_weekly_timesheet') }}" class="btn btn-info">
+                <i class="fas fa-calendar-week me-1"></i> New Weekly Entry
+            </a>
         </div>
     </div>
 </div>

@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}Weekly Timesheet{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Weekly Timesheet</h1>
+            
+            <div class="card mb-4 border-dark">
+                <div class="card-header bg-dark text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Enter Hours for the Week</h5>
+                        <a href="{{ url_for('worker_timesheet') }}" class="btn btn-outline-light btn-sm">
+                            Switch to Daily View
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('worker_weekly_timesheet') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    {{ form.job_id.label(class="form-label") }}
+                                    {{ form.job_id(class="form-select", id="job_select") }}
+                                    {% for error in form.job_id.errors %}
+                                        <span class="text-danger">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    {{ form.labor_activity_id.label(class="form-label") }}
+                                    {{ form.labor_activity_id(class="form-select", id="labor_activity_select") }}
+                                    {% for error in form.labor_activity_id.errors %}
+                                        <span class="text-danger">{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    {{ form.week_start.label(class="form-label") }}
+                                    {{ form.week_start(class="form-control", type="date", id="week_start_date") }}
+                                    {% for error in form.week_start.errors %}
+                                        <span class="text-danger">{{ error }}</span>
+                                    {% endfor %}
+                                    <small class="form-text text-muted">Select the Monday of the week</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-4">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">Hours</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-5 d-flex align-items-center">
+                                        <p class="mb-0"><strong>Total Weekly Hours:</strong> <span id="total_hours">0</span></p>
+                                    </div>
+                                    <div class="col-md-7 text-end d-flex justify-content-end">
+                                        <button type="button" class="btn btn-outline-secondary me-2" id="reset_default">Reset to Default</button>
+                                        <button type="button" class="btn btn-outline-secondary" id="clear_all">Clear All</button>
+                                    </div>
+                                </div>
+                                
+                                <hr>
+                                
+                                <div class="row g-3">
+                                    <!-- Weekday Hours -->
+                                    <div class="col-md-6 col-lg-4 col-xl-3">
+                                        <div class="form-group">
+                                            {{ form.monday_hours.label(class="form-label") }}
+                                            {{ form.monday_hours(class="form-control hours-input", min="0", max="12", step="0.5") }}
+                                            {% for error in form.monday_hours.errors %}
+                                                <span class="text-danger">{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6 col-lg-4 col-xl-3">
+                                        <div class="form-group">
+                                            {{ form.tuesday_hours.label(class="form-label") }}
+                                            {{ form.tuesday_hours(class="form-control hours-input", min="0", max="12", step="0.5") }}
+                                            {% for error in form.tuesday_hours.errors %}
+                                                <span class="text-danger">{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6 col-lg-4 col-xl-3">
+                                        <div class="form-group">
+                                            {{ form.wednesday_hours.label(class="form-label") }}
+                                            {{ form.wednesday_hours(class="form-control hours-input", min="0", max="12", step="0.5") }}
+                                            {% for error in form.wednesday_hours.errors %}
+                                                <span class="text-danger">{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6 col-lg-4 col-xl-3">
+                                        <div class="form-group">
+                                            {{ form.thursday_hours.label(class="form-label") }}
+                                            {{ form.thursday_hours(class="form-control hours-input", min="0", max="12", step="0.5") }}
+                                            {% for error in form.thursday_hours.errors %}
+                                                <span class="text-danger">{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6 col-lg-4 col-xl-3">
+                                        <div class="form-group">
+                                            {{ form.friday_hours.label(class="form-label") }}
+                                            {{ form.friday_hours(class="form-control hours-input", min="0", max="12", step="0.5") }}
+                                            {% for error in form.friday_hours.errors %}
+                                                <span class="text-danger">{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Weekend Hours -->
+                                    <div class="col-md-6 col-lg-4 col-xl-3">
+                                        <div class="form-group">
+                                            {{ form.saturday_hours.label(class="form-label") }}
+                                            {{ form.saturday_hours(class="form-control hours-input", min="0", max="12", step="0.5") }}
+                                            {% for error in form.saturday_hours.errors %}
+                                                <span class="text-danger">{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6 col-lg-4 col-xl-3">
+                                        <div class="form-group">
+                                            {{ form.sunday_hours.label(class="form-label") }}
+                                            {{ form.sunday_hours(class="form-control hours-input", min="0", max="12", step="0.5") }}
+                                            {% for error in form.sunday_hours.errors %}
+                                                <span class="text-danger">{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            {{ form.notes.label(class="form-label") }}
+                            {{ form.notes(class="form-control", rows="3", placeholder="Enter any notes about this week's work") }}
+                            {% for error in form.notes.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('worker_history') }}" class="btn btn-secondary">Cancel</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const jobSelect = document.getElementById('job_select');
+        const laborActivitySelect = document.getElementById('labor_activity_select');
+        const hoursInputs = document.querySelectorAll('.hours-input');
+        const totalHoursElement = document.getElementById('total_hours');
+        const resetDefaultBtn = document.getElementById('reset_default');
+        const clearAllBtn = document.getElementById('clear_all');
+        
+        // Calculate total hours whenever an input changes
+        function calculateTotal() {
+            let total = 0;
+            hoursInputs.forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+            totalHoursElement.textContent = total.toFixed(1);
+        }
+        
+        // Load labor activities for the selected job
+        jobSelect.addEventListener('change', function() {
+            const jobId = this.value;
+            if (jobId) {
+                // Redirect to the same page with job_id parameter
+                window.location.href = `{{ url_for('worker_weekly_timesheet') }}?job_id=${jobId}`;
+            }
+        });
+        
+        // Calculate total when any hours input changes
+        hoursInputs.forEach(input => {
+            input.addEventListener('input', calculateTotal);
+        });
+        
+        // Reset to default hours (8 for weekdays, 0 for weekends)
+        resetDefaultBtn.addEventListener('click', function() {
+            // Monday to Friday: 8 hours
+            document.getElementById('monday_hours').value = '8.0';
+            document.getElementById('tuesday_hours').value = '8.0';
+            document.getElementById('wednesday_hours').value = '8.0';
+            document.getElementById('thursday_hours').value = '8.0';
+            document.getElementById('friday_hours').value = '8.0';
+            
+            // Weekend: 0 hours
+            document.getElementById('saturday_hours').value = '0.0';
+            document.getElementById('sunday_hours').value = '0.0';
+            
+            calculateTotal();
+        });
+        
+        // Clear all hours
+        clearAllBtn.addEventListener('click', function() {
+            hoursInputs.forEach(input => {
+                input.value = '0.0';
+            });
+            calculateTotal();
+        });
+        
+        // Calculate total on page load
+        calculateTotal();
+    });
+</script>
+{% endblock %}
