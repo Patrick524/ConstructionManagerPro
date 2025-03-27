@@ -475,32 +475,29 @@ def foreman_enter_time(job_id, user_id):
             form.sunday_hours.data
         ]
         
-        # Delete any existing entries for the same job, worker, activity and date
+        # First, delete any existing entries for this week with the same activity
+        # This ensures we don't get duplicate entries if the foreman submits multiple times
+        TimeEntry.query.filter(
+            TimeEntry.user_id == user_id,
+            TimeEntry.job_id == job_id,
+            TimeEntry.labor_activity_id == form.labor_activity_id.data,
+            TimeEntry.date >= dates[0],
+            TimeEntry.date <= dates[6]
+        ).delete()
+        
+        # Now create new entries for days with hours > 0
         for i, date_val in enumerate(dates):
             if hours_values[i] > 0:
-                # Check for existing entry
-                existing_entry = TimeEntry.query.filter_by(
+                # Create a new entry
+                entry = TimeEntry(
                     user_id=user_id,
                     job_id=job_id,
                     labor_activity_id=form.labor_activity_id.data,
-                    date=date_val
-                ).first()
-                
-                if existing_entry:
-                    # Update the existing entry
-                    existing_entry.hours = hours_values[i]
-                    existing_entry.notes = form.notes.data
-                else:
-                    # Create a new entry
-                    entry = TimeEntry(
-                        user_id=user_id,
-                        job_id=job_id,
-                        labor_activity_id=form.labor_activity_id.data,
-                        date=date_val,
-                        hours=hours_values[i],
-                        notes=form.notes.data
-                    )
-                    db.session.add(entry)
+                    date=date_val,
+                    hours=hours_values[i],
+                    notes=form.notes.data
+                )
+                db.session.add(entry)
         
         db.session.commit()
         flash(f'Time entries for {worker.name} on {job.job_code} successfully saved!', 'success')
