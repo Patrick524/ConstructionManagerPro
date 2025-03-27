@@ -144,7 +144,17 @@ def worker_weekly_timesheet():
             flash('Cannot add or edit time entries for this week. It has already been approved.', 'danger')
             return redirect(url_for('worker_weekly_timesheet'))
             
-        # Create/update time entries for each day of the week that has hours
+        # First, delete any existing entries for this week with the same activity
+        # This ensures we don't get duplicate entries if the user submits multiple times
+        TimeEntry.query.filter(
+            TimeEntry.user_id == current_user.id,
+            TimeEntry.job_id == form.job_id.data,
+            TimeEntry.labor_activity_id == form.labor_activity_id.data,
+            TimeEntry.date >= week_start,
+            TimeEntry.date <= week_end
+        ).delete()
+        
+        # Create time entries for each day of the week that has hours
         days_of_week = [
             ('monday', form.monday_hours),
             ('tuesday', form.tuesday_hours),
@@ -162,33 +172,17 @@ def worker_weekly_timesheet():
                 # Calculate the date for this day
                 entry_date = week_start + timedelta(days=i)
                 
-                # Check for existing entry
-                existing_entry = TimeEntry.query.filter_by(
+                # Create new entry
+                new_entry = TimeEntry(
                     user_id=current_user.id,
                     job_id=form.job_id.data,
                     labor_activity_id=form.labor_activity_id.data,
-                    date=entry_date
-                ).first()
-                
-                if existing_entry:
-                    # Update existing entry
-                    existing_entry.hours = hours_field.data
-                    existing_entry.notes = form.notes.data
-                    existing_entry.approved = False  # Reset approval status
-                    existing_entry.approved_by = None
-                    existing_entry.approved_at = None
-                else:
-                    # Create new entry
-                    new_entry = TimeEntry(
-                        user_id=current_user.id,
-                        job_id=form.job_id.data,
-                        labor_activity_id=form.labor_activity_id.data,
-                        date=entry_date,
-                        hours=hours_field.data,
-                        notes=form.notes.data
-                    )
-                    db.session.add(new_entry)
-                    entries_created += 1
+                    date=entry_date,
+                    hours=hours_field.data,
+                    notes=form.notes.data
+                )
+                db.session.add(new_entry)
+                entries_created += 1
         
         db.session.commit()
         
@@ -253,33 +247,30 @@ def worker_timesheet():
             flash('You must enter at least one labor activity with hours.', 'danger')
             return redirect(url_for('worker_timesheet'))
         
-        # First check if there's an existing time entry for this date and job
+        # Get all activity IDs that will be submitted
+        activity_ids = [act_id for act_id, _ in labor_activities]
+        
+        # Delete all existing entries for this date and job with matching activities
+        # to avoid duplicates when resubmitting the form
+        TimeEntry.query.filter(
+            TimeEntry.user_id == current_user.id,
+            TimeEntry.job_id == form.job_id.data,
+            TimeEntry.labor_activity_id.in_(activity_ids),
+            TimeEntry.date == form.date.data
+        ).delete()
+        
+        # Create new entries for each activity
         for activity_id, hours in labor_activities:
-            existing_entry = TimeEntry.query.filter_by(
+            # Create new entry
+            new_entry = TimeEntry(
                 user_id=current_user.id,
                 job_id=form.job_id.data,
                 labor_activity_id=activity_id,
-                date=form.date.data
-            ).first()
-            
-            if existing_entry:
-                # Update existing entry
-                existing_entry.hours = hours
-                existing_entry.notes = form.notes.data
-                existing_entry.approved = False  # Reset approval status
-                existing_entry.approved_by = None
-                existing_entry.approved_at = None
-            else:
-                # Create new entry
-                new_entry = TimeEntry(
-                    user_id=current_user.id,
-                    job_id=form.job_id.data,
-                    labor_activity_id=activity_id,
-                    date=form.date.data,
-                    hours=hours,
-                    notes=form.notes.data
-                )
-                db.session.add(new_entry)
+                date=form.date.data,
+                hours=hours,
+                notes=form.notes.data
+            )
+            db.session.add(new_entry)
         
         db.session.commit()
         flash('Time entry saved successfully!', 'success')
