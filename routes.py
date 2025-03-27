@@ -423,6 +423,144 @@ def foreman_dashboard():
         end_date=end_date
     )
 
+@app.route('/foreman/enter_time/<int:job_id>/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+@foreman_required
+def foreman_enter_time(job_id, user_id):
+    """Allow foremen to enter time on behalf of a worker"""
+    # Get the worker and job
+    worker = User.query.get_or_404(user_id)
+    job = Job.query.get_or_404(job_id)
+    
+    # Use the same weekly timesheet form as workers
+    form = WeeklyTimesheetForm()
+    form.job_id.data = job_id
+    
+    # Populate labor activity choices based on job trade
+    labor_activities = LaborActivity.query.filter_by(trade_category=job.trade_type).all()
+    form.labor_activity_id.choices = [(activity.id, activity.name) for activity in labor_activities]
+    
+    # Default to current week if no week start provided
+    if not form.week_start.data:
+        today = date.today()
+        form.week_start.data = get_week_start(today)
+    
+    week_start = form.week_start.data
+    week_end = week_start + timedelta(days=6)
+    
+    # Check if this week is already approved
+    existing_approval = WeeklyApprovalLock.query.filter_by(
+        user_id=user_id,
+        job_id=job_id,
+        week_start=week_start
+    ).first()
+    
+    if existing_approval:
+        flash(f'This week was already approved by {existing_approval.approver.name} on {existing_approval.approved_at.strftime("%Y-%m-%d %H:%M")}. Time entries cannot be modified.', 'warning')
+        return redirect(url_for('foreman_dashboard'))
+    
+    if form.validate_on_submit():
+        # Get the dates for each day of the week
+        monday = form.week_start.data
+        dates = [monday + timedelta(days=i) for i in range(7)]
+        
+        # Get the hours for each day
+        hours_values = [
+            form.monday_hours.data,
+            form.tuesday_hours.data, 
+            form.wednesday_hours.data,
+            form.thursday_hours.data,
+            form.friday_hours.data,
+            form.saturday_hours.data,
+            form.sunday_hours.data
+        ]
+        
+        # Delete any existing entries for the same job, worker, activity and date
+        for i, date_val in enumerate(dates):
+            if hours_values[i] > 0:
+                # Check for existing entry
+                existing_entry = TimeEntry.query.filter_by(
+                    user_id=user_id,
+                    job_id=job_id,
+                    labor_activity_id=form.labor_activity_id.data,
+                    date=date_val
+                ).first()
+                
+                if existing_entry:
+                    # Update the existing entry
+                    existing_entry.hours = hours_values[i]
+                    existing_entry.notes = form.notes.data
+                else:
+                    # Create a new entry
+                    entry = TimeEntry(
+                        user_id=user_id,
+                        job_id=job_id,
+                        labor_activity_id=form.labor_activity_id.data,
+                        date=date_val,
+                        hours=hours_values[i],
+                        notes=form.notes.data
+                    )
+                    db.session.add(entry)
+        
+        db.session.commit()
+        flash(f'Time entries for {worker.name} on {job.job_code} successfully saved!', 'success')
+        return redirect(url_for('foreman_dashboard'))
+    
+    # Load existing entries for this week
+    existing_entries = TimeEntry.query.filter(
+        TimeEntry.user_id == user_id,
+        TimeEntry.job_id == job_id,
+        TimeEntry.date >= week_start,
+        TimeEntry.date <= week_end
+    ).all()
+    
+    # If form is being loaded and there are existing entries, populate the form
+    if not form.is_submitted() and existing_entries:
+        # Group by labor_activity_id
+        entries_by_activity = {}
+        for entry in existing_entries:
+            if entry.labor_activity_id not in entries_by_activity:
+                entries_by_activity[entry.labor_activity_id] = []
+            entries_by_activity[entry.labor_activity_id].append(entry)
+        
+        # For simplicity, just use the first activity group to populate the form
+        if entries_by_activity:
+            # Get the first activity and its entries
+            activity_id, entries = next(iter(entries_by_activity.items()))
+            form.labor_activity_id.data = activity_id
+            
+            # Find entries for each day and populate hours
+            for entry in entries:
+                day_index = (entry.date - week_start).days
+                if day_index == 0:
+                    form.monday_hours.data = entry.hours
+                elif day_index == 1:
+                    form.tuesday_hours.data = entry.hours
+                elif day_index == 2:
+                    form.wednesday_hours.data = entry.hours
+                elif day_index == 3:
+                    form.thursday_hours.data = entry.hours
+                elif day_index == 4:
+                    form.friday_hours.data = entry.hours
+                elif day_index == 5:
+                    form.saturday_hours.data = entry.hours
+                elif day_index == 6:
+                    form.sunday_hours.data = entry.hours
+            
+            # Populate notes from any entry (they should be the same)
+            if entries:
+                form.notes.data = entries[0].notes
+    
+    return render_template(
+        'foreman/enter_time.html',
+        form=form,
+        worker=worker,
+        job=job,
+        week_start=week_start,
+        week_end=week_end,
+        existing_entries=existing_entries
+    )
+
 @app.route('/foreman/approve/<int:job_id>/<int:user_id>', methods=['GET', 'POST'])
 @login_required
 @foreman_required

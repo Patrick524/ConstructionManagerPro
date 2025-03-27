@@ -95,15 +95,23 @@
                                                     {% endif %}
                                                 </td>
                                                 <td>
-                                                    <a href="{{ url_for('approve_timesheet', job_id=job_item.job.id, user_id=worker_data.worker.id) }}" 
-                                                       class="btn btn-sm {{ 'btn-primary' if worker_data.has_all_days and not worker_data.is_approved else 'btn-outline-secondary' }}"
-                                                       {{ 'disabled' if worker_data.is_approved else '' }}>
-                                                        {% if worker_data.is_approved %}
-                                                            <i class="fas fa-check me-1"></i> Approved
-                                                        {% else %}
-                                                            <i class="fas fa-clipboard-check me-1"></i> Review & Approve
-                                                        {% endif %}
-                                                    </a>
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <a href="{{ url_for('approve_timesheet', job_id=job_item.job.id, user_id=worker_data.worker.id) }}" 
+                                                           class="btn {{ 'btn-primary' if worker_data.has_all_days and not worker_data.is_approved else 'btn-outline-secondary' }}"
+                                                           {{ 'disabled' if worker_data.is_approved else '' }}>
+                                                            {% if worker_data.is_approved %}
+                                                                <i class="fas fa-check me-1"></i> Approved
+                                                            {% else %}
+                                                                <i class="fas fa-clipboard-check me-1"></i> Review
+                                                            {% endif %}
+                                                        </a>
+                                                        <a href="{{ url_for('foreman_enter_time', job_id=job_item.job.id, user_id=worker_data.worker.id) }}" 
+                                                           class="btn btn-outline-info"
+                                                           {{ 'disabled' if worker_data.is_approved else '' }}
+                                                           title="Enter time for this worker">
+                                                            <i class="fas fa-clock"></i>
+                                                        </a>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         {% endfor %}
@@ -153,8 +161,12 @@
                     </div>
                     <div class="col-md-6">
                         <p class="mb-1">
+                            <i class="fas fa-clock text-info me-2"></i>
+                            Click the <i class="fas fa-clock"></i> icon to enter time on behalf of a worker.
+                        </p>
+                        <p class="mb-1">
                             <i class="fas fa-exclamation-triangle text-warning me-2"></i>
-                            Workers must submit time for all 7 days of the week before you can approve.
+                            You can now approve timesheets with missing entries.
                         </p>
                         <p class="mb-0">
                             <i class="fas fa-lock text-secondary me-2"></i>

@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Enter Time for {{ worker.name }} - Construction Timesheet{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="page-title">
+            <i class="fas fa-clock text-primary me-2"></i>Enter Time for Worker
+        </h1>
+        <h4 class="text-muted">{{ worker.name }} - {{ job.job_code }}</h4>
+    </div>
+    <div class="col-md-4">
+        <div class="d-flex justify-content-md-end align-items-center h-100">
+            <a href="{{ url_for('foreman_dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info" role="alert">
+    <div class="d-flex align-items-center">
+        <i class="far fa-calendar-alt me-2 fa-lg"></i>
+        <div>
+            <strong>Week of:</strong> {{ week_start.strftime('%b %d, %Y') }} - {{ week_end.strftime('%b %d, %Y') }}
+            <div class="small">You are entering time on behalf of {{ worker.name }}</div>
+        </div>
+    </div>
+</div>
+
+{% if existing_entries %}
+<div class="alert alert-warning" role="alert">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    <strong>Note:</strong> This worker already has {{ existing_entries|length }} time entries for this week. 
+    Your submission will update or add to the existing entries.
+</div>
+{% endif %}
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-pencil-alt me-2"></i>Weekly Timesheet Form
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" class="weekly-timesheet-form">
+            {{ form.hidden_tag() }}
+            <div class="row mb-3">
+                <label class="col-md-3 col-form-label">Job:</label>
+                <div class="col-md-9">
+                    <p class="form-control-plaintext">
+                        <span class="badge trade-{{ job.trade_type }}">{{ job.trade_type|capitalize }}</span>
+                        {{ job.job_code }} - {{ job.description }}
+                    </p>
+                    {{ form.job_id(class="d-none") }}
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <label class="col-md-3 col-form-label">Week Starting:</label>
+                <div class="col-md-9">
+                    {{ form.week_start(class="form-control date-picker") }}
+                    <div class="form-text">Monday of the week</div>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <label class="col-md-3 col-form-label">{{ form.labor_activity_id.label }}:</label>
+                <div class="col-md-9">
+                    {{ form.labor_activity_id(class="form-select") }}
+                    <div class="form-text">Select the type of work performed this week</div>
+                </div>
+            </div>
+            
+            <div class="hours-grid mt-4">
+                <div class="row align-items-end">
+                    <div class="col">
+                        <label class="form-label text-center d-block">Monday</label>
+                        {{ form.monday_hours(class="form-control text-center hours-input", step="0.5", min="0", max="12") }}
+                    </div>
+                    <div class="col">
+                        <label class="form-label text-center d-block">Tuesday</label>
+                        {{ form.tuesday_hours(class="form-control text-center hours-input", step="0.5", min="0", max="12") }}
+                    </div>
+                    <div class="col">
+                        <label class="form-label text-center d-block">Wednesday</label>
+                        {{ form.wednesday_hours(class="form-control text-center hours-input", step="0.5", min="0", max="12") }}
+                    </div>
+                    <div class="col">
+                        <label class="form-label text-center d-block">Thursday</label>
+                        {{ form.thursday_hours(class="form-control text-center hours-input", step="0.5", min="0", max="12") }}
+                    </div>
+                    <div class="col">
+                        <label class="form-label text-center d-block">Friday</label>
+                        {{ form.friday_hours(class="form-control text-center hours-input", step="0.5", min="0", max="12") }}
+                    </div>
+                    <div class="col">
+                        <label class="form-label text-center d-block">Saturday</label>
+                        {{ form.saturday_hours(class="form-control text-center hours-input", step="0.5", min="0", max="12") }}
+                    </div>
+                    <div class="col">
+                        <label class="form-label text-center d-block">Sunday</label>
+                        {{ form.sunday_hours(class="form-control text-center hours-input", step="0.5", min="0", max="12") }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-12">
+                    <label class="form-label"><i class="fas fa-calculator me-1"></i>Weekly Total: <span id="weekly-total">0.0</span> hours</label>
+                    <div class="progress" style="height: 25px;">
+                        <div id="weekly-total-bar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="40">0.0 hours</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-12">
+                    <label class="form-label">{{ form.notes.label }}:</label>
+                    {{ form.notes(class="form-control", rows=3, placeholder="Enter any additional information about this week's work") }}
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <a href="{{ url_for('foreman_dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-times me-1"></i> Cancel
+                </a>
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize date pickers
+    document.addEventListener('DOMContentLoaded', function() {
+        initDatePickers();
+        
+        // Calculate total hours whenever a value changes
+        const hoursInputs = document.querySelectorAll('.hours-input');
+        hoursInputs.forEach(input => {
+            input.addEventListener('input', calculateTotal);
+        });
+        
+        // Calculate initial total
+        calculateTotal();
+    });
+    
+    function calculateTotal() {
+        const hours = [
+            parseFloat(document.getElementById('monday_hours').value) || 0,
+            parseFloat(document.getElementById('tuesday_hours').value) || 0,
+            parseFloat(document.getElementById('wednesday_hours').value) || 0,
+            parseFloat(document.getElementById('thursday_hours').value) || 0,
+            parseFloat(document.getElementById('friday_hours').value) || 0,
+            parseFloat(document.getElementById('saturday_hours').value) || 0,
+            parseFloat(document.getElementById('sunday_hours').value) || 0
+        ];
+        
+        const total = hours.reduce((sum, val) => sum + val, 0);
+        const totalElement = document.getElementById('weekly-total');
+        const progressBar = document.getElementById('weekly-total-bar');
+        
+        totalElement.textContent = total.toFixed(1);
+        
+        // Update progress bar
+        const percentage = Math.min(100, (total / 40) * 100);
+        progressBar.style.width = percentage + '%';
+        progressBar.setAttribute('aria-valuenow', total);
+        progressBar.textContent = total.toFixed(1) + ' hours';
+        
+        // Set color based on total
+        if (total > 40) {
+            progressBar.classList.remove('bg-success', 'bg-primary');
+            progressBar.classList.add('bg-warning');
+        } else if (total >= 30) {
+            progressBar.classList.remove('bg-warning', 'bg-primary');
+            progressBar.classList.add('bg-success');
+        } else {
+            progressBar.classList.remove('bg-warning', 'bg-success');
+            progressBar.classList.add('bg-primary');
+        }
+    }
+</script>
+{% endblock %}
