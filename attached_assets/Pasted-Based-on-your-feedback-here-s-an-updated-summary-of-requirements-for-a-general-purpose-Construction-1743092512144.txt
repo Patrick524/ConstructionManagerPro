@@ -1,0 +1,55 @@
+Based on your feedback, here's an updated summary of requirements for a general-purpose Construction Timesheet application that will initially focus on drywall work:
+
+## Construction Timesheet Management System
+
+**Purpose**: Track employee hours across construction jobs with role-based access, starting with drywall work but expandable to other trades.
+
+**Technology**:
+- Modern web framework (Django recommended)
+- SQL database
+
+**Core Models**:
+- User: Id, Name, Email, Role (worker, foreman, admin)
+- Job: Id, JobCode, Description, Status, TradeType
+- LaborActivity: Id, Name, TradeCategory
+- TimeEntry: Id, UserId, JobId, Date, LaborActivityId, Hours, Approved, ApprovedBy, ApprovedAt
+- WeeklyApprovalLock: UserId, JobId, WeekStart, ApprovedBy, ApprovedAt
+
+**Role-Based Features**:
+
+1. **Field Workers**:
+   - Enter daily hours (1-12) for one job with multiple labor activities
+   - Edit entries until foreman approves
+   - Mobile-friendly interface for on-site use
+
+2. **Foremen**:
+   - Weekly dashboard showing workers' hours per job
+   - Edit/approve time entries 
+   - Bulk-approve all entries for a job/week
+   - Entries lock after approval
+
+3. **Admins**:
+   - Receive weekly reports when time is approved
+   - Generate CSV/PDF reports for payroll and billing
+   - Manage users, jobs, and labor activities
+   - Configure trade-specific labor activities
+
+**Workflow**:
+- Workers enter time daily
+- Foremen review weekly (all 7 days required before approval)
+- Upon approval, entries lock and reports generate
+- HR/Billing receive notifications with report links
+
+**UI Requirements**:
+- Responsive design for field use
+- Calendar/grid view for time entry
+- Dashboard with clear approval status indicators
+- Mobile-friendly interface
+- Trade-specific views and filters
+
+**Expansion Capability**:
+- Support for multiple construction trades
+- Customizable labor activities per trade
+- Trade-specific reporting templates
+
+This application will start with a focus on drywall work but is designed as a flexible platform that can accommodate various construction trades as the system expands.
