@@ -134,11 +134,6 @@
                                         <td data-trade_type="{{ job.trade_type }}">
                                             <span class="badge bg-{{ job.trade_type }}">{{ job.trade_type|capitalize }}</span>
                                         </td>
-                                        <td data-foreman="{{ job.foreman.name }}">
-                                            {{ job.foreman.name }}
-                                        </td>
-                                        <td data-status="{{ job.status }}">
-                                            <span class="badge bg-{{ 'success' if job.status == 'active' else 'secondary' if job.status == 'complete' else 'warning' }}">
                                                 {{ job.status|capitalize }}
                                             </span>
                                         </td>
