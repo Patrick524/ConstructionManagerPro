@@ -60,14 +60,14 @@ def login():
             return redirect(url_for('foreman_dashboard'))
         else:
             return redirect(url_for('admin_dashboard'))
-            
+
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
             login_user(user)
             next_page = request.args.get('next')
-            
+
             if next_page:
                 return redirect(next_page)
             elif user.is_worker():
@@ -78,7 +78,7 @@ def login():
                 return redirect(url_for('admin_dashboard'))
         else:
             flash('Login unsuccessful. Please check your email and password.', 'danger')
-    
+
     # Ensure that errors are displayed if the form is submitted but invalid
     if request.method == 'POST' and not form.validate():
         flash('Please check your input and try again.', 'warning')
@@ -90,7 +90,7 @@ def register():
     # or require admin approval for new accounts
     if current_user.is_authenticated:
         return redirect(url_for('login'))
-        
+
     form = RegistrationForm()
     if form.validate_on_submit():
         user = User(
@@ -101,10 +101,10 @@ def register():
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
-        
+
         flash('Your account has been created! You can now log in.', 'success')
         return redirect(url_for('login'))
-        
+
     return render_template('register.html', form=form)
 
 @app.route('/logout')
@@ -119,7 +119,7 @@ def logout():
 def worker_weekly_timesheet():
     """Weekly timesheet view allowing workers to enter time for an entire week at once"""
     form = WeeklyTimesheetForm()
-    
+
     # Check if we're loading a specific job's labor activities
     job_id = request.args.get('job_id')
     if job_id:
@@ -130,15 +130,15 @@ def worker_weekly_timesheet():
     else:
         # Default empty list or all activities if no job selected
         form.labor_activity_id.choices = [(activity.id, activity.name) for activity in LaborActivity.query.all()]
-    
+
     # Default to current week if no week start provided
     if not form.week_start.data:
         today = date.today()
         form.week_start.data = get_week_start(today)
-        
+
     week_start = form.week_start.data
     week_end = week_start + timedelta(days=6)
-    
+
     if form.validate_on_submit():
         # Check if any timesheet for this week is already approved/locked
         is_locked = WeeklyApprovalLock.query.filter_by(
@@ -146,11 +146,11 @@ def worker_weekly_timesheet():
             job_id=form.job_id.data,
             week_start=week_start
         ).first()
-        
+
         if is_locked:
             flash('Cannot add or edit time entries for this week. It has already been approved.', 'danger')
             return redirect(url_for('worker_weekly_timesheet'))
-            
+
         # First, delete any existing entries for this week with the same activity
         # This ensures we don't get duplicate entries if the user submits multiple times
         TimeEntry.query.filter(
@@ -160,7 +160,7 @@ def worker_weekly_timesheet():
             TimeEntry.date >= week_start,
             TimeEntry.date <= week_end
         ).delete()
-        
+
         # Create time entries for each day of the week that has hours
         days_of_week = [
             ('monday', form.monday_hours),
@@ -171,14 +171,14 @@ def worker_weekly_timesheet():
             ('saturday', form.saturday_hours),
             ('sunday', form.sunday_hours)
         ]
-        
+
         entries_created = 0
-        
+
         for i, (day_name, hours_field) in enumerate(days_of_week):
             if hours_field.data and hours_field.data > 0:
                 # Calculate the date for this day
                 entry_date = week_start + timedelta(days=i)
-                
+
                 # Create new entry
                 new_entry = TimeEntry(
                     user_id=current_user.id,
@@ -190,25 +190,25 @@ def worker_weekly_timesheet():
                 )
                 db.session.add(new_entry)
                 entries_created += 1
-        
+
         db.session.commit()
-        
+
         if entries_created > 0:
             flash(f'Weekly timesheet saved successfully! Created {entries_created} time entries.', 'success')
         else:
             flash('Weekly timesheet updated successfully!', 'success')
-            
+
         return redirect(url_for('worker_history'))
-    
+
     # Get job_id from URL parameters if provided
     if job_id and not form.job_id.data:
         form.job_id.data = int(job_id)
-        
+
     # If labor_activity_id is in the URL, use it
     labor_activity_id = request.args.get('labor_activity_id')
     if labor_activity_id:
         form.labor_activity_id.data = int(labor_activity_id)
-    
+
     # Check if this is a GET request or if form failed validation
     if request.method == 'GET' or not form.validate():
         # This is the key part - we're explicitly checking for GET requests to load existing data
@@ -216,7 +216,7 @@ def worker_weekly_timesheet():
         if form.job_id.data and form.labor_activity_id.data:
             print(f"DEBUG: Searching for entries with job_id={form.job_id.data}, labor_activity_id={form.labor_activity_id.data}, user_id={current_user.id}")
             print(f"DEBUG: Week range: {week_start} to {week_end}")
-            
+
             existing_entries = TimeEntry.query.filter(
                 TimeEntry.user_id == current_user.id,
                 TimeEntry.job_id == form.job_id.data,
@@ -224,9 +224,9 @@ def worker_weekly_timesheet():
                 TimeEntry.date >= week_start,
                 TimeEntry.date <= week_end
             ).options(db.joinedload(TimeEntry.labor_activity)).all()
-            
+
             print(f"DEBUG: Found {len(existing_entries)} existing entries")
-            
+
             # Set all hours fields to 0 by default
             form.monday_hours.data = 0.0
             form.tuesday_hours.data = 0.0
@@ -235,11 +235,11 @@ def worker_weekly_timesheet():
             form.friday_hours.data = 0.0
             form.saturday_hours.data = 0.0
             form.sunday_hours.data = 0.0
-                
+
             # If there are existing entries, populate the form
             if existing_entries:
                 print(f"DEBUG: Setting form values from existing entries")
-                
+
                 # Create a dictionary to store hours by day index
                 day_entries = {}
                 for entry in existing_entries:
@@ -248,7 +248,7 @@ def worker_weekly_timesheet():
                     if 0 <= day_index <= 6:  # Make sure it's within the week
                         day_entries[day_index] = entry.hours
                         print(f"DEBUG: Day index {day_index} = {entry.hours} hours")
-                
+
                 # Map each day to the form field
                 if 0 in day_entries:
                     form.monday_hours.data = day_entries[0]
@@ -264,11 +264,11 @@ def worker_weekly_timesheet():
                     form.saturday_hours.data = day_entries[5]
                 if 6 in day_entries:
                     form.sunday_hours.data = day_entries[6]
-                
+
                 # Populate notes from any entry (they should be the same)
                 if existing_entries:
                     form.notes.data = existing_entries[0].notes
-                    
+
                 print(f"DEBUG: Form values after population: M={form.monday_hours.data}, T={form.tuesday_hours.data}, W={form.wednesday_hours.data}, Total: {sum([form.monday_hours.data or 0, form.tuesday_hours.data or 0, form.wednesday_hours.data or 0, form.thursday_hours.data or 0, form.friday_hours.data or 0, form.saturday_hours.data or 0, form.sunday_hours.data or 0])}")
             else:
                 print("DEBUG: No existing entries found to populate form")
@@ -283,9 +283,9 @@ def worker_weekly_timesheet():
             TimeEntry.date >= week_start,
             TimeEntry.date <= week_end
         ).options(db.joinedload(TimeEntry.labor_activity)).all()
-        
+
         print(f"DEBUG: Found {len(job_entries)} job entries")
-        
+
         # Set all hours fields to 0 by default
         form.monday_hours.data = 0.0
         form.tuesday_hours.data = 0.0
@@ -294,7 +294,7 @@ def worker_weekly_timesheet():
         form.friday_hours.data = 0.0
         form.saturday_hours.data = 0.0
         form.sunday_hours.data = 0.0
-        
+
         if job_entries:
             # Group by labor_activity_id
             entries_by_activity = {}
@@ -302,16 +302,16 @@ def worker_weekly_timesheet():
                 if entry.labor_activity_id not in entries_by_activity:
                     entries_by_activity[entry.labor_activity_id] = []
                 entries_by_activity[entry.labor_activity_id].append(entry)
-            
+
             print(f"DEBUG: Grouped into {len(entries_by_activity)} activities")
-            
+
             # If entries exist, set the labor_activity_id to the first group and populate form
             if entries_by_activity:
                 # Get the first activity and its entries
                 activity_id, entries = next(iter(entries_by_activity.items()))
                 form.labor_activity_id.data = activity_id
                 print(f"DEBUG: Setting labor_activity_id to {activity_id}")
-                
+
                 # Create a dictionary to store hours by day index
                 day_entries = {}
                 for entry in entries:
@@ -320,7 +320,7 @@ def worker_weekly_timesheet():
                     if 0 <= day_index <= 6:  # Make sure it's within the week
                         day_entries[day_index] = entry.hours
                         print(f"DEBUG: Day index {day_index} = {entry.hours} hours")
-                
+
                 # Map each day to the form field
                 if 0 in day_entries:
                     form.monday_hours.data = day_entries[0]
@@ -336,17 +336,17 @@ def worker_weekly_timesheet():
                     form.saturday_hours.data = day_entries[5]
                 if 6 in day_entries:
                     form.sunday_hours.data = day_entries[6]
-                
+
                 # Populate notes from any entry (they should be the same)
                 if entries:
                     form.notes.data = entries[0].notes
-                    
+
                 print(f"DEBUG: Form values after population from job entries: M={form.monday_hours.data}, T={form.tuesday_hours.data}, W={form.wednesday_hours.data}, Total: {sum([form.monday_hours.data or 0, form.tuesday_hours.data or 0, form.wednesday_hours.data or 0, form.thursday_hours.data or 0, form.friday_hours.data or 0, form.saturday_hours.data or 0, form.sunday_hours.data or 0])}")
             else:
                 print("DEBUG: No grouped activities found to populate form")
         else:
             print("DEBUG: No job entries found to populate form")
-    
+
     return render_template('worker/weekly_timesheet.html', form=form)
 
 @app.route('/worker/timesheet', methods=['GET', 'POST'])
@@ -354,11 +354,11 @@ def worker_weekly_timesheet():
 @worker_required
 def worker_timesheet():
     form = TimeEntryForm()
-    
+
     # Default to today's date
     if not form.date.data:
         form.date.data = date.today()
-    
+
     if form.validate_on_submit():
         # Check if timesheet for this date is already approved/locked
         week_start = get_week_start(form.date.data)
@@ -367,11 +367,11 @@ def worker_timesheet():
             job_id=form.job_id.data,
             week_start=week_start
         ).first()
-        
+
         if is_locked:
             flash('Cannot add or edit time entries for this week. It has already been approved.', 'danger')
             return redirect(url_for('worker_timesheet'))
-        
+
         # Extract all labor activities from the form
         labor_activities = []
         for key in request.form.keys():
@@ -379,22 +379,22 @@ def worker_timesheet():
                 index = key.split('_')[-1]
                 activity_id = request.form.get(f'labor_activity_{index}')
                 hours = request.form.get(f'hours_{index}')
-                
+
                 if activity_id and hours and float(hours) > 0:
                     labor_activities.append((int(activity_id), float(hours)))
-        
+
         # Add the first activity if it's valid
         if form.labor_activity_1.data and form.hours_1.data and form.hours_1.data > 0:
             labor_activities.append((form.labor_activity_1.data, form.hours_1.data))
-        
+
         # Ensure we have at least one valid labor activity
         if not labor_activities:
             flash('You must enter at least one labor activity with hours.', 'danger')
             return redirect(url_for('worker_timesheet'))
-        
+
         # Get all activity IDs that will be submitted
         activity_ids = [act_id for act_id, _ in labor_activities]
-        
+
         # Delete all existing entries for this date and job with matching activities
         # to avoid duplicates when resubmitting the form
         TimeEntry.query.filter(
@@ -403,7 +403,7 @@ def worker_timesheet():
             TimeEntry.labor_activity_id.in_(activity_ids),
             TimeEntry.date == form.date.data
         ).delete()
-        
+
         # Create new entries for each activity
         for activity_id, hours in labor_activities:
             # Create new entry
@@ -416,14 +416,14 @@ def worker_timesheet():
                 notes=form.notes.data
             )
             db.session.add(new_entry)
-        
+
         db.session.commit()
         flash('Time entry saved successfully!', 'success')
         return redirect(url_for('worker_history'))
-    
+
     # Get labor activities for the selected job's trade type
     activities = LaborActivity.query.all()
-    
+
     return render_template('worker/timesheet.html', form=form, activities=activities)
 
 @app.route('/worker/history')
@@ -433,42 +433,42 @@ def worker_history():
     # Get date range parameters from query string
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
-    
+
     # Default to current week if no dates provided
     if not start_date:
         today = date.today()
         start_date = get_week_start(today)
     else:
         start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-        
+
     if not end_date:
         end_date = start_date + timedelta(days=6)
     else:
         end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
-    
+
     # Get time entries for the date range
     entries = TimeEntry.query.filter(
         TimeEntry.user_id == current_user.id,
         TimeEntry.date >= start_date,
         TimeEntry.date <= end_date
     ).order_by(TimeEntry.date.desc()).all()
-    
+
     # Group entries by date for display
     entries_by_date = {}
     for entry in entries:
         if entry.date not in entries_by_date:
             entries_by_date[entry.date] = []
         entries_by_date[entry.date].append(entry)
-    
+
     # Get weekly approval status
     week_start = get_week_start(start_date)
     approved_weeks = WeeklyApprovalLock.query.filter_by(
         user_id=current_user.id,
         week_start=week_start
     ).all()
-    
+
     approved_jobs = [lock.job_id for lock in approved_weeks]
-    
+
     return render_template(
         'worker/history.html',
         entries_by_date=entries_by_date,
@@ -484,19 +484,19 @@ def worker_history():
 def foreman_dashboard():
     # Get date range parameters from query string
     start_date = request.args.get('start_date')
-    
+
     # Default to current week if no dates provided
     if not start_date:
         today = date.today()
         start_date = get_week_start(today)
     else:
         start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-        
+
     end_date = start_date + timedelta(days=6)
-    
+
     # Get all active jobs
     jobs = Job.query.filter_by(status='active').all()
-    
+
     # For each job, get all workers with time entries
     job_data = []
     for job in jobs:
@@ -508,9 +508,9 @@ def foreman_dashboard():
                 TimeEntry.date <= end_date,
                 User.role == 'worker'
             ).distinct()
-        
+
         workers = workers_query.all()
-        
+
         # Get weekly approval status for each worker
         workers_data = []
         for worker in workers:
@@ -520,7 +520,7 @@ def foreman_dashboard():
                 job_id=job.id,
                 week_start=start_date
             ).first() is not None
-            
+
             # Count total hours for the week
             total_hours = db.session.query(db.func.sum(TimeEntry.hours)).\
                 filter(
@@ -529,7 +529,7 @@ def foreman_dashboard():
                     TimeEntry.date >= start_date,
                     TimeEntry.date <= end_date
                 ).scalar() or 0
-            
+
             # Check if all 7 days of the week have entries
             days_with_entries = db.session.query(TimeEntry.date).\
                 filter(
@@ -538,7 +538,7 @@ def foreman_dashboard():
                     TimeEntry.date >= start_date,
                     TimeEntry.date <= end_date
                 ).distinct().count()
-            
+
             workers_data.append({
                 'worker': worker,
                 'is_approved': is_approved,
@@ -546,12 +546,12 @@ def foreman_dashboard():
                 'days_with_entries': days_with_entries,
                 'has_all_days': days_with_entries == 7  # A full week has 7 days
             })
-        
+
         job_data.append({
             'job': job,
             'workers': workers_data
         })
-    
+
     return render_template(
         'foreman/dashboard.html',
         job_data=job_data,
@@ -567,39 +567,42 @@ def foreman_enter_time(job_id, user_id):
     # Get the worker and job
     worker = User.query.get_or_404(user_id)
     job = Job.query.get_or_404(job_id)
-    
+
     # Use the same weekly timesheet form as workers
     form = WeeklyTimesheetForm()
     form.job_id.data = job_id
-    
+
     # Populate labor activity choices based on job trade
     labor_activities = LaborActivity.query.filter_by(trade_category=job.trade_type).all()
     form.labor_activity_id.choices = [(activity.id, activity.name) for activity in labor_activities]
-    
-    # Default to current week if no week start provided
-    if not form.week_start.data:
+
+    # Get week start from query parameters or default to current week
+    selected_week = request.args.get('week_start')
+    if selected_week:
+        form.week_start.data = datetime.strptime(selected_week, '%Y-%m-%d').date()
+    elif not form.week_start.data:
         today = date.today()
         form.week_start.data = get_week_start(today)
-    
+
     week_start = form.week_start.data
     week_end = week_start + timedelta(days=6)
-    
+
     # Check if this week is already approved
     existing_approval = WeeklyApprovalLock.query.filter_by(
         user_id=user_id,
         job_id=job_id,
         week_start=week_start
     ).first()
-    
+
     if existing_approval:
         flash(f'This week was already approved by {existing_approval.approver.name} on {existing_approval.approved_at.strftime("%Y-%m-%d %H:%M")}. Time entries cannot be modified.', 'warning')
         return redirect(url_for('foreman_dashboard'))
-    
+
     if form.validate_on_submit():
         # Get the dates for each day of the week
         monday = form.week_start.data
         dates = [monday + timedelta(days=i) for i in range(7)]
-        
+
         # Get the hours for each day
         hours_values = [
             form.monday_hours.data,
@@ -610,7 +613,7 @@ def foreman_enter_time(job_id, user_id):
             form.saturday_hours.data,
             form.sunday_hours.data
         ]
-        
+
         # First, delete any existing entries for this week with the same activity
         # This ensures we don't get duplicate entries if the foreman submits multiple times
         TimeEntry.query.filter(
@@ -620,7 +623,7 @@ def foreman_enter_time(job_id, user_id):
             TimeEntry.date >= dates[0],
             TimeEntry.date <= dates[6]
         ).delete()
-        
+
         # Now create new entries for days with hours > 0
         for i, date_val in enumerate(dates):
             if hours_values[i] > 0:
@@ -634,14 +637,14 @@ def foreman_enter_time(job_id, user_id):
                     notes=form.notes.data
                 )
                 db.session.add(entry)
-        
+
         db.session.commit()
         flash(f'Time entries for {worker.name} on {job.job_code} successfully saved!', 'success')
         return redirect(url_for('foreman_dashboard'))
-    
+
     # Initialize for template context
     existing_entries = []
-    
+
     # Check if this is a GET request or if form failed validation
     if request.method == 'GET' or not form.validate():
         # Set all hours fields to 0 by default
@@ -652,7 +655,7 @@ def foreman_enter_time(job_id, user_id):
         form.friday_hours.data = 0.0
         form.saturday_hours.data = 0.0
         form.sunday_hours.data = 0.0
-        
+
         # Load existing entries for this week with eager loading of labor_activity
         if form.labor_activity_id.data:
             # If labor activity is already selected, get entries for that specific activity
@@ -663,7 +666,7 @@ def foreman_enter_time(job_id, user_id):
                 TimeEntry.date >= week_start,
                 TimeEntry.date <= week_end
             ).options(db.joinedload(TimeEntry.labor_activity)).all()
-            
+
             if existing_entries:
                 # Create a dictionary to store hours by day index
                 day_entries = {}
@@ -671,7 +674,7 @@ def foreman_enter_time(job_id, user_id):
                     day_index = (entry.date - week_start).days
                     if 0 <= day_index <= 6:  # Make sure it's within the week
                         day_entries[day_index] = entry.hours
-                
+
                 # Map each day to the form field
                 if 0 in day_entries:
                     form.monday_hours.data = day_entries[0]
@@ -687,7 +690,7 @@ def foreman_enter_time(job_id, user_id):
                     form.saturday_hours.data = day_entries[5]
                 if 6 in day_entries:
                     form.sunday_hours.data = day_entries[6]
-                
+
                 # Populate notes field
                 form.notes.data = existing_entries[0].notes
         else:
@@ -698,7 +701,7 @@ def foreman_enter_time(job_id, user_id):
                 TimeEntry.date >= week_start,
                 TimeEntry.date <= week_end
             ).options(db.joinedload(TimeEntry.labor_activity)).all()
-            
+
             if existing_entries:
                 # Group by labor_activity_id
                 entries_by_activity = {}
@@ -706,19 +709,19 @@ def foreman_enter_time(job_id, user_id):
                     if entry.labor_activity_id not in entries_by_activity:
                         entries_by_activity[entry.labor_activity_id] = []
                     entries_by_activity[entry.labor_activity_id].append(entry)
-                
+
                 if entries_by_activity:
                     # Get the first activity and its entries
                     activity_id, first_entries = next(iter(entries_by_activity.items()))
                     form.labor_activity_id.data = activity_id
-                    
+
                     # Create a dictionary to store hours by day index
                     day_entries = {}
                     for entry in first_entries:
                         day_index = (entry.date - week_start).days
                         if 0 <= day_index <= 6:  # Make sure it's within the week
                             day_entries[day_index] = entry.hours
-                    
+
                     # Map each day to the form field
                     if 0 in day_entries:
                         form.monday_hours.data = day_entries[0]
@@ -734,11 +737,11 @@ def foreman_enter_time(job_id, user_id):
                         form.saturday_hours.data = day_entries[5]
                     if 6 in day_entries:
                         form.sunday_hours.data = day_entries[6]
-                    
+
                     # Populate notes field
                     if first_entries:
                         form.notes.data = first_entries[0].notes
-    
+
     return render_template(
         'foreman/enter_time.html',
         form=form,
@@ -756,33 +759,33 @@ def approve_timesheet(job_id, user_id):
     # Get the worker and job
     worker = User.query.get_or_404(user_id)
     job = Job.query.get_or_404(job_id)
-    
+
     form = ApprovalForm()
     # Populate the form dropdown options
     form.job_id.choices = [(job.id, f"{job.job_code} - {job.description}")]
     form.user_id.choices = [(worker.id, worker.name)]
     form.job_id.data = job_id
     form.user_id.data = user_id
-    
+
     # Default to current week if no week start provided
     if not form.week_start.data:
         today = date.today()
         form.week_start.data = get_week_start(today)
-    
+
     week_start = form.week_start.data
     week_end = week_start + timedelta(days=6)
-    
+
     # Check if this week is already approved
     existing_approval = WeeklyApprovalLock.query.filter_by(
         user_id=user_id,
         job_id=job_id,
         week_start=week_start
     ).first()
-    
+
     if existing_approval:
         flash(f'This week was already approved by {existing_approval.approver.name} on {existing_approval.approved_at.strftime("%Y-%m-%d %H:%M")}', 'warning')
         return redirect(url_for('foreman_dashboard'))
-    
+
     # Get all time entries for the week
     entries = TimeEntry.query.filter(
         TimeEntry.user_id == user_id,
@@ -790,24 +793,24 @@ def approve_timesheet(job_id, user_id):
         TimeEntry.date >= week_start,
         TimeEntry.date <= week_end
     ).order_by(TimeEntry.date).all()
-    
+
     # Check if all 7 days have entries
     days_with_entries = set(entry.date for entry in entries)
     all_days = {week_start + timedelta(days=i) for i in range(7)}
     missing_days = all_days - days_with_entries
-    
+
     if form.validate_on_submit():
         # Show a notification about missing days, but still allow approval
         if missing_days:
             missing_day_list = ", ".join([d.strftime('%a %m/%d') for d in sorted(missing_days)])
             flash(f'Note: Worker has no time entries for: {missing_day_list}', 'warning')
-        
+
         # Approve all time entries
         for entry in entries:
             entry.approved = True
             entry.approved_by = current_user.id
             entry.approved_at = datetime.utcnow()
-        
+
         # Create weekly approval lock
         approval = WeeklyApprovalLock(
             user_id=user_id,
@@ -817,23 +820,23 @@ def approve_timesheet(job_id, user_id):
         )
         db.session.add(approval)
         db.session.commit()
-        
+
         flash(f'Timesheet for {worker.name} on job {job.job_code} successfully approved!', 'success')
         return redirect(url_for('foreman_dashboard'))
-    
+
     # Group entries by date for display
     entries_by_date = {}
     for day in all_days:
         entries_by_date[day] = []
-    
+
     for entry in entries:
         entries_by_date[entry.date].append(entry)
-    
+
     # Calculate daily and weekly totals
     daily_totals = {day: sum(entry.hours for entry in day_entries) 
                    for day, day_entries in entries_by_date.items()}
     weekly_total = sum(daily_totals.values())
-    
+
     return render_template(
         'foreman/approve.html',
         form=form,
@@ -855,23 +858,23 @@ def admin_dashboard():
     # Get counts for dashboard widgets
     active_jobs_count = Job.query.filter_by(status='active').count()
     total_workers = User.query.filter_by(role='worker').count()
-    
+
     # Get recent time approvals
     recent_approvals = WeeklyApprovalLock.query.order_by(
         WeeklyApprovalLock.approved_at.desc()
     ).limit(10).all()
-    
+
     # Get current week's total hours
     today = date.today()
     week_start = get_week_start(today)
     week_end = week_start + timedelta(days=6)
-    
+
     weekly_hours = db.session.query(db.func.sum(TimeEntry.hours)).\
         filter(
             TimeEntry.date >= week_start,
             TimeEntry.date <= week_end
         ).scalar() or 0
-    
+
     # Get hours by job for the current week (for chart)
     job_hours = db.session.query(
         Job.job_code,
@@ -880,7 +883,7 @@ def admin_dashboard():
         TimeEntry.date >= week_start,
         TimeEntry.date <= week_end
     ).group_by(Job.job_code).all()
-    
+
     # Get hours by trade category for the current week (for chart)
     trade_hours = db.session.query(
         LaborActivity.trade_category,
@@ -889,7 +892,7 @@ def admin_dashboard():
         TimeEntry.date >= week_start,
         TimeEntry.date <= week_end
     ).group_by(LaborActivity.trade_category).all()
-    
+
     return render_template(
         'admin/dashboard.html',
         active_jobs_count=active_jobs_count,
@@ -907,11 +910,11 @@ def admin_dashboard():
 @admin_required
 def manage_jobs():
     form = JobForm()
-    
+
     if form.validate_on_submit():
         # Check if we're editing an existing job
         job_id = request.args.get('edit')
-        
+
         if job_id:
             job = Job.query.get_or_404(job_id)
             job.job_code = form.job_code.data
@@ -929,10 +932,10 @@ def manage_jobs():
             )
             db.session.add(job)
             flash('New job created successfully!', 'success')
-            
+
         db.session.commit()
         return redirect(url_for('manage_jobs'))
-    
+
     # Check if we're editing a job
     job_id = request.args.get('edit')
     if job_id:
@@ -941,10 +944,10 @@ def manage_jobs():
         form.description.data = job.description
         form.status.data = job.status
         form.trade_type.data = job.trade_type
-    
+
     # Get all jobs for display
     jobs = Job.query.order_by(Job.created_at.desc()).all()
-    
+
     return render_template('admin/jobs.html', form=form, jobs=jobs, editing=bool(job_id))
 
 @app.route('/admin/activities', methods=['GET', 'POST'])
@@ -952,11 +955,11 @@ def manage_jobs():
 @admin_required
 def manage_activities():
     form = LaborActivityForm()
-    
+
     if form.validate_on_submit():
         # Check if we're editing an existing activity
         activity_id = request.args.get('edit')
-        
+
         if activity_id:
             activity = LaborActivity.query.get_or_404(activity_id)
             activity.name = form.name.data
@@ -970,26 +973,26 @@ def manage_activities():
             )
             db.session.add(activity)
             flash('New labor activity created successfully!', 'success')
-            
+
         db.session.commit()
         return redirect(url_for('manage_activities'))
-    
+
     # Check if we're editing an activity
     activity_id = request.args.get('edit')
     if activity_id:
         activity = LaborActivity.query.get_or_404(activity_id)
         form.name.data = activity.name
         form.trade_category.data = activity.trade_category
-    
+
     # Get all activities grouped by trade category
     activities_by_trade = {}
     activities = LaborActivity.query.order_by(LaborActivity.trade_category, LaborActivity.name).all()
-    
+
     for activity in activities:
         if activity.trade_category not in activities_by_trade:
             activities_by_trade[activity.trade_category] = []
         activities_by_trade[activity.trade_category].append(activity)
-    
+
     return render_template(
         'admin/activities.html',
         form=form,
@@ -1002,26 +1005,26 @@ def manage_activities():
 @admin_required
 def manage_users():
     form = UserManagementForm()
-    
+
     if form.validate_on_submit():
         # Check if we're editing an existing user
         user_id = request.args.get('edit')
-        
+
         if user_id:
             user = User.query.get_or_404(user_id)
             user.name = form.name.data
             user.email = form.email.data
             user.role = form.role.data
-            
+
             # Update password if provided
             if form.password.data:
                 user.set_password(form.password.data)
-                
+
             flash('User updated successfully!', 'success')
             db.session.commit()
-            
+
         return redirect(url_for('manage_users'))
-    
+
     # Check if we're editing a user
     user_id = request.args.get('edit')
     if user_id:
@@ -1029,10 +1032,10 @@ def manage_users():
         form.name.data = user.name
         form.email.data = user.email
         form.role.data = user.role
-    
+
     # Get all users for display
     users = User.query.order_by(User.role, User.name).all()
-    
+
     return render_template('admin/users.html', form=form, users=users, editing=bool(user_id))
 
 @app.route('/admin/reports', methods=['GET', 'POST'])
@@ -1040,7 +1043,7 @@ def manage_users():
 @admin_required
 def generate_reports():
     form = ReportForm()
-    
+
     if form.validate_on_submit():
         # Get form data
         report_type = form.report_type.data
@@ -1049,7 +1052,7 @@ def generate_reports():
         job_id = form.job_id.data if form.job_id.data != 0 else None
         user_id = form.user_id.data if form.user_id.data != 0 else None
         report_format = form.format.data
-        
+
         # Build the base query
         query = db.session.query(
             TimeEntry.id,
@@ -1071,14 +1074,14 @@ def generate_reports():
             TimeEntry.date >= start_date,
             TimeEntry.date <= end_date
         )
-        
+
         # Apply filters
         if job_id:
             query = query.filter(TimeEntry.job_id == job_id)
-            
+
         if user_id:
             query = query.filter(TimeEntry.user_id == user_id)
-        
+
         # Order the results
         if report_type == 'payroll':
             query = query.order_by(User.name, TimeEntry.date)
@@ -1086,18 +1089,18 @@ def generate_reports():
             query = query.order_by(Job.job_code, TimeEntry.date)
         else:  # employee_hours
             query = query.order_by(TimeEntry.date, User.name)
-        
+
         # Execute the query
         results = query.all()
-        
+
         # Create pandas dataframe from results
         columns = ['id', 'date', 'hours', 'approved', 'worker_name', 'job_code', 
                   'job_description', 'activity', 'trade_category']
         df = pd.DataFrame(results, columns=columns)
-        
+
         # Convert DataFrame to list of dictionaries for report generation
         data_dicts = df.to_dict('records')
-        
+
         # Get common info for both formats
         report_titles = {
             'payroll': 'Payroll Report',
@@ -1105,7 +1108,7 @@ def generate_reports():
             'employee_hours': 'Employee Hours Report'
         }
         report_title = f"{report_titles.get(report_type, 'Report')} ({start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')})"
-        
+
         # Determine file delivery method (download or email)
         delivery_method = form.delivery_method.data
 
@@ -1113,24 +1116,24 @@ def generate_reports():
         if report_format == 'csv':
             # Generate CSV report
             csv_data = utils.generate_csv_report(data_dicts, columns)
-            
+
             # Generate filename
             filename = f"{report_type}_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.csv"
-            
+
             # Check if we should email the report
             if delivery_method == 'email':
                 recipient_email = form.recipient_email.data
-                
+
                 # Create email body
                 email_body = f"""
                 Please find attached the {report_title} you requested.
-                
+
                 Date Range: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}
                 Report Type: {report_titles.get(report_type, 'Report')}
-                
+
                 This is an automated email from the Construction Timesheet Management System.
                 """
-                
+
                 # Send email with CSV attachment
                 email_sent = utils.send_email_with_attachment(
                     recipient_email=recipient_email,
@@ -1140,12 +1143,12 @@ def generate_reports():
                     attachment_filename=filename,
                     attachment_mimetype='text/csv'
                 )
-                
+
                 if email_sent:
                     flash(f'Report successfully emailed to {recipient_email}', 'success')
                 else:
                     flash('Failed to send email. Please check SMTP settings.', 'danger')
-                
+
                 return redirect(url_for('generate_reports'))
             else:
                 # Download the file
@@ -1158,24 +1161,24 @@ def generate_reports():
         else:  # PDF format
             # Generate PDF report
             pdf_buffer = utils.generate_pdf_report(data_dicts, columns, title=report_title)
-            
+
             # Generate filename
             filename = f"{report_type}_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.pdf"
-            
+
             # Check if we should email the report
             if delivery_method == 'email':
                 recipient_email = form.recipient_email.data
-                
+
                 # Create email body
                 email_body = f"""
                 Please find attached the {report_title} you requested.
-                
+
                 Date Range: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}
                 Report Type: {report_titles.get(report_type, 'Report')}
-                
+
                 This is an automated email from the Construction Timesheet Management System.
                 """
-                
+
                 # Send email with PDF attachment
                 email_sent = utils.send_email_with_attachment(
                     recipient_email=recipient_email,
@@ -1185,12 +1188,12 @@ def generate_reports():
                     attachment_filename=filename,
                     attachment_mimetype='application/pdf'
                 )
-                
+
                 if email_sent:
                     flash(f'Report successfully emailed to {recipient_email}', 'success')
                 else:
                     flash('Failed to send email. Please check SMTP settings or credentials.', 'danger')
-                
+
                 return redirect(url_for('generate_reports'))
             else:
                 # Download the file
@@ -1200,13 +1203,13 @@ def generate_reports():
                     as_attachment=True,
                     download_name=filename
                 )
-    
+
     # Default dates to current week
     if not form.start_date.data:
         today = date.today()
         form.start_date.data = get_week_start(today)
         form.end_date.data = form.start_date.data + timedelta(days=6)
-    
+
     return render_template('admin/reports.html', form=form)
 
 # API routes for AJAX calls
@@ -1215,7 +1218,7 @@ def generate_reports():
 def get_labor_activities(job_id):
     job = Job.query.get_or_404(job_id)
     activities = LaborActivity.query.filter_by(trade_category=job.trade_type).all()
-    
+
     # Return JSON response with labor activities for the job's trade type
     return jsonify([
         {'id': activity.id, 'name': activity.name}
@@ -1227,13 +1230,13 @@ def get_labor_activities(job_id):
 def get_time_entries(date, job_id):
     """API endpoint to get time entries for a specific date and job"""
     target_date = datetime.strptime(date, '%Y-%m-%d').date()
-    
+
     entries = TimeEntry.query.filter(
         TimeEntry.user_id == current_user.id,
         TimeEntry.job_id == job_id,
         TimeEntry.date == target_date
     ).all()
-    
+
     # Return JSON response with time entries
     return jsonify([
         {
@@ -1253,7 +1256,7 @@ def page_not_found(e):
 @app.errorhandler(500)
 def internal_server_error(e):
     return render_template('500.html'), 500
-    
+
 @app.route('/debug')
 def debug_route():
     """Debug route to test rendering and basic functionality"""
