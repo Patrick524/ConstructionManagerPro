@@ -1057,21 +1057,53 @@ def manage_users():
 
             flash('User updated successfully!', 'success')
             db.session.commit()
+        else:
+            # This is a new user being created
+            user = User(
+                name=form.name.data,
+                email=form.email.data,
+                role=form.role.data
+            )
+            
+            # Set the password
+            if form.password.data:
+                user.set_password(form.password.data)
+            else:
+                # Default password is required
+                flash('Password is required for new users', 'danger')
+                users = User.query.order_by(User.role, User.name).all()
+                return render_template('admin/users.html', form=form, users=users, editing=False, new_user=True)
+            
+            # Try to add the new user
+            try:
+                db.session.add(user)
+                db.session.commit()
+                flash('New user added successfully!', 'success')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error adding user: {str(e)}', 'danger')
 
         return redirect(url_for('manage_users'))
 
     # Check if we're editing a user
     user_id = request.args.get('edit')
+    new_user = request.args.get('new') == 'true'
+    
     if user_id:
+        # Editing existing user
         user = User.query.get_or_404(user_id)
         form.name.data = user.name
         form.email.data = user.email
         form.role.data = user.role
+        editing = True
+    else:
+        # Not editing (either viewing or adding new)
+        editing = False
 
     # Get all users for display
     users = User.query.order_by(User.role, User.name).all()
 
-    return render_template('admin/users.html', form=form, users=users, editing=bool(user_id))
+    return render_template('admin/users.html', form=form, users=users, editing=editing, new_user=new_user)
 
 @app.route('/admin/reports', methods=['GET', 'POST'])
 @login_required

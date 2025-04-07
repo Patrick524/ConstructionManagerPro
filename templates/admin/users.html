@@ -11,19 +11,19 @@
     </div>
     <div class="col-md-4">
         <div class="d-flex justify-content-md-end align-items-center h-100">
-            <a href="{{ url_for('register') }}" class="btn btn-primary">
-                <i class="fas fa-user-plus me-2"></i>Add New User
-            </a>
+            <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#userFormContainer">
+                <i class="fas fa-user-plus me-2"></i>{{ 'Update User' if editing else 'Add New User' }}
+            </button>
         </div>
     </div>
 </div>
 
 <div class="row mb-4">
     <div class="col-12">
-        <div class="collapse {{ 'show' if editing else '' }}" id="userFormContainer">
+        <div class="collapse {{ 'show' if editing or new_user else '' }}" id="userFormContainer">
             <div class="card mb-4">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Edit User</h5>
+                    <h5 class="mb-0">{{ 'Edit User' if editing else 'Add New User' }}</h5>
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('manage_users', edit=request.args.get('edit')) }}">
@@ -78,10 +78,16 @@
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="password" class="form-label">New Password (leave blank to keep current)</label>
+                                <label for="password" class="form-label">
+                                    {% if editing %}
+                                        New Password (leave blank to keep current)
+                                    {% else %}
+                                        Password <span class="text-danger">*</span>
+                                    {% endif %}
+                                </label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                    {{ form.password(class="form-control", placeholder="Enter new password") }}
+                                    {{ form.password(class="form-control", placeholder="Enter password") }}
                                 </div>
                                 {% if form.password.errors %}
                                     <div class="text-danger">
@@ -93,10 +99,16 @@
                             </div>
                             
                             <div class="col-md-6 mb-4">
-                                <label for="confirm_password" class="form-label">Confirm New Password</label>
+                                <label for="confirm_password" class="form-label">
+                                    {% if editing %}
+                                        Confirm New Password
+                                    {% else %}
+                                        Confirm Password <span class="text-danger">*</span>
+                                    {% endif %}
+                                </label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                    {{ form.confirm_password(class="form-control", placeholder="Confirm new password") }}
+                                    {{ form.confirm_password(class="form-control", placeholder="Confirm password") }}
                                 </div>
                                 {% if form.confirm_password.errors %}
                                     <div class="text-danger">
@@ -110,7 +122,7 @@
                         
                         <div class="d-flex justify-content-between">
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>Update User
+                                <i class="fas fa-save me-2"></i>{{ 'Update User' if editing else 'Add User' }}
                             </button>
                             <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#userFormContainer">
                                 Cancel
@@ -179,9 +191,9 @@
                                         <i class="fas fa-users fa-3x text-muted mb-3 d-block"></i>
                                         <h5>No users found</h5>
                                         <p class="mb-3">Start by adding your first user using the button above</p>
-                                        <a href="{{ url_for('register') }}" class="btn btn-primary">
+                                        <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#userFormContainer">
                                             <i class="fas fa-user-plus me-2"></i>Add New User
-                                        </a>
+                                        </button>
                                     </td>
                                 </tr>
                             {% endif %}
