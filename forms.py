@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, SelectField, FloatField, EmailField
 from wtforms import TextAreaField, HiddenField, DateField, BooleanField, FieldList, FormField
-from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, NumberRange
+from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, NumberRange, Optional
 from models import User, Job, LaborActivity
 from datetime import date, timedelta
 
@@ -77,7 +77,16 @@ class JobForm(FlaskForm):
         ('masonry', 'Masonry'),
         ('other', 'Other')
     ], validators=[DataRequired()])
+    foreman_id = SelectField('Assign Foreman', coerce=int, validators=[Optional()])
     submit = SubmitField('Save Job')
+    
+    def __init__(self, *args, **kwargs):
+        super(JobForm, self).__init__(*args, **kwargs)
+        from models import User
+        
+        # Populate foreman choices
+        foremen = User.query.filter_by(role='foreman').all()
+        self.foreman_id.choices = [(0, '-- Select Foreman --')] + [(f.id, f.name) for f in foremen]
 
 class LaborActivityForm(FlaskForm):
     """Form for creating/editing labor activities"""
