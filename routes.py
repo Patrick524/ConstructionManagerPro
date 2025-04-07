@@ -910,10 +910,6 @@ def admin_dashboard():
 @admin_required
 def manage_jobs():
     form = JobForm()
-    
-    # Populate foreman choices
-    foremen = User.query.filter_by(role='foreman').order_by(User.name).all()
-    form.foreman_id.choices = [(f.id, f.name) for f in foremen]
 
     if form.validate_on_submit():
         # Check if we're editing an existing job
@@ -925,7 +921,6 @@ def manage_jobs():
             job.description = form.description.data
             job.status = form.status.data
             job.trade_type = form.trade_type.data
-            job.foreman_id = form.foreman_id.data
             flash('Job updated successfully!', 'success')
         else:
             # Create new job
@@ -933,8 +928,7 @@ def manage_jobs():
                 job_code=form.job_code.data,
                 description=form.description.data,
                 status=form.status.data,
-                trade_type=form.trade_type.data,
-                foreman_id=form.foreman_id.data
+                trade_type=form.trade_type.data
             )
             db.session.add(job)
             flash('New job created successfully!', 'success')

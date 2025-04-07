@@ -53,20 +53,7 @@
                                 </div>
                             </div>
                             
-                            <div class="col-md-6 mb-3">
-                                <label for="foreman_id" class="form-label">Assigned Foreman</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-user-tie"></i></span>
-                                    {{ form.foreman_id(class="form-select") }}
-                                </div>
-                                {% if form.trade_type.errors %}
-                                    <div class="text-danger">
-                                        {% for error in form.trade_type.errors %}
-                                            <small>{{ error }}</small>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
+                            <!-- Foreman assignment removed as per database structure -->
                         </div>
                         
                         <div class="mb-3">
@@ -132,7 +119,7 @@
                                 <th data-sort="job_code">Job Code <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="description">Description <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="trade_type">Trade <i class="fas fa-sort text-muted"></i></th>
-                                <th data-sort="foreman">Foreman <i class="fas fa-sort text-muted"></i></th>
+                                <!-- Foreman column removed -->
                                 <th data-sort="status">Status <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="created_at">Created <i class="fas fa-sort text-muted"></i></th>
                                 <th>Actions</th>
