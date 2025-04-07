@@ -77,6 +77,7 @@ class JobForm(FlaskForm):
         ('masonry', 'Masonry'),
         ('other', 'Other')
     ], validators=[DataRequired()])
+    foreman_id = SelectField('Assigned Foreman', coerce=int, validators=[DataRequired()])
     submit = SubmitField('Save Job')
 
 class LaborActivityForm(FlaskForm):

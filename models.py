@@ -40,9 +40,11 @@ class Job(db.Model):
     description = db.Column(db.String(255), nullable=False)
     status = db.Column(db.String(20), default='active')  # active, complete, on_hold
     trade_type = db.Column(db.String(50), default='drywall')  # drywall, plumbing, electrical, etc.
+    foreman_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
+    foreman = db.relationship('User', foreign_keys=[foreman_id], backref='managed_jobs')
     time_entries = db.relationship('TimeEntry', backref='job', lazy='dynamic')
     weekly_approvals = db.relationship('WeeklyApprovalLock', backref='job', lazy='dynamic')
     

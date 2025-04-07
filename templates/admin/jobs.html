@@ -51,6 +51,14 @@
                                     <span class="input-group-text"><i class="fas fa-hard-hat"></i></span>
                                     {{ form.trade_type(class="form-select") }}
                                 </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="foreman_id" class="form-label">Assigned Foreman</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user-tie"></i></span>
+                                    {{ form.foreman_id(class="form-select") }}
+                                </div>
                                 {% if form.trade_type.errors %}
                                     <div class="text-danger">
                                         {% for error in form.trade_type.errors %}
@@ -124,6 +132,7 @@
                                 <th data-sort="job_code">Job Code <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="description">Description <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="trade_type">Trade <i class="fas fa-sort text-muted"></i></th>
+                                <th data-sort="foreman">Foreman <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="status">Status <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="created_at">Created <i class="fas fa-sort text-muted"></i></th>
                                 <th>Actions</th>
@@ -137,6 +146,9 @@
                                         <td data-description="{{ job.description }}">{{ job.description }}</td>
                                         <td data-trade_type="{{ job.trade_type }}">
                                             <span class="badge bg-{{ job.trade_type }}">{{ job.trade_type|capitalize }}</span>
+                                        </td>
+                                        <td data-foreman="{{ job.foreman.name }}">
+                                            {{ job.foreman.name }}
                                         </td>
                                         <td data-status="{{ job.status }}">
                                             <span class="badge bg-{{ 'success' if job.status == 'active' else 'secondary' if job.status == 'complete' else 'warning' }}">
