@@ -165,6 +165,13 @@
                                                 <a href="{{ url_for('generate_reports') }}?report_type=job_labor&job_id={{ job.id }}" class="btn btn-outline-info">
                                                     <i class="fas fa-chart-bar"></i> Report
                                                 </a>
+                                                <button type="button" class="btn btn-outline-danger" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#deleteJobModal"
+                                                        data-job-id="{{ job.id }}"
+                                                        data-job-code="{{ job.job_code }}">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -247,6 +254,56 @@
                 rows.forEach(row => tbody.appendChild(row));
             });
         });
+        
+        // Setup delete job modal
+        const deleteJobModal = document.getElementById('deleteJobModal');
+        if (deleteJobModal) {
+            deleteJobModal.addEventListener('show.bs.modal', function (event) {
+                // Button that triggered the modal
+                const button = event.relatedTarget;
+                
+                // Extract job info from data attributes
+                const jobId = button.getAttribute('data-job-id');
+                const jobCode = button.getAttribute('data-job-code');
+                
+                // Update the modal content
+                const modalTitle = deleteJobModal.querySelector('.modal-title');
+                const jobCodeSpan = document.getElementById('deleteJobCode');
+                const deleteForm = document.getElementById('deleteJobForm');
+                
+                modalTitle.textContent = `Delete Job: ${jobCode}`;
+                jobCodeSpan.textContent = jobCode;
+                deleteForm.action = "/admin/jobs/delete/" + jobId;
+            });
+        }
     });
 </script>
 {% endblock %}
+
+<!-- Delete Job Confirmation Modal -->
+<div class="modal fade" id="deleteJobModal" tabindex="-1" aria-labelledby="deleteJobModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteJobModalLabel">Delete Job</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    This action cannot be undone.
+                </div>
+                <p>Are you sure you want to delete job <strong id="deleteJobCode"></strong>?</p>
+                <p>Jobs with time entries or weekly approvals cannot be deleted. They will be marked as "Complete" instead.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteJobForm" method="POST">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i> Delete Job
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

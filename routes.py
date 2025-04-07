@@ -957,6 +957,34 @@ def manage_jobs():
 
     return render_template('admin/jobs.html', form=form, jobs=jobs, editing=bool(job_id))
 
+@app.route('/admin/jobs/delete/<int:job_id>', methods=['POST'])
+@login_required
+@admin_required
+def delete_job(job_id):
+    job = Job.query.get_or_404(job_id)
+    
+    # Check if there are any time entries associated with this job
+    time_entries = TimeEntry.query.filter_by(job_id=job_id).count()
+    
+    if time_entries > 0:
+        flash(f'Cannot delete job "{job.job_code}". It has {time_entries} time entries associated with it. Mark it as "Complete" instead.', 'danger')
+        return redirect(url_for('manage_jobs'))
+    
+    # Check if there are any weekly approval locks for this job
+    approvals = WeeklyApprovalLock.query.filter_by(job_id=job_id).count()
+    
+    if approvals > 0:
+        flash(f'Cannot delete job "{job.job_code}". It has {approvals} weekly approvals associated with it. Mark it as "Complete" instead.', 'danger')
+        return redirect(url_for('manage_jobs'))
+        
+    # If no time entries or approvals, safe to delete
+    job_code = job.job_code  # Store for the flash message
+    db.session.delete(job)
+    db.session.commit()
+    
+    flash(f'Job "{job_code}" has been deleted successfully.', 'success')
+    return redirect(url_for('manage_jobs'))
+
 @app.route('/admin/activities', methods=['GET', 'POST'])
 @login_required
 @admin_required
