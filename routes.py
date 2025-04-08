@@ -772,10 +772,17 @@ def approve_timesheet(job_id, user_id):
     form.job_id.data = job_id
     form.user_id.data = user_id
 
+    # Get start_date from URL if provided
+    url_start_date = request.args.get('start_date')
+    
     # Default to current week if no week start provided
     if not form.week_start.data:
-        today = date.today()
-        form.week_start.data = get_week_start(today)
+        if url_start_date:
+            # Use the start_date from URL
+            form.week_start.data = datetime.strptime(url_start_date, '%Y-%m-%d').date()
+        else:
+            today = date.today()
+            form.week_start.data = get_week_start(today)
 
     week_start = form.week_start.data
     week_end = week_start + timedelta(days=6)

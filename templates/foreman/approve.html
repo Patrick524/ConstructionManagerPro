@@ -11,7 +11,7 @@
     </div>
     <div class="col-md-4">
         <div class="d-flex justify-content-md-end align-items-center h-100">
-            <a href="{{ url_for('foreman_dashboard') }}" class="btn btn-outline-secondary">
+            <a href="{{ url_for('foreman_dashboard', start_date=week_start.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
             </a>
         </div>
@@ -102,7 +102,7 @@
                 <h5 class="mb-0">Approval Form</h5>
             </div>
             <div class="card-body">
-                <form method="POST" action="{{ url_for('approve_timesheet', job_id=job.id, user_id=worker.id) }}">
+                <form method="POST" action="{{ url_for('approve_timesheet', job_id=job.id, user_id=worker.id, start_date=week_start.strftime('%Y-%m-%d')) }}">
                     {{ form.hidden_tag() }}
                     <div class="d-none">
                         {{ form.job_id() }}
@@ -138,7 +138,7 @@
                         <button type="submit" class="btn btn-primary btn-lg">
                             <i class="fas fa-clipboard-check me-2"></i>Approve Timesheet
                         </button>
-                        <a href="{{ url_for('foreman_dashboard') }}" class="btn btn-outline-secondary">
+                        <a href="{{ url_for('foreman_dashboard', start_date=week_start.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary">
                             Cancel
                         </a>
                     </div>
