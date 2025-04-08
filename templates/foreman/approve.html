@@ -33,6 +33,38 @@
     </div>
 </div>
 
+<!-- Quick Approval Card -->
+<div class="row mb-4">
+    <div class="col-lg-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Quick Approval</h5>
+                        <p class="mb-0 text-muted">Total Hours: <strong>{{ weekly_total }} hrs</strong> for the week</p>
+                    </div>
+                    <form method="POST" action="{{ url_for('approve_timesheet', job_id=job.id, user_id=worker.id, start_date=week_start.strftime('%Y-%m-%d')) }}">
+                        {{ form.hidden_tag() }}
+                        <div class="d-none">
+                            {{ form.job_id() }}
+                            {{ form.user_id() }}
+                            {{ form.week_start() }}
+                        </div>
+                        <div class="d-flex">
+                            <button type="submit" class="btn btn-primary btn-lg me-2">
+                                <i class="fas fa-clipboard-check me-2"></i>Approve Timesheet
+                            </button>
+                            <a href="{{ url_for('foreman_dashboard', start_date=week_start.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-lg">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-lg-8">
         <div class="card mb-4">
@@ -99,50 +131,32 @@
     <div class="col-lg-4">
         <div class="card">
             <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Approval Form</h5>
+                <h5 class="mb-0">Approval Details</h5>
             </div>
             <div class="card-body">
-                <form method="POST" action="{{ url_for('approve_timesheet', job_id=job.id, user_id=worker.id, start_date=week_start.strftime('%Y-%m-%d')) }}">
-                    {{ form.hidden_tag() }}
-                    <div class="d-none">
-                        {{ form.job_id() }}
-                        {{ form.user_id() }}
-                        {{ form.week_start() }}
+                <div class="mb-3">
+                    <strong>Job:</strong> {{ job.job_code }} - {{ job.description }}<br>
+                    <strong>Worker:</strong> {{ worker.name }}<br>
+                    <strong>Week Starting:</strong> {{ week_start.strftime('%b %d, %Y') }}
+                </div>
+                <hr>
+                
+                {% if missing_days %}
+                    <div class="alert alert-warning">
+                        <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Missing Days</h5>
+                        <p>The following days are missing time entries:</p>
+                        <ul>
+                            {% for day in missing_days %}
+                                <li>{{ day.strftime('%A, %b %d') }}</li>
+                            {% endfor %}
+                        </ul>
+                        <p class="mb-0"><small class="text-muted">You can still approve this timesheet.</small></p>
                     </div>
-                    
-                    <div class="mb-3">
-                        <strong>Job:</strong> {{ job.job_code }} - {{ job.description }}<br>
-                        <strong>Worker:</strong> {{ worker.name }}<br>
-                        <strong>Week Starting:</strong> {{ week_start.strftime('%b %d, %Y') }}
+                {% else %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>All 7 days have time entries
                     </div>
-                    <hr>
-                    
-                    {% if missing_days %}
-                        <div class="alert alert-warning">
-                            <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Missing Days</h5>
-                            <p>The following days are missing time entries:</p>
-                            <ul>
-                                {% for day in missing_days %}
-                                    <li>{{ day.strftime('%A, %b %d') }}</li>
-                                {% endfor %}
-                            </ul>
-                            <p class="mb-0"><small class="text-muted">You can still approve this timesheet.</small></p>
-                        </div>
-                    {% else %}
-                        <div class="alert alert-success">
-                            <i class="fas fa-check-circle me-2"></i>All 7 days have time entries
-                        </div>
-                    {% endif %}
-                    
-                    <div class="d-grid gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="fas fa-clipboard-check me-2"></i>Approve Timesheet
-                        </button>
-                        <a href="{{ url_for('foreman_dashboard', start_date=week_start.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary">
-                            Cancel
-                        </a>
-                    </div>
-                </form>
+                {% endif %}
             </div>
         </div>
         
