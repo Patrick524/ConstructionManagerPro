@@ -198,7 +198,8 @@ def worker_weekly_timesheet():
         else:
             flash('Weekly timesheet updated successfully!', 'success')
 
-        return redirect(url_for('worker_history'))
+        # Pass the week_start to maintain the selected date when redirecting
+        return redirect(url_for('worker_history', start_date=week_start.strftime('%Y-%m-%d')))
 
     # Get job_id from URL parameters if provided
     if job_id and not form.job_id.data:
@@ -419,7 +420,9 @@ def worker_timesheet():
 
         db.session.commit()
         flash('Time entry saved successfully!', 'success')
-        return redirect(url_for('worker_history'))
+        # Pass the date to maintain the selected date when redirecting
+        week_start = get_week_start(form.date.data)
+        return redirect(url_for('worker_history', start_date=week_start.strftime('%Y-%m-%d')))
 
     # Get labor activities for the selected job's trade type
     activities = LaborActivity.query.all()
@@ -596,7 +599,8 @@ def foreman_enter_time(job_id, user_id):
 
     if existing_approval:
         flash(f'This week was already approved by {existing_approval.approver.name} on {existing_approval.approved_at.strftime("%Y-%m-%d %H:%M")}. Time entries cannot be modified.', 'warning')
-        return redirect(url_for('foreman_dashboard'))
+        # Pass the week_start to maintain the selected date when redirecting
+        return redirect(url_for('foreman_dashboard', start_date=week_start.strftime('%Y-%m-%d')))
 
     if form.validate_on_submit():
         # Get the dates for each day of the week
@@ -640,7 +644,8 @@ def foreman_enter_time(job_id, user_id):
 
         db.session.commit()
         flash(f'Time entries for {worker.name} on {job.job_code} successfully saved!', 'success')
-        return redirect(url_for('foreman_dashboard'))
+        # Pass the week_start to maintain the selected date when redirecting
+        return redirect(url_for('foreman_dashboard', start_date=week_start.strftime('%Y-%m-%d')))
 
     # Initialize for template context
     existing_entries = []
@@ -784,7 +789,8 @@ def approve_timesheet(job_id, user_id):
 
     if existing_approval:
         flash(f'This week was already approved by {existing_approval.approver.name} on {existing_approval.approved_at.strftime("%Y-%m-%d %H:%M")}', 'warning')
-        return redirect(url_for('foreman_dashboard'))
+        # Pass the week_start to maintain the selected date when redirecting
+        return redirect(url_for('foreman_dashboard', start_date=week_start.strftime('%Y-%m-%d')))
 
     # Get all time entries for the week
     entries = TimeEntry.query.filter(
@@ -822,7 +828,8 @@ def approve_timesheet(job_id, user_id):
         db.session.commit()
 
         flash(f'Timesheet for {worker.name} on job {job.job_code} successfully approved!', 'success')
-        return redirect(url_for('foreman_dashboard'))
+        # Pass the week_start to maintain the selected date when redirecting
+        return redirect(url_for('foreman_dashboard', start_date=week_start.strftime('%Y-%m-%d')))
 
     # Group entries by date for display
     entries_by_date = {}
