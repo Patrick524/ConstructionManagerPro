@@ -10,7 +10,7 @@
                 <i class="fas fa-stopwatch me-2"></i>Clock In/Out
             </h2>
             <div class="alert alert-info mb-4">
-                <i class="fas fa-info-circle me-2"></i> All times are displayed in UTC format with your local time shown in parentheses.
+                <i class="fas fa-info-circle me-2"></i> All times are displayed in UTC format with Pacific Time (PT) shown in parentheses.
             </div>
         </div>
     </div>
@@ -259,7 +259,7 @@
             });
     }
 
-    // Convert UTC time to local time
+    // Convert UTC time to Pacific Time
     function convertUTCToLocal() {
         // Find all elements with the UTC class
         document.querySelectorAll('.utc-time').forEach(el => {
@@ -274,17 +274,21 @@
                 // Parse the UTC time
                 const utcDate = new Date(utcTimeStr);
                 
-                // Format the local time
-                const localTimeStr = utcDate.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'});
+                // Convert to Pacific Time (fixed 7 hour offset for PDT)
+                // This is a simplified way to handle Pacific Time - in production, would use libraries
+                const pacificTime = new Date(utcDate.getTime() - (7 * 60 * 60 * 1000));
+                
+                // Format the Pacific time
+                const pacificTimeStr = pacificTime.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'});
                 
                 // Check if this is a simple time or a range (contains a hyphen)
                 if (originalContent.includes(' - ')) {
                     // For time ranges, we need a more complex approach
-                    // This is a temporary solution that just adds the local time note
-                    el.innerHTML = `${originalContent} <br><span class="badge bg-success">Local time: approximately ${localTimeStr}</span>`;
+                    // This is a temporary solution that just adds the Pacific time note
+                    el.innerHTML = `${originalContent} <br><span class="badge bg-success">Pacific time: ${pacificTimeStr}</span>`;
                 } else {
-                    // Update the display to show both UTC and local time
-                    el.innerHTML = `${originalContent} <span class="text-success">(${localTimeStr} local)</span>`;
+                    // Update the display to show both UTC and Pacific time
+                    el.innerHTML = `${originalContent} <span class="text-success">(${pacificTimeStr} Pacific)</span>`;
                 }
             } catch (error) {
                 console.error("Error converting time:", error);
