@@ -111,6 +111,7 @@ class UserManagementForm(FlaskForm):
         ('foreman', 'Foreman'),
         ('admin', 'Administrator')
     ], validators=[DataRequired()])
+    use_clock_in = BooleanField('Use Clock In/Out System', default=False)
     password = PasswordField('New Password (leave blank to keep current)')
     confirm_password = PasswordField('Confirm New Password', 
                                     validators=[EqualTo('password')])

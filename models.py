@@ -10,10 +10,12 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), nullable=False, default='worker')  # worker, foreman, admin
+    use_clock_in = db.Column(db.Boolean, default=False)  # Whether the worker uses clock in/out
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
     time_entries = db.relationship('TimeEntry', foreign_keys='TimeEntry.user_id', backref='user', lazy='dynamic')
+    clock_sessions = db.relationship('ClockSession', backref='user', lazy='dynamic')
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -101,3 +103,58 @@ class WeeklyApprovalLock(db.Model):
     
     def __repr__(self):
         return f'<WeeklyApprovalLock {self.user_id} - {self.job_id} - {self.week_start}>'
+        
+class ClockSession(db.Model):
+    """Clock in/out session records for workers"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    job_id = db.Column(db.Integer, db.ForeignKey('job.id'), nullable=False)
+    labor_activity_id = db.Column(db.Integer, db.ForeignKey('labor_activity.id'), nullable=False)
+    clock_in = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    clock_out = db.Column(db.DateTime, nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    is_active = db.Column(db.Boolean, default=True)  # Used to track if session is currently active
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    job = db.relationship('Job', backref='clock_sessions', lazy='joined')
+    labor_activity = db.relationship('LaborActivity', backref='clock_sessions', lazy='joined')
+    
+    def clock_out_session(self):
+        """Clock out of the session"""
+        self.clock_out = datetime.utcnow()
+        self.is_active = False
+    
+    def get_duration_hours(self):
+        """Get the duration of the session in hours"""
+        if not self.clock_out:
+            # If still clocked in, calculate against current time
+            end_time = datetime.utcnow()
+        else:
+            end_time = self.clock_out
+            
+        delta = end_time - self.clock_in
+        # Convert timedelta to hours (as a float)
+        hours = delta.total_seconds() / 3600
+        return round(hours, 2)  # Round to 2 decimal places
+    
+    def create_time_entry(self):
+        """Convert a completed clock session to a TimeEntry"""
+        if not self.clock_out:
+            return None
+            
+        # Create a new time entry from this clock session
+        time_entry = TimeEntry(
+            user_id=self.user_id,
+            job_id=self.job_id,
+            labor_activity_id=self.labor_activity_id,
+            date=self.clock_in.date(),  # Use the clock-in date
+            hours=self.get_duration_hours(),
+            notes=self.notes
+        )
+        
+        return time_entry
+        
+    def __repr__(self):
+        status = "ACTIVE" if self.is_active else "COMPLETED"
+        return f'<ClockSession {self.id} - {status} - {self.user_id} - {self.job_id}>'

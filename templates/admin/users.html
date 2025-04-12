@@ -76,6 +76,18 @@
                             {% endif %}
                         </div>
                         
+                        <div class="mb-3" id="clock_in_setting_container">
+                            <div class="form-check form-switch">
+                                {{ form.use_clock_in(class="form-check-input") }}
+                                <label class="form-check-label" for="use_clock_in">
+                                    <i class="fas fa-clock me-1"></i> Use Clock In/Out System
+                                </label>
+                            </div>
+                            <small class="text-muted">
+                                When enabled, worker must use clock in/out interface instead of manual time entry
+                            </small>
+                        </div>
+                        
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="password" class="form-label">
@@ -209,6 +221,32 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Setup role-dependent fields
+        const roleSelect = document.querySelector('#role');
+        const clockInContainer = document.querySelector('#clock_in_setting_container');
+        
+        if (roleSelect && clockInContainer) {
+            // Only show clock-in option for workers
+            function toggleClockInOption() {
+                if (roleSelect.value === 'worker') {
+                    clockInContainer.style.display = 'block';
+                } else {
+                    clockInContainer.style.display = 'none';
+                    // Reset the checkbox if not a worker
+                    const clockInCheckbox = document.querySelector('#use_clock_in');
+                    if (clockInCheckbox) {
+                        clockInCheckbox.checked = false;
+                    }
+                }
+            }
+            
+            // Initial check
+            toggleClockInOption();
+            
+            // Check whenever role changes
+            roleSelect.addEventListener('change', toggleClockInOption);
+        }
+        
         // Setup search functionality
         const searchInput = document.getElementById('userSearch');
         const table = document.getElementById('usersTable');
