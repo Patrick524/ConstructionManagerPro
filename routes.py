@@ -16,6 +16,7 @@ import utils
 # Context processor to provide the current datetime to all templates
 @app.context_processor
 def inject_now():
+    """Inject the current datetime into all templates"""
     return {'now': datetime.utcnow()}
 
 # Helper function to get the Monday of a given week
@@ -56,7 +57,10 @@ def admin_required(f):
 def login():
     if current_user.is_authenticated:
         if current_user.is_worker():
-            return redirect(url_for('worker_timesheet'))
+            if current_user.use_clock_in:
+                return redirect(url_for('worker_clock'))
+            else:
+                return redirect(url_for('worker_timesheet'))
         elif current_user.is_foreman():
             return redirect(url_for('foreman_dashboard'))
         else:
@@ -72,7 +76,10 @@ def login():
             if next_page:
                 return redirect(next_page)
             elif user.is_worker():
-                return redirect(url_for('worker_timesheet'))
+                if user.use_clock_in:
+                    return redirect(url_for('worker_clock'))
+                else:
+                    return redirect(url_for('worker_timesheet'))
             elif user.is_foreman():
                 return redirect(url_for('foreman_dashboard'))
             else:

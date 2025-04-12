@@ -37,12 +37,21 @@
                 <ul class="navbar-nav">
                     {% if current_user.is_authenticated %}
                         {% if current_user.is_worker() %}
-                            <li class="nav-item">
-                                <a class="nav-link {% if request.endpoint == 'worker_timesheet' %}active{% endif %}" 
-                                   href="{{ url_for('worker_timesheet') }}">
-                                    <i class="far fa-clock me-1"></i>Enter Time
-                                </a>
-                            </li>
+                            {% if current_user.use_clock_in %}
+                                <li class="nav-item">
+                                    <a class="nav-link {% if request.endpoint == 'worker_clock' %}active{% endif %}" 
+                                       href="{{ url_for('worker_clock') }}">
+                                        <i class="fas fa-stopwatch me-1"></i>Clock In/Out
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="nav-item">
+                                    <a class="nav-link {% if request.endpoint == 'worker_timesheet' %}active{% endif %}" 
+                                       href="{{ url_for('worker_timesheet') }}">
+                                        <i class="far fa-clock me-1"></i>Enter Time
+                                    </a>
+                                </li>
+                            {% endif %}
                             <li class="nav-item">
                                 <a class="nav-link {% if request.endpoint == 'worker_history' %}active{% endif %}" 
                                    href="{{ url_for('worker_history') }}">
