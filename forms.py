@@ -166,6 +166,31 @@ class WeeklyTimesheetForm(FlaskForm):
             total += self.sunday_hours.data
         return total
         
+class ClockInForm(FlaskForm):
+    """Form for clock in"""
+    job_id = SelectField('Job', coerce=int, validators=[DataRequired()])
+    labor_activity_id = SelectField('Labor Activity', coerce=int, validators=[DataRequired()])
+    notes = TextAreaField('Notes (optional)')
+    submit = SubmitField('Clock In')
+    
+    def __init__(self, *args, **kwargs):
+        super(ClockInForm, self).__init__(*args, **kwargs)
+        # Populate job choices - only active jobs
+        self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
+                              for job in Job.query.filter_by(status='active').all()]
+        
+        # Default to the first labor activity, but this will be dynamically updated via JavaScript
+        activities = LaborActivity.query.all()
+        if activities:
+            self.labor_activity_id.choices = [(activity.id, activity.name) for activity in activities]
+        else:
+            self.labor_activity_id.choices = []
+
+class ClockOutForm(FlaskForm):
+    """Form for clock out"""
+    notes = TextAreaField('Notes (optional)')
+    submit = SubmitField('Clock Out')
+
 class ReportForm(FlaskForm):
     """Form for generating reports"""
     report_type = SelectField('Report Type', choices=[

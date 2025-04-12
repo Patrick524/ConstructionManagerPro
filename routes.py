@@ -6,9 +6,10 @@ from functools import wraps
 from flask import render_template, redirect, url_for, flash, request, jsonify, send_file
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db
-from models import User, Job, LaborActivity, TimeEntry, WeeklyApprovalLock
+from models import User, Job, LaborActivity, TimeEntry, WeeklyApprovalLock, ClockSession
 from forms import (LoginForm, RegistrationForm, TimeEntryForm, ApprovalForm, JobForm,
-                  LaborActivityForm, UserManagementForm, ReportForm, WeeklyTimesheetForm)
+                  LaborActivityForm, UserManagementForm, ReportForm, WeeklyTimesheetForm,
+                  ClockInForm, ClockOutForm)
 import pandas as pd
 import utils
 
@@ -479,6 +480,151 @@ def worker_history():
         end_date=end_date,
         approved_jobs=approved_jobs
     )
+
+@app.route('/worker/clock', methods=['GET'])
+@login_required
+@worker_required
+def worker_clock():
+    """Clock in/out interface for workers who use the clock system"""
+    # Check if user is configured to use clock in/out
+    if not current_user.use_clock_in:
+        flash('You are not configured to use the clock in/out system. Please use the timesheet interface.', 'warning')
+        return redirect(url_for('worker_timesheet'))
+    
+    # Get active session (if any)
+    active_session = ClockSession.query.filter_by(
+        user_id=current_user.id,
+        is_active=True
+    ).first()
+    
+    # Get today's sessions (active and completed)
+    today_start = datetime.combine(date.today(), datetime.min.time())
+    today_end = datetime.combine(date.today(), datetime.max.time())
+    
+    today_sessions = ClockSession.query.filter(
+        ClockSession.user_id == current_user.id,
+        ClockSession.clock_in >= today_start,
+        ClockSession.clock_in <= today_end
+    ).order_by(ClockSession.clock_in.desc()).all()
+    
+    # Calculate today's hours from completed sessions
+    today_hours = sum(session.get_duration_hours() for session in today_sessions if not session.is_active)
+    
+    # Get recent sessions (completed, not including today)
+    recent_sessions = ClockSession.query.filter(
+        ClockSession.user_id == current_user.id,
+        ClockSession.is_active == False,
+        ClockSession.clock_in < today_start
+    ).order_by(ClockSession.clock_in.desc()).limit(5).all()
+    
+    # Prepare forms
+    clock_in_form = ClockInForm()
+    clock_out_form = ClockOutForm()
+    
+    return render_template(
+        'worker/clock.html',
+        active_session=active_session,
+        today_sessions=today_sessions,
+        recent_sessions=recent_sessions,
+        today_hours=today_hours,
+        session_count=len([s for s in today_sessions if not s.is_active]),
+        clock_in_form=clock_in_form,
+        clock_out_form=clock_out_form
+    )
+
+@app.route('/worker/clock-in', methods=['POST'])
+@login_required
+@worker_required
+def clock_in():
+    """Handle clock in submissions"""
+    # Check if user is configured to use clock in/out
+    if not current_user.use_clock_in:
+        flash('You are not configured to use the clock in/out system.', 'warning')
+        return redirect(url_for('worker_timesheet'))
+    
+    # Check if already clocked in
+    active_session = ClockSession.query.filter_by(
+        user_id=current_user.id,
+        is_active=True
+    ).first()
+    
+    if active_session:
+        flash('You are already clocked in! Please clock out of your current session first.', 'warning')
+        return redirect(url_for('worker_clock'))
+    
+    form = ClockInForm()
+    
+    if form.validate_on_submit():
+        # Create new clock session
+        session = ClockSession(
+            user_id=current_user.id,
+            job_id=form.job_id.data,
+            labor_activity_id=form.labor_activity_id.data,
+            notes=form.notes.data,
+            clock_in=datetime.utcnow(),
+            is_active=True
+        )
+        
+        db.session.add(session)
+        db.session.commit()
+        
+        flash('You have successfully clocked in!', 'success')
+        return redirect(url_for('worker_clock'))
+    
+    # If form validation fails
+    for field, errors in form.errors.items():
+        for error in errors:
+            flash(f"Error in {getattr(form, field).label.text}: {error}", "danger")
+    
+    return redirect(url_for('worker_clock'))
+
+@app.route('/worker/clock-out', methods=['POST'])
+@login_required
+@worker_required
+def clock_out():
+    """Handle clock out submissions"""
+    # Check if user is configured to use clock in/out
+    if not current_user.use_clock_in:
+        flash('You are not configured to use the clock in/out system.', 'warning')
+        return redirect(url_for('worker_timesheet'))
+    
+    # Get active session
+    active_session = ClockSession.query.filter_by(
+        user_id=current_user.id,
+        is_active=True
+    ).first()
+    
+    if not active_session:
+        flash('You are not currently clocked in to any job!', 'warning')
+        return redirect(url_for('worker_clock'))
+    
+    form = ClockOutForm()
+    
+    if form.validate_on_submit():
+        # Update notes if provided
+        if form.notes.data:
+            active_session.notes = form.notes.data
+        
+        # Clock out
+        active_session.clock_out_session()
+        
+        # Create a time entry based on this clock session
+        time_entry = active_session.create_time_entry()
+        if time_entry:
+            db.session.add(time_entry)
+        
+        db.session.commit()
+        
+        hours = active_session.get_duration_hours()
+        flash(f'You have successfully clocked out! {hours:.2f} hours recorded.', 'success')
+        return redirect(url_for('worker_clock'))
+    
+    # If form validation fails
+    for field, errors in form.errors.items():
+        for error in errors:
+            flash(f"Error in {getattr(form, field).label.text}: {error}", "danger")
+    
+    return redirect(url_for('worker_clock'))
 
 # Foreman routes
 @app.route('/foreman/dashboard')
