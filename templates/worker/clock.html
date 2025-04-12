@@ -273,17 +273,14 @@
                     // Parse the UTC time string to a Date object
                     const utcDate = new Date(utcTimeStr);
                     
-                    // Format the time in the user's local timezone
-                    const localTimeStr = utcDate.toLocaleString(undefined, {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric',
+                    // Format the time in the user's local timezone - just use time for clean display
+                    const localTimeStr = utcDate.toLocaleTimeString(undefined, {
                         hour: 'numeric',
                         minute: '2-digit',
                         hour12: true
                     });
                     
-                    // Update the display with the local time
+                    // Update the display with the local time only
                     timeDisplay.textContent = localTimeStr;
                 } catch (error) {
                     console.error("Error converting time:", error);
@@ -308,7 +305,7 @@
                     hour12: true
                 });
                 
-                // Update the display
+                // Update the display with only local time
                 el.textContent = localTimeStr;
             } catch (error) {
                 console.error("Error converting time:", error);
@@ -343,7 +340,7 @@
                 // Calculate hours (keep the original calculation from backend)
                 const hours = parseFloat(el.textContent.match(/\(([^)]+)\s*hours\)/)[1]);
                 
-                // Update the time range display
+                // Update the time range display with just local times 
                 el.textContent = `${startTimeLocal} - ${endTimeLocal} (${hours} hours)`;
             } catch (error) {
                 console.error("Error converting time range:", error);
