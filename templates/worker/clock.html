@@ -35,7 +35,7 @@
                                         <strong>Activity:</strong> {{ active_session.labor_activity.name }}
                                     </p>
                                     <p class="mb-1">
-                                        <strong>Started:</strong> {{ active_session.clock_in.strftime('%I:%M %p') }} UTC
+                                        <strong>Started:</strong> <span class="utc-time" data-utc-time="{{ active_session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ active_session.clock_in.strftime('%I:%M %p') }} UTC</span>
                                         ({{ ((now - active_session.clock_in).total_seconds() / 3600)|round(1) }} hours)
                                     </p>
                                     {% if active_session.notes %}
@@ -256,7 +256,26 @@
             });
     }
 
-    // Add event listener to job select
+    // Convert UTC time to local time
+    function convertUTCToLocal() {
+        // Find all elements with the UTC class
+        document.querySelectorAll('.utc-time').forEach(el => {
+            // Get the original UTC time string
+            const utcTimeStr = el.getAttribute('data-utc-time');
+            if (!utcTimeStr) return;
+            
+            // Parse the UTC time
+            const utcDate = new Date(utcTimeStr);
+            
+            // Format the local time
+            const localTimeStr = utcDate.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'});
+            
+            // Update the display to show both UTC and local time
+            el.innerHTML = `${el.textContent} <span class="text-success">(${localTimeStr} local)</span>`;
+        });
+    }
+
+    // Add event listeners
     document.addEventListener('DOMContentLoaded', function() {
         const jobSelect = document.querySelector('#job_id');
         if (jobSelect) {
@@ -264,6 +283,9 @@
             // Initial load
             updateLaborActivities();
         }
+        
+        // Convert all UTC times to local time
+        convertUTCToLocal();
     });
 </script>
 {% endblock %}
