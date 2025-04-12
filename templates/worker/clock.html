@@ -35,7 +35,7 @@
                                         <strong>Activity:</strong> {{ active_session.labor_activity.name }}
                                     </p>
                                     <p class="mb-1">
-                                        <strong>Started:</strong> {{ active_session.clock_in.strftime('%I:%M %p') }}
+                                        <strong>Started:</strong> {{ active_session.clock_in.strftime('%I:%M %p') }} UTC
                                         ({{ ((now - active_session.clock_in).total_seconds() / 3600)|round(1) }} hours)
                                     </p>
                                     {% if active_session.notes %}
@@ -156,10 +156,10 @@
                                         <tr class="{{ 'table-info' if session.is_active else '' }}">
                                             <td>{{ session.job.job_code }}</td>
                                             <td>{{ session.labor_activity.name }}</td>
-                                            <td>{{ session.clock_in.strftime('%I:%M %p') }}</td>
+                                            <td>{{ session.clock_in.strftime('%I:%M %p') }} UTC</td>
                                             <td>
                                                 {% if session.clock_out %}
-                                                    {{ session.clock_out.strftime('%I:%M %p') }}
+                                                    {{ session.clock_out.strftime('%I:%M %p') }} UTC
                                                 {% else %}
                                                     <span class="badge bg-info">Active</span>
                                                 {% endif %}
@@ -213,7 +213,7 @@
                                     <p class="mb-1">{{ session.labor_activity.name }}</p>
                                     <small>
                                         {{ session.clock_in.strftime('%I:%M %p') }} - 
-                                        {{ session.clock_out.strftime('%I:%M %p') }}
+                                        {{ session.clock_out.strftime('%I:%M %p') }} UTC
                                         ({{ session.get_duration_hours()|round(1) }} hours)
                                     </small>
                                 </div>
