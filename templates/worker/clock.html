@@ -9,9 +9,7 @@
             <h2 class="border-bottom pb-2 mb-4">
                 <i class="fas fa-stopwatch me-2"></i>Clock In/Out
             </h2>
-            <div class="alert alert-info mb-4">
-                <i class="fas fa-info-circle me-2"></i> All times are displayed in UTC format with Pacific Time (PT) shown in parentheses.
-            </div>
+
         </div>
     </div>
 
@@ -38,7 +36,7 @@
                                         <strong>Activity:</strong> {{ active_session.labor_activity.name }}
                                     </p>
                                     <p class="mb-1">
-                                        <strong>Started:</strong> <span class="utc-time" data-utc-time="{{ active_session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ active_session.clock_in.strftime('%I:%M %p') }} UTC</span>
+                                        <strong>Started:</strong> <span id="localTimeDisplay" data-utc-time="{{ active_session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}">Loading local time...</span>
                                         ({{ ((now - active_session.clock_in).total_seconds() / 3600)|round(1) }} hours)
                                     </p>
                                     {% if active_session.notes %}
@@ -159,10 +157,10 @@
                                         <tr class="{{ 'table-info' if session.is_active else '' }}">
                                             <td>{{ session.job.job_code }}</td>
                                             <td>{{ session.labor_activity.name }}</td>
-                                            <td><span class="utc-time" data-utc-time="{{ session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ session.clock_in.strftime('%I:%M %p') }} UTC</span></td>
+                                            <td><span class="local-time" data-utc-time="{{ session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ session.clock_in.strftime('%I:%M %p') }}</span></td>
                                             <td>
                                                 {% if session.clock_out %}
-                                                    <span class="utc-time" data-utc-time="{{ session.clock_out.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ session.clock_out.strftime('%I:%M %p') }} UTC</span>
+                                                    <span class="local-time" data-utc-time="{{ session.clock_out.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ session.clock_out.strftime('%I:%M %p') }}</span>
                                                 {% else %}
                                                     <span class="badge bg-info">Active</span>
                                                 {% endif %}
@@ -214,9 +212,11 @@
                                         <small>{{ session.clock_in.strftime('%m/%d/%Y') }}</small>
                                     </div>
                                     <p class="mb-1">{{ session.labor_activity.name }}</p>
-                                    <small class="utc-time" data-utc-time="{{ session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}">
+                                    <small class="time-range" 
+                                         data-start-time="{{ session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}"
+                                         data-end-time="{{ session.clock_out.strftime('%Y-%m-%dT%H:%M:%S') }}">
                                         {{ session.clock_in.strftime('%I:%M %p') }} - 
-                                        {{ session.clock_out.strftime('%I:%M %p') }} UTC
+                                        {{ session.clock_out.strftime('%I:%M %p') }}
                                         ({{ session.get_duration_hours()|round(1) }} hours)
                                     </small>
                                 </div>
@@ -259,39 +259,94 @@
             });
     }
 
-    // Convert UTC time to Pacific Time
-    function convertUTCToLocal() {
-        // Find all elements with the UTC class
-        document.querySelectorAll('.utc-time').forEach(el => {
-            // Get the original UTC time string
+    // Display local time in the clock-in status
+    function displayLocalTime() {
+        // Get the time display element
+        const timeDisplay = document.getElementById('localTimeDisplay');
+        
+        if (timeDisplay) {
+            // Get the UTC timestamp from the data attribute
+            const utcTimeStr = timeDisplay.getAttribute('data-utc-time');
+            
+            if (utcTimeStr) {
+                try {
+                    // Parse the UTC time string to a Date object
+                    const utcDate = new Date(utcTimeStr);
+                    
+                    // Format the time in the user's local timezone
+                    const localTimeStr = utcDate.toLocaleString(undefined, {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                    
+                    // Update the display with the local time
+                    timeDisplay.textContent = localTimeStr;
+                } catch (error) {
+                    console.error("Error converting time:", error);
+                    timeDisplay.textContent = "Time format error";
+                }
+            }
+        }
+        
+        // Convert all times with class "local-time" to the browser's local time
+        document.querySelectorAll('.local-time').forEach(el => {
             const utcTimeStr = el.getAttribute('data-utc-time');
             if (!utcTimeStr) return;
             
             try {
-                // Get the original content
-                const originalContent = el.innerHTML;
-                
                 // Parse the UTC time
                 const utcDate = new Date(utcTimeStr);
                 
-                // Convert to Pacific Time (fixed 7 hour offset for PDT)
-                // This is a simplified way to handle Pacific Time - in production, would use libraries
-                const pacificTime = new Date(utcDate.getTime() - (7 * 60 * 60 * 1000));
+                // Format the local time
+                const localTimeStr = utcDate.toLocaleTimeString(undefined, {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
                 
-                // Format the Pacific time
-                const pacificTimeStr = pacificTime.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'});
-                
-                // Check if this is a simple time or a range (contains a hyphen)
-                if (originalContent.includes(' - ')) {
-                    // For time ranges, we need a more complex approach
-                    // This is a temporary solution that just adds the Pacific time note
-                    el.innerHTML = `${originalContent} <br><span class="badge bg-success">Pacific time: ${pacificTimeStr}</span>`;
-                } else {
-                    // Update the display to show both UTC and Pacific time
-                    el.innerHTML = `${originalContent} <span class="text-success">(${pacificTimeStr} Pacific)</span>`;
-                }
+                // Update the display
+                el.textContent = localTimeStr;
             } catch (error) {
                 console.error("Error converting time:", error);
+            }
+        });
+        
+        // Convert time ranges
+        document.querySelectorAll('.time-range').forEach(el => {
+            const startTimeStr = el.getAttribute('data-start-time');
+            const endTimeStr = el.getAttribute('data-end-time');
+            
+            if (!startTimeStr || !endTimeStr) return;
+            
+            try {
+                // Parse the UTC time strings
+                const startDate = new Date(startTimeStr);
+                const endDate = new Date(endTimeStr);
+                
+                // Format the local times
+                const startTimeLocal = startDate.toLocaleTimeString(undefined, {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+                
+                const endTimeLocal = endDate.toLocaleTimeString(undefined, {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+                
+                // Calculate hours (keep the original calculation from backend)
+                const hours = parseFloat(el.textContent.match(/\(([^)]+)\s*hours\)/)[1]);
+                
+                // Update the time range display
+                el.textContent = `${startTimeLocal} - ${endTimeLocal} (${hours} hours)`;
+            } catch (error) {
+                console.error("Error converting time range:", error);
             }
         });
     }
@@ -305,8 +360,8 @@
             updateLaborActivities();
         }
         
-        // Convert all UTC times to local time
-        convertUTCToLocal();
+        // Display local time
+        displayLocalTime();
     });
 </script>
 {% endblock %}
