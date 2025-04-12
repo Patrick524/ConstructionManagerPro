@@ -9,6 +9,9 @@
             <h2 class="border-bottom pb-2 mb-4">
                 <i class="fas fa-stopwatch me-2"></i>Clock In/Out
             </h2>
+            <div class="alert alert-info mb-4">
+                <i class="fas fa-info-circle me-2"></i> All times are displayed in UTC format with your local time shown in parentheses.
+            </div>
         </div>
     </div>
 
@@ -156,10 +159,10 @@
                                         <tr class="{{ 'table-info' if session.is_active else '' }}">
                                             <td>{{ session.job.job_code }}</td>
                                             <td>{{ session.labor_activity.name }}</td>
-                                            <td>{{ session.clock_in.strftime('%I:%M %p') }} UTC</td>
+                                            <td><span class="utc-time" data-utc-time="{{ session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ session.clock_in.strftime('%I:%M %p') }} UTC</span></td>
                                             <td>
                                                 {% if session.clock_out %}
-                                                    {{ session.clock_out.strftime('%I:%M %p') }} UTC
+                                                    <span class="utc-time" data-utc-time="{{ session.clock_out.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ session.clock_out.strftime('%I:%M %p') }} UTC</span>
                                                 {% else %}
                                                     <span class="badge bg-info">Active</span>
                                                 {% endif %}
@@ -211,7 +214,7 @@
                                         <small>{{ session.clock_in.strftime('%m/%d/%Y') }}</small>
                                     </div>
                                     <p class="mb-1">{{ session.labor_activity.name }}</p>
-                                    <small>
+                                    <small class="utc-time" data-utc-time="{{ session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}">
                                         {{ session.clock_in.strftime('%I:%M %p') }} - 
                                         {{ session.clock_out.strftime('%I:%M %p') }} UTC
                                         ({{ session.get_duration_hours()|round(1) }} hours)
@@ -264,14 +267,28 @@
             const utcTimeStr = el.getAttribute('data-utc-time');
             if (!utcTimeStr) return;
             
-            // Parse the UTC time
-            const utcDate = new Date(utcTimeStr);
-            
-            // Format the local time
-            const localTimeStr = utcDate.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'});
-            
-            // Update the display to show both UTC and local time
-            el.innerHTML = `${el.textContent} <span class="text-success">(${localTimeStr} local)</span>`;
+            try {
+                // Get the original content
+                const originalContent = el.innerHTML;
+                
+                // Parse the UTC time
+                const utcDate = new Date(utcTimeStr);
+                
+                // Format the local time
+                const localTimeStr = utcDate.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'});
+                
+                // Check if this is a simple time or a range (contains a hyphen)
+                if (originalContent.includes(' - ')) {
+                    // For time ranges, we need a more complex approach
+                    // This is a temporary solution that just adds the local time note
+                    el.innerHTML = `${originalContent} <br><span class="badge bg-success">Local time: approximately ${localTimeStr}</span>`;
+                } else {
+                    // Update the display to show both UTC and local time
+                    el.innerHTML = `${originalContent} <span class="text-success">(${localTimeStr} local)</span>`;
+                }
+            } catch (error) {
+                console.error("Error converting time:", error);
+            }
         });
     }
 
