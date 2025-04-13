@@ -63,6 +63,7 @@ class JobForm(FlaskForm):
     """Form for creating/editing jobs"""
     job_code = StringField('Job Code', validators=[DataRequired(), Length(min=2, max=20)])
     description = StringField('Description', validators=[DataRequired(), Length(min=2, max=255)])
+    location = StringField('Job Location', validators=[Optional(), Length(max=255)])
     status = SelectField('Status', choices=[
         ('active', 'Active'),
         ('complete', 'Complete'),
