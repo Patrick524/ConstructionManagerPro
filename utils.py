@@ -210,11 +210,11 @@ def send_email_with_attachment(recipient_email, subject, body, attachment_data=N
     from email.mime.application import MIMEApplication
 
     # Get email configuration from environment variables
-    smtp_server = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
-    smtp_port = int(os.environ.get('SMTP_PORT', 587))
-    smtp_username = os.environ.get('SMTP_USERNAME')
-    smtp_password = os.environ.get('SMTP_PASSWORD')
-    sender_email = os.environ.get('SENDER_EMAIL', smtp_username)
+    smtp_server = os.environ.get('SMTP_SERVER', 'mail.smtp2go.com')
+    smtp_port = int(os.environ.get('SMTP_PORT', 2525))  # Updated to use port 2525 for smtp2go
+    smtp_username = os.environ.get('SMTP_USERNAME', 'Cmpro@cmpro')
+    smtp_password = os.environ.get('SMTP_PASSWORD', 'w7n0w0IBE5QYvpHP')
+    sender_email = os.environ.get('SENDER_EMAIL', 'noreply@constructiontimesheet.com')
 
     # Validate required credentials
     if not smtp_username or not smtp_password:
@@ -232,7 +232,12 @@ def send_email_with_attachment(recipient_email, subject, body, attachment_data=N
 
     # Add attachment if provided
     if attachment_data and attachment_filename:
-        attachment = MIMEApplication(attachment_data.read(), _subtype=attachment_mimetype.split('/')[-1])
+        # Default to 'octet-stream' if mimetype is not provided
+        subtype = 'octet-stream'
+        if attachment_mimetype:
+            subtype = attachment_mimetype.split('/')[-1]
+        
+        attachment = MIMEApplication(attachment_data.read(), _subtype=subtype)
         attachment.add_header('Content-Disposition', 'attachment', filename=attachment_filename)
         msg.attach(attachment)
         # Reset file pointer in case the attachment needs to be used again
@@ -240,16 +245,30 @@ def send_email_with_attachment(recipient_email, subject, body, attachment_data=N
 
     try:
         # Connect to the SMTP server
+        print(f"Connecting to {smtp_server}:{smtp_port}...")
         server = smtplib.SMTP(smtp_server, smtp_port)
+        
+        print("Starting TLS...")
         server.starttls()  # Secure the connection
+        
+        print(f"Logging in as {smtp_username}...")
         server.login(smtp_username, smtp_password)
 
         # Send the email
+        print(f"Sending email to {recipient_email}...")
         server.send_message(msg)
         server.quit()
+        print("Email sent successfully!")
         return True
     except Exception as e:
         print(f"Error sending email: {e}")
+        # Add specific error handling for common SMTP errors
+        if "authentication failed" in str(e).lower():
+            print("Authentication failed. Please check your SMTP_USERNAME and SMTP_PASSWORD.")
+        elif "connection refused" in str(e).lower():
+            print(f"Connection to {smtp_server}:{smtp_port} refused. Please check your SMTP_SERVER and SMTP_PORT.")
+        elif "timeout" in str(e).lower():
+            print(f"Connection to {smtp_server}:{smtp_port} timed out. Please check your network settings.")
         return False
 
 def format_date(date_obj):
