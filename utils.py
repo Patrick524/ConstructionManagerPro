@@ -250,6 +250,11 @@ def generate_pdf_report(data, columns, title="Report"):
     # Add the table
     elements.append(table)
 
+    # Apply zebra striping to the table
+    for i in range(1, len(table_data)):  # Start from 1 to skip header
+        if i % 2 == 0:  # Every other row
+            style_list.append(('BACKGROUND', (0, i), (-1, i), colors.whitesmoke))
+
     # Create a function to add a footer to the bottom-right corner of each page
     def add_footer(canvas, doc):
         canvas.saveState()
