@@ -395,33 +395,27 @@
                 // Always show job description
                 description.textContent = data.description || 'No description available';
                 
-                // Show or hide foreman info based on availability
-                if (data.foreman_name) {
-                    foreman.textContent = data.foreman_name;
-                    if (foremanContainer) {
-                        foremanContainer.classList.remove('d-none');
-                    }
-                } else {
-                    foreman.textContent = 'No foreman assigned';
-                    // Only hide the container if it's a separate element
-                    if (foremanContainer) {
-                        foremanContainer.classList.add('d-none');
-                    }
+                // Always show foreman info
+                foreman.textContent = data.foreman_name || 'No foreman assigned';
+                if (foremanContainer) {
+                    foremanContainer.classList.remove('d-none');
                 }
                 
                 // Handle location and map
                 if (data.location) {
                     location.textContent = data.location;
                     locationContainer.classList.remove('d-none');
-                    mapContainer.classList.remove('d-none');
                     
-                    // Initialize or update map with the location
+                    // Show map container and initialize map
+                    mapContainer.classList.remove('d-none');
                     setTimeout(() => {
                         initMap('jobSelectMap', data.location);
                     }, 100);
                 } else {
                     location.textContent = 'No location specified';
-                    locationContainer.classList.add('d-none');
+                    // Always show location container with the "No location specified" text
+                    locationContainer.classList.remove('d-none');
+                    // Only hide the map container
                     mapContainer.classList.add('d-none');
                 }
                 
