@@ -9,7 +9,7 @@ def test_email_connection():
     smtp_port = 2525
     smtp_username = 'Cmpro@cmpro'
     smtp_password = 'w7n0w0IBE5QYvpHP'
-    sender_email = 'Cmpro@gmail.com'  # Using a Gmail domain which might be pre-verified in the account
+    sender_email = 'scans@thehensoncompany.com'  # Verified sender email from the smtp2go account
     recipient_email = 'test@example.com'  # Replace with a real email for testing
     
     # Create message

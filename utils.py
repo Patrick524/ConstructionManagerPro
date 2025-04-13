@@ -211,10 +211,10 @@ def send_email_with_attachment(recipient_email, subject, body, attachment_data=N
 
     # Get email configuration from environment variables
     smtp_server = os.environ.get('SMTP_SERVER', 'mail.smtp2go.com')
-    smtp_port = int(os.environ.get('SMTP_PORT', 2525))  # Updated to use port 2525 for smtp2go
+    smtp_port = int(os.environ.get('SMTP_PORT', 2525))  # Using port 2525 for smtp2go
     smtp_username = os.environ.get('SMTP_USERNAME', 'Cmpro@cmpro')
     smtp_password = os.environ.get('SMTP_PASSWORD', 'w7n0w0IBE5QYvpHP')
-    sender_email = os.environ.get('SENDER_EMAIL', 'noreply@constructiontimesheet.com')
+    sender_email = os.environ.get('SENDER_EMAIL', 'scans@thehensoncompany.com')  # Using verified sender email
 
     # Validate required credentials
     if not smtp_username or not smtp_password:
