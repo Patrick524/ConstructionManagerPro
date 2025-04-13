@@ -199,7 +199,7 @@ function setupActivityButtons() {
 /**
  * Add a new labor activity field
  */
-function addActivityField(activityId = '', hours = '') {
+function addActivityField(activityId = '', hours = '0') {
     const container = document.getElementById('labor-activities-container');
     if (!container) return;
     
@@ -276,7 +276,7 @@ function resetActivityFields() {
     const hoursInput = document.getElementById('hours_1');
     
     if (laborActivitySelect) laborActivitySelect.value = '';
-    if (hoursInput) hoursInput.value = '';
+    if (hoursInput) hoursInput.value = '0'; // Set default value to 0 instead of empty string
     
     // Reset activity count
     container.dataset.activityCount = 1;

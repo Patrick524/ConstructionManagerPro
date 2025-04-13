@@ -117,7 +117,7 @@
                                     <div class="col-md-6 col-lg-4 col-xl-3">
                                         <div class="form-group">
                                             {{ form.friday_hours.label(class="form-label") }}
-                                            {{ form.friday_hours(class="form-control hours-input", min="0", max="12", step="0.5") }}
+                                            {{ form.friday_hours(class="form-control hours-input", min="0", max="12", step="0.5", value=form.friday_hours.data or "0") }}
                                             {% for error in form.friday_hours.errors %}
                                                 <span class="text-danger">{{ error }}</span>
                                             {% endfor %}
@@ -128,7 +128,7 @@
                                     <div class="col-md-6 col-lg-4 col-xl-3">
                                         <div class="form-group">
                                             {{ form.saturday_hours.label(class="form-label") }}
-                                            {{ form.saturday_hours(class="form-control hours-input", min="0", max="12", step="0.5") }}
+                                            {{ form.saturday_hours(class="form-control hours-input", min="0", max="12", step="0.5", value=form.saturday_hours.data or "0") }}
                                             {% for error in form.saturday_hours.errors %}
                                                 <span class="text-danger">{{ error }}</span>
                                             {% endfor %}
@@ -138,7 +138,7 @@
                                     <div class="col-md-6 col-lg-4 col-xl-3">
                                         <div class="form-group">
                                             {{ form.sunday_hours.label(class="form-label") }}
-                                            {{ form.sunday_hours(class="form-control hours-input", min="0", max="12", step="0.5") }}
+                                            {{ form.sunday_hours(class="form-control hours-input", min="0", max="12", step="0.5", value=form.sunday_hours.data or "0") }}
                                             {% for error in form.sunday_hours.errors %}
                                                 <span class="text-danger">{{ error }}</span>
                                             {% endfor %}
