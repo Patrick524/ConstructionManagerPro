@@ -93,17 +93,25 @@ def generate_pdf_report(data, columns, title="Report"):
     from reportlab.lib.pagesizes import letter, landscape
     from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
     from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.units import inch
 
     # Create a buffer for the PDF
     buffer = io.BytesIO()
 
-    # Create the PDF document with landscape orientation 
-    # (better for reports with many columns)
-    doc = SimpleDocTemplate(buffer, pagesize=landscape(letter))
+    # Create the PDF document with landscape orientation for better readability
+    doc = SimpleDocTemplate(
+        buffer, 
+        pagesize=landscape(letter),
+        leftMargin=0.5*inch,
+        rightMargin=0.5*inch,
+        topMargin=0.5*inch,
+        bottomMargin=0.5*inch
+    )
 
     # Get styles for paragraphs
     styles = getSampleStyleSheet()
     title_style = styles['Heading1']
+    title_style.alignment = 1  # Center alignment for title
 
     # Define Column Headers and their display names
     header_map = {
@@ -120,6 +128,7 @@ def generate_pdf_report(data, columns, title="Report"):
 
     # Format the data for the table
     table_data = []
+    
     # Create header row with proper column names
     header_row = [header_map.get(col, col.replace('_', ' ').title()) for col in columns]
     table_data.append(header_row)
@@ -130,41 +139,76 @@ def generate_pdf_report(data, columns, title="Report"):
         formatted_row = []
         for col in columns:
             value = row.get(col, '')
-            # Format dates to USA style (Month Day, Year)
+            # Format dates to USA style (MM/DD/YYYY)
             if col == 'date' and isinstance(value, (datetime, date)):
                 value = value.strftime('%m/%d/%Y')
             # Format booleans
             elif col == 'approved':
                 value = 'Yes' if value else 'No'
+            # Format numeric values
+            elif col == 'hours' and isinstance(value, (int, float)):
+                value = f"{value:.2f}"  # Format with 2 decimal places
             formatted_row.append(value)
         table_data.append(formatted_row)
 
-    # Create the table
-    table = Table(table_data)
+    # Determine which columns should be right-aligned (numeric data)
+    numeric_columns = []
+    for i, col in enumerate(columns):
+        if col == 'hours' or col == 'id':
+            numeric_columns.append(i)
 
-    # Style the table
+    # Set column widths - auto-calculated but with minimums
+    col_widths = [1.2*inch] * len(columns)  # Default width
+    
+    # Give more space to description columns
+    for i, col in enumerate(columns):
+        if 'description' in col or col == 'worker_name':
+            col_widths[i] = 2*inch
+        elif col == 'date':
+            col_widths[i] = 0.9*inch
+        elif col == 'hours':
+            col_widths[i] = 0.7*inch
+            
+    # Create the table with specified column widths
+    table = Table(table_data, colWidths=col_widths)
+
+    # Define the base table style
     style = TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        # Header row styling
+        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),  # Light gray background for header
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('FONTSIZE', (0, 0), (-1, 0), 10),
         ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('TOPPADDING', (0, 0), (-1, 0), 12),
+        
+        # Cell borders - show all borders
+        ('BOX', (0, 0), (-1, -1), 1, colors.black),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+        
+        # Data rows base styling
         ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, -1), 8),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
     ])
+    
+    # Add right alignment for numeric columns
+    for col in numeric_columns:
+        style.add(('ALIGN', (col, 1), (col, -1), 'RIGHT'))
+    
     table.setStyle(style)
 
-    # Add alternate row coloring
+    # Add alternate row coloring for readability
     for i in range(1, len(table_data)):
         if i % 2 == 0:
             style = TableStyle([('BACKGROUND', (0, i), (-1, i), colors.white)])
         else:
-            style = TableStyle([('BACKGROUND', (0, i), (-1, i), colors.lightgrey)])
+            style = TableStyle([('BACKGROUND', (0, i), (-1, i), colors.lightgrey.clone(alpha=0.3))])
         table.setStyle(style)
 
     # Build the PDF document content
