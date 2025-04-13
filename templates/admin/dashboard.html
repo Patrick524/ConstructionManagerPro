@@ -89,9 +89,8 @@
             </div>
             <div class="card-body">
                 {% if job_hours and job_hours|length > 0 %}
-                <canvas id="job-hours-chart" height="250" 
-                        data-labels="{{ job_hours|map(attribute=0)|list|tojson }}" 
-                        data-values="{{ job_hours|map(attribute=1)|list|tojson }}"></canvas>
+                <script id="job-hours-data" type="application/json">{{ job_hours|tojson }}</script>
+                <canvas id="job-hours-chart" height="250"></canvas>
                 {% else %}
                 <div class="text-center py-5">
                     <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
@@ -110,9 +109,8 @@
             </div>
             <div class="card-body">
                 {% if trade_hours and trade_hours|length > 0 %}
-                <canvas id="trade-hours-chart" height="250"
-                        data-labels="{{ trade_hours|map(attribute=0)|map('capitalize')|list|tojson }}"
-                        data-values="{{ trade_hours|map(attribute=1)|list|tojson }}"></canvas>
+                <script id="trade-hours-data" type="application/json">{{ trade_hours|tojson }}</script>
+                <canvas id="trade-hours-chart" height="250"></canvas>
                 {% else %}
                 <div class="text-center py-5">
                     <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>

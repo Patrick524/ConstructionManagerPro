@@ -17,42 +17,31 @@ document.addEventListener('DOMContentLoaded', function() {
  * Initialize charts on the admin dashboard
  */
 function initDashboardCharts() {
+    // Define default colors for charts
+    const colors = [
+        '#0d6efd', '#6610f2', '#6f42c1', '#d63384', 
+        '#dc3545', '#fd7e14', '#ffc107', '#198754'
+    ];
+
     // Job hours chart (pie chart)
     const jobHoursChart = document.getElementById('job-hours-chart');
     if (jobHoursChart) {
         try {
-            console.log('Job chart data attributes:', jobHoursChart.dataset);
-            let jobLabels = [];
-            let jobData = [];
+            // Directly access server data
+            const chartData = JSON.parse(document.getElementById('job-hours-data').textContent || '[]');
+            console.log('Job chart data:', chartData);
             
-            try {
-                jobLabels = JSON.parse(jobHoursChart.dataset.labels || '[]');
-                console.log('Parsed job labels:', jobLabels);
-            } catch (e) {
-                console.error('Error parsing job labels:', e);
-                jobLabels = [];
-            }
-            
-            try {
-                jobData = JSON.parse(jobHoursChart.dataset.values || '[]');
-                console.log('Parsed job data:', jobData);
-            } catch (e) {
-                console.error('Error parsing job data:', e);
-                jobData = [];
-            }
-            
-            // Only create chart if we have data
-            if (jobLabels.length > 0 && jobData.length > 0) {
+            if (chartData && chartData.length > 0) {
+                const labels = chartData.map(item => item[0]);
+                const values = chartData.map(item => item[1]);
+                
                 new Chart(jobHoursChart, {
                     type: 'pie',
                     data: {
-                        labels: jobLabels,
+                        labels: labels,
                         datasets: [{
-                            data: jobData,
-                            backgroundColor: [
-                                '#0d6efd', '#6610f2', '#6f42c1', '#d63384', 
-                                '#dc3545', '#fd7e14', '#ffc107', '#198754'
-                            ],
+                            data: values,
+                            backgroundColor: colors,
                             borderWidth: 1
                         }]
                     },
@@ -82,35 +71,21 @@ function initDashboardCharts() {
     const tradeHoursChart = document.getElementById('trade-hours-chart');
     if (tradeHoursChart) {
         try {
-            console.log('Trade chart data attributes:', tradeHoursChart.dataset);
-            let tradeLabels = [];
-            let tradeData = [];
+            // Directly access server data
+            const chartData = JSON.parse(document.getElementById('trade-hours-data').textContent || '[]');
+            console.log('Trade chart data:', chartData);
             
-            try {
-                tradeLabels = JSON.parse(tradeHoursChart.dataset.labels || '[]');
-                console.log('Parsed trade labels:', tradeLabels);
-            } catch (e) {
-                console.error('Error parsing trade labels:', e);
-                tradeLabels = [];
-            }
-            
-            try {
-                tradeData = JSON.parse(tradeHoursChart.dataset.values || '[]');
-                console.log('Parsed trade data:', tradeData);
-            } catch (e) {
-                console.error('Error parsing trade data:', e);
-                tradeData = [];
-            }
-            
-            // Only create chart if we have data
-            if (tradeLabels.length > 0 && tradeData.length > 0) {
+            if (chartData && chartData.length > 0) {
+                const labels = chartData.map(item => item[0]);
+                const values = chartData.map(item => item[1]);
+                
                 new Chart(tradeHoursChart, {
                     type: 'bar',
                     data: {
-                        labels: tradeLabels,
+                        labels: labels,
                         datasets: [{
                             label: 'Hours',
-                            data: tradeData,
+                            data: values,
                             backgroundColor: '#0d6efd',
                             borderWidth: 0
                         }]
