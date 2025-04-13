@@ -63,7 +63,7 @@
     <div class="col-md-3">
         <div class="dashboard-widget">
             <h5 class="dashboard-widget-title">Weekly Hours</h5>
-            <div class="dashboard-widget-value">{{ weekly_hours }}</div>
+            <div class="dashboard-widget-value">{{ "%.2f"|format(weekly_hours) }}</div>
             <a href="{{ url_for('generate_reports') }}" class="btn btn-sm btn-outline-primary">View Reports</a>
         </div>
     </div>
