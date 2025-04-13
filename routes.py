@@ -1410,7 +1410,7 @@ def generate_reports():
             pdf_buffer = utils.generate_pdf_report(data_dicts, columns, title=report_title)
 
             # Generate filename
-            filename = f"{report_type}_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.pdf"
+            filename = f"{report_type}_{start_date.strftime('%m%d%Y')}_{end_date.strftime('%m%d%Y')}.pdf"
 
             # Check if we should email the report
             if delivery_method == 'email':
