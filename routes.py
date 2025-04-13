@@ -1422,8 +1422,28 @@ def generate_reports():
 
                 return redirect(url_for('generate_reports'))
             else:
-                # Store the file data in session for download
-                session['report_data'] = csv_data.encode('utf-8')
+                # Use the same file-based approach for CSV files to be consistent
+                # Get the CSV data as bytes
+                csv_bytes = csv_data.encode('utf-8')
+                
+                # Generate a unique ID for this report
+                import uuid
+                report_id = str(uuid.uuid4())
+                
+                # Create a temp directory if it doesn't exist
+                temp_dir = os.path.join(os.getcwd(), 'temp_reports')
+                if not os.path.exists(temp_dir):
+                    os.makedirs(temp_dir)
+                
+                # Save the CSV data to a temporary file
+                temp_file_path = os.path.join(temp_dir, f"{report_id}.csv")
+                with open(temp_file_path, 'wb') as f:
+                    f.write(csv_bytes)
+                
+                print(f"DEBUG: Saved CSV to temporary file: {temp_file_path}")
+                
+                # Store only file reference in session
+                session['report_id'] = report_id
                 session['report_filename'] = filename
                 session['report_mimetype'] = 'text/csv'
                 
@@ -1481,29 +1501,40 @@ def generate_reports():
                     flash('Error: Generated PDF is empty', 'danger')
                     return redirect(url_for('generate_reports'))
                 
-                print(f"DEBUG: Verified PDF data exists, proceeding with session storage")
+                print(f"DEBUG: Verified PDF data exists, proceeding with temporary file storage")
                 
-                # Clear any previous report data to avoid conflicts
-                if 'report_data' in session:
-                    del session['report_data']
-                if 'report_filename' in session:
-                    del session['report_filename']
-                if 'report_mimetype' in session:
-                    del session['report_mimetype']
-                    
-                # Store the file data in session - PDF data is already bytes, no need to encode
-                session['report_data'] = pdf_data
+                # CRITICAL FIX: The PDF is too large for the session cookie (>4KB limit)
+                # Instead of storing binary data in the session, save to a temporary file
+                # and store only the reference in the session
+                
+                # Generate a unique ID for this report
+                import uuid
+                report_id = str(uuid.uuid4())
+                
+                # Create a temp directory if it doesn't exist
+                temp_dir = os.path.join(os.getcwd(), 'temp_reports')
+                if not os.path.exists(temp_dir):
+                    os.makedirs(temp_dir)
+                
+                # Save the PDF data to a temporary file
+                temp_file_path = os.path.join(temp_dir, f"{report_id}.pdf")
+                with open(temp_file_path, 'wb') as f:
+                    f.write(pdf_data)
+                
+                print(f"DEBUG: Saved PDF to temporary file: {temp_file_path}")
+                
+                # Store only file reference in session (much smaller)
+                session['report_id'] = report_id
                 session['report_filename'] = filename
                 session['report_mimetype'] = 'application/pdf'
                 
                 # Debug log for confirmation
-                print(f"DEBUG: Successfully stored PDF in session, type: {type(pdf_data)}")
-                print(f"DEBUG: Session values - filename: {session['report_filename']}, mimetype: {session['report_mimetype']}")
+                print(f"DEBUG: Stored reference in session, report_id: {report_id}")
                 
                 # Set a flash message
                 flash('PDF report generated successfully. Download will begin shortly.', 'success')
                 
-                # Redirect to download endpoint
+                # Redirect to download endpoint 
                 return redirect(url_for('download_report'))
 
     # Default dates to current week
@@ -1563,49 +1594,72 @@ def internal_server_error(e):
 @login_required
 def download_report():
     """Download report endpoint that serves file and redirects back to the reports page"""
-    if 'report_data' not in session or 'report_filename' not in session or 'report_mimetype' not in session:
+    # We now use only the file reference mode
+    if 'report_id' not in session or 'report_filename' not in session or 'report_mimetype' not in session:
         flash('No report data found. Please generate a report first.', 'warning')
+        return redirect(url_for('generate_reports'))
+    
+    # Get filename and mimetype from session
+    filename = session['report_filename']
+    mimetype = session['report_mimetype']
+    report_id = session['report_id']
+    
+    # Log what we're doing
+    print(f"DEBUG download_report: Using file reference mode, ID: {report_id}, File: {filename}")
+    
+    # Verify the file exists before proceeding
+    file_ext = 'pdf' if mimetype == 'application/pdf' else 'csv'
+    temp_file_path = os.path.join(os.getcwd(), 'temp_reports', f"{report_id}.{file_ext}")
+    
+    if not os.path.exists(temp_file_path):
+        flash('Error: Report file not found. Please regenerate the report.', 'danger')
         return redirect(url_for('generate_reports'))
     
     # Create a template that will auto-download the file and then redirect back
     return render_template('download.html', 
-                          filename=session['report_filename'],
-                          mimetype=session['report_mimetype'],
+                          filename=filename,
+                          mimetype=mimetype,
                           return_url=url_for('generate_reports'))
 
 @app.route('/get-report-file')
 @login_required
 def get_report_file():
     """Actual file download endpoint"""
-    if 'report_data' not in session or 'report_filename' not in session or 'report_mimetype' not in session:
+    # We now use only file-based storage with report_id for all file types
+    if 'report_id' not in session or 'report_filename' not in session or 'report_mimetype' not in session:
         flash('No report data found. Please generate a report first.', 'warning')
         return redirect(url_for('generate_reports'))
     
-    # Get data from session
-    report_data = session['report_data']
-    report_filename = session['report_filename'] 
+    # Get information from session
+    report_id = session['report_id']
+    report_filename = session['report_filename']
     report_mimetype = session['report_mimetype']
     
-    # Debug info to track issues
-    print(f"DEBUG get_report_file: Got data from session, type={type(report_data)}, length={len(report_data) if isinstance(report_data, bytes) else 'N/A'}")
-    print(f"DEBUG get_report_file: Filename={report_filename}, Mimetype={report_mimetype}")
+    print(f"DEBUG get_report_file: Processing {report_filename}, mimetype {report_mimetype}, ID: {report_id}")
     
     try:
-        # Ensure report_data is bytes
-        if not isinstance(report_data, bytes):
-            print(f"WARNING: report_data is not bytes, it's {type(report_data)}")
-            if isinstance(report_data, str):
-                report_data = report_data.encode('utf-8')
-        
-        # Check if this is a PDF file - use additional detection beyond just checking mimetype
+        # Determine file extension and path based on mimetype
         is_pdf = report_mimetype == 'application/pdf' or report_filename.lower().endswith('.pdf')
+        file_ext = 'pdf' if is_pdf else 'csv'
         
+        # Build the path to the temporary file
+        temp_file_path = os.path.join(os.getcwd(), 'temp_reports', f"{report_id}.{file_ext}")
+        
+        print(f"DEBUG: Reading file from: {temp_file_path}")
+        
+        # Check if the file exists
+        if not os.path.exists(temp_file_path):
+            flash('Error: Report file not found. Please regenerate the report.', 'danger')
+            return redirect(url_for('generate_reports'))
+        
+        # Send the file directly from disk with appropriate mimetype
         if is_pdf:
-            print(f"DEBUG: Detected PDF file, using direct file delivery with strict PDF mimetype")
-            # For PDFs, enforce the correct mimetype and force download
+            print(f"DEBUG: Serving PDF file with strict PDF mimetype")
+            
+            # For PDFs, apply special handling with strict headers
             response = send_file(
-                BytesIO(report_data),
-                mimetype='application/pdf',  # Always use this exact mimetype for PDFs
+                temp_file_path,
+                mimetype='application/pdf',
                 as_attachment=True,
                 download_name=report_filename
             )
@@ -1615,17 +1669,20 @@ def get_report_file():
             response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
             response.headers["Pragma"] = "no-cache" 
             response.headers["Expires"] = "0"
-            
-            return response
         else:
-            # For other formats (CSV, etc.)
-            print(f"DEBUG: Non-PDF format detected ({report_mimetype}), using standard file delivery")
-            return send_file(
-                BytesIO(report_data),
+            # For other formats (CSV, etc.), use standard delivery
+            print(f"DEBUG: Serving file using standard delivery for {report_mimetype}")
+            response = send_file(
+                temp_file_path,
                 mimetype=report_mimetype,
                 as_attachment=True,
                 download_name=report_filename
             )
+        
+        # Clean up the temp file after sending (optional, can be disabled for debugging)
+        # os.remove(temp_file_path)
+        
+        return response
         
     except Exception as e:
         print(f"Error sending file: {e}")
