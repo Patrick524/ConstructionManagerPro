@@ -130,9 +130,9 @@ def generate_pdf_report(data, columns, title="Report"):
         formatted_row = []
         for col in columns:
             value = row.get(col, '')
-            # Format dates
+            # Format dates to USA style (Month Day, Year)
             if col == 'date' and isinstance(value, (datetime, date)):
-                value = value.strftime('%B %d, %Y') # Modified date format here
+                value = value.strftime('%m/%d/%Y')
             # Format booleans
             elif col == 'approved':
                 value = 'Yes' if value else 'No'
