@@ -175,7 +175,7 @@ def generate_pdf_report(data, columns, title="Report"):
     elements.append(Spacer(1, 12))
 
     # Add timestamp
-    timestamp = Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", 
+    timestamp = Paragraph(f"Generated: {datetime.now().strftime('%m/%d/%Y %H:%M:%S')}", 
                           styles['Normal'])
     elements.append(timestamp)
     elements.append(Spacer(1, 12))
