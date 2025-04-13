@@ -3,7 +3,7 @@ import csv
 import io
 from datetime import datetime, timedelta, date
 from functools import wraps
-from flask import render_template, redirect, url_for, flash, request, jsonify, send_file
+from flask import render_template, redirect, url_for, flash, request, jsonify, send_file, session
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db
 from models import User, Job, LaborActivity, TimeEntry, WeeklyApprovalLock, ClockSession
@@ -1398,13 +1398,16 @@ def generate_reports():
 
                 return redirect(url_for('generate_reports'))
             else:
-                # Download the file
-                return send_file(
-                    io.BytesIO(csv_data.encode('utf-8')),
-                    mimetype='text/csv',
-                    as_attachment=True,
-                    download_name=filename
-                )
+                # Store the file data in session for download
+                session['report_data'] = csv_data.encode('utf-8')
+                session['report_filename'] = filename
+                session['report_mimetype'] = 'text/csv'
+                
+                # Set a flash message
+                flash('Report generated successfully. Download will begin shortly.', 'success')
+                
+                # Redirect to download endpoint
+                return redirect(url_for('download_report'))
         else:  # PDF format
             # Generate PDF report
             pdf_buffer = utils.generate_pdf_report(data_dicts, columns, title=report_title)
@@ -1443,13 +1446,16 @@ def generate_reports():
 
                 return redirect(url_for('generate_reports'))
             else:
-                # Download the file
-                return send_file(
-                    pdf_buffer,
-                    mimetype='application/pdf',
-                    as_attachment=True,
-                    download_name=filename
-                )
+                # Store the file data in session for download
+                session['report_data'] = pdf_buffer.getvalue()
+                session['report_filename'] = filename
+                session['report_mimetype'] = 'application/pdf'
+                
+                # Set a flash message
+                flash('Report generated successfully. Download will begin shortly.', 'success')
+                
+                # Redirect to download endpoint
+                return redirect(url_for('download_report'))
 
     # Default dates to current week
     if not form.start_date.data:
@@ -1503,6 +1509,45 @@ def page_not_found(e):
 @app.errorhandler(500)
 def internal_server_error(e):
     return render_template('500.html'), 500
+
+@app.route('/download-report')
+@login_required
+def download_report():
+    """Download report endpoint that serves file and redirects back to the reports page"""
+    if 'report_data' not in session or 'report_filename' not in session or 'report_mimetype' not in session:
+        flash('No report data found. Please generate a report first.', 'warning')
+        return redirect(url_for('generate_reports'))
+    
+    # Create a template that will auto-download the file and then redirect back
+    return render_template('download.html', 
+                          filename=session['report_filename'],
+                          mimetype=session['report_mimetype'],
+                          return_url=url_for('generate_reports'))
+
+@app.route('/get-report-file')
+@login_required
+def get_report_file():
+    """Actual file download endpoint"""
+    if 'report_data' not in session or 'report_filename' not in session or 'report_mimetype' not in session:
+        flash('No report data found. Please generate a report first.', 'warning')
+        return redirect(url_for('generate_reports'))
+    
+    # Get data from session
+    report_data = session['report_data']
+    filename = session['report_filename']
+    mimetype = session['report_mimetype']
+    
+    # Create a BytesIO object from the data
+    file_data = io.BytesIO(report_data)
+    file_data.seek(0)
+    
+    # Send the file
+    return send_file(
+        file_data,
+        mimetype=mimetype,
+        as_attachment=True,
+        download_name=filename
+    )
 
 @app.route('/debug')
 def debug_route():
