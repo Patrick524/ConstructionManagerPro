@@ -254,7 +254,7 @@ def send_email_with_attachment(recipient_email, subject, body, attachment_data=N
 
 def format_date(date_obj):
     """Format a date for display."""
-    return date_obj.strftime('%B %d, %Y') # Modified date format here
+    return date_obj.strftime('%m/%d/%Y') # U.S. date format (MM/DD/YYYY)
 
 def format_datetime(datetime_obj):
     """Format a datetime for display."""
