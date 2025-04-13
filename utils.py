@@ -201,15 +201,22 @@ def generate_pdf_report(data, columns, title="Report"):
     for col in numeric_columns:
         style.add(('ALIGN', (col, 1), (col, -1), 'RIGHT'))
     
-    table.setStyle(style)
-
     # Add alternate row coloring for readability
+    row_styles = []
+    # Create a light gray color for alternating rows
+    light_gray = colors.Color(0.9, 0.9, 0.9)
+    
     for i in range(1, len(table_data)):
         if i % 2 == 0:
-            style = TableStyle([('BACKGROUND', (0, i), (-1, i), colors.white)])
+            row_styles.append(('BACKGROUND', (0, i), (-1, i), colors.white))
         else:
-            style = TableStyle([('BACKGROUND', (0, i), (-1, i), colors.lightgrey.clone(alpha=0.3))])
-        table.setStyle(style)
+            row_styles.append(('BACKGROUND', (0, i), (-1, i), light_gray))
+    
+    for cmd in row_styles:
+        style.add(cmd)
+        
+    # Apply all styles at once
+    table.setStyle(style)
 
     # Build the PDF document content
     elements = []
