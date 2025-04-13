@@ -32,6 +32,14 @@
                                     <p class="mb-1">
                                         <strong>Job:</strong> {{ active_session.job.job_code }} - {{ active_session.job.description }}
                                     </p>
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="fas fa-building text-muted me-2"></i>
+                                        <span class="text-muted">{{ active_session.job.location }}</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fas fa-hard-hat text-muted me-2"></i>
+                                        <span class="text-muted">{{ active_session.job.foreman.name if active_session.job.foreman else 'No foreman assigned' }}</span>
+                                    </div>
                                     <p class="mb-1">
                                         <strong>Activity:</strong> {{ active_session.labor_activity.name }}
                                     </p>
@@ -124,7 +132,7 @@
                 <div class="card-body text-center">
                     <div class="display-4 mb-2">{{ today_hours|round(1) }}</div>
                     <p class="text-muted">Hours Today</p>
-                    
+
                     <div class="row mt-4">
                         <div class="col-6">
                             <div class="d-inline-block p-3 rounded-circle bg-light text-dark">
@@ -291,7 +299,7 @@
             .then(data => {
                 const activitySelect = document.querySelector('#labor_activity_id');
                 activitySelect.innerHTML = '';
-                
+
                 data.forEach(activity => {
                     const option = document.createElement('option');
                     option.value = activity.id;
@@ -305,23 +313,23 @@
     function displayLocalTime() {
         // Get the time display element
         const timeDisplay = document.getElementById('localTimeDisplay');
-        
+
         if (timeDisplay) {
             // Get the UTC timestamp from the data attribute
             const utcTimeStr = timeDisplay.getAttribute('data-utc-time');
-            
+
             if (utcTimeStr) {
                 try {
                     // Parse the UTC time string to a Date object
                     const utcDate = new Date(utcTimeStr);
-                    
+
                     // Format the time in the user's local timezone - just use time for clean display
                     const localTimeStr = utcDate.toLocaleTimeString(undefined, {
                         hour: 'numeric',
                         minute: '2-digit',
                         hour12: true
                     });
-                    
+
                     // Update the display with the local time only
                     timeDisplay.textContent = localTimeStr;
                 } catch (error) {
@@ -330,25 +338,25 @@
                 }
             }
         }
-        
+
         // Convert all times with class "local-time" to the browser's local time
         document.querySelectorAll('.local-time').forEach(el => {
             const utcTimeStr = el.getAttribute('data-utc-time');
             if (!utcTimeStr) return;
-            
+
             try {
                 // Parse the UTC time
                 const utcDate = new Date(utcTimeStr);
                 const now = new Date();
-                
+
                 // Check if this is from today
                 const isToday = utcDate.getDate() === now.getDate() && 
                                 utcDate.getMonth() === now.getMonth() && 
                                 utcDate.getFullYear() === now.getFullYear();
-                
+
                 // Format the local time - with date if not today
                 let localTimeStr;
-                
+
                 if (isToday) {
                     // Today - just show time
                     localTimeStr = utcDate.toLocaleTimeString(undefined, {
@@ -366,62 +374,62 @@
                         hour12: true
                     });
                 }
-                
+
                 // Update the display with the formatted local time
                 el.textContent = localTimeStr;
             } catch (error) {
                 console.error("Error converting time:", error);
             }
         });
-        
+
         // Convert all dates with class "local-date" to the browser's local date format
         document.querySelectorAll('.local-date').forEach(el => {
             const utcDateStr = el.getAttribute('data-utc-date');
             if (!utcDateStr) return;
-            
+
             try {
                 // Parse the UTC date string
                 const utcDate = new Date(utcDateStr);
-                
+
                 // Format the local date
                 const localDateStr = utcDate.toLocaleDateString(undefined, {
                     year: 'numeric',
                     month: '2-digit',
                     day: '2-digit'
                 });
-                
+
                 // Update the display with only local date
                 el.textContent = localDateStr;
             } catch (error) {
                 console.error("Error converting date:", error);
             }
         });
-        
+
         // Convert time ranges
         document.querySelectorAll('.time-range').forEach(el => {
             const startTimeStr = el.getAttribute('data-start-time');
             const endTimeStr = el.getAttribute('data-end-time');
-            
+
             if (!startTimeStr || !endTimeStr) return;
-            
+
             try {
                 // Parse the UTC time strings
                 const startDate = new Date(startTimeStr);
                 const endDate = new Date(endTimeStr);
                 const now = new Date();
-                
+
                 // Check if both dates are from today
                 const isSameDay = startDate.getDate() === endDate.getDate() && 
                                   startDate.getMonth() === endDate.getMonth() && 
                                   startDate.getFullYear() === endDate.getFullYear();
-                                  
+
                 const isToday = startDate.getDate() === now.getDate() && 
                                startDate.getMonth() === now.getMonth() && 
                                startDate.getFullYear() === now.getFullYear();
-                
+
                 // Format the local times
                 let startTimeLocal, endTimeLocal;
-                
+
                 if (isToday) {
                     // Today - just show time
                     startTimeLocal = startDate.toLocaleTimeString(undefined, {
@@ -429,7 +437,7 @@
                         minute: '2-digit',
                         hour12: true
                     });
-                    
+
                     endTimeLocal = endDate.toLocaleTimeString(undefined, {
                         hour: 'numeric',
                         minute: '2-digit',
@@ -444,7 +452,7 @@
                         minute: '2-digit',
                         hour12: true
                     });
-                    
+
                     if (isSameDay) {
                         // End time on same day - just show time
                         endTimeLocal = endDate.toLocaleTimeString(undefined, {
@@ -463,10 +471,10 @@
                         });
                     }
                 }
-                
+
                 // Get the duration from the data attribute
                 const hours = el.getAttribute('data-duration');
-                
+
                 // Update the time range display with the properly formatted times
                 el.textContent = `${startTimeLocal} - ${endTimeLocal} (${hours} hours)`;
             } catch (error) {
@@ -489,7 +497,7 @@
             currentTimeElement.textContent = formattedTime;
         }
     }
-    
+
     // Add event listeners
     document.addEventListener('DOMContentLoaded', function() {
         const jobSelect = document.querySelector('#job_id');
@@ -498,13 +506,13 @@
             // Initial load
             updateLaborActivities();
         }
-        
+
         // Display local time
         displayLocalTime();
-        
+
         // Update current time display right away
         updateCurrentTime();
-        
+
         // Set up interval to update the current time every second
         setInterval(updateCurrentTime, 1000);
     });
