@@ -1572,6 +1572,7 @@ def get_report_file():
     
     # Debug info to track issues
     print(f"DEBUG get_report_file: Got data from session, type={type(report_data)}, length={len(report_data) if isinstance(report_data, bytes) else 'N/A'}")
+    print(f"DEBUG get_report_file: Filename={filename}, Mimetype={mimetype}")
     
     try:
         # Ensure report_data is bytes
@@ -1588,32 +1589,44 @@ def get_report_file():
         content_check = len(file_data.getvalue())
         print(f"DEBUG get_report_file: BytesIO created with {content_check} bytes")
         
-        # Check if this is an iframe request or direct navigation
+        # Check if this is an iframe request - we'll handle differently
         is_iframe = request.args.get('iframe', 'false') == 'true'
+        direct_download = request.args.get('download', 'false') == 'true'
         
-        # If direct navigation and PDF, show a page with embedded PDF viewer
-        if not is_iframe and mimetype == 'application/pdf':
-            # For PDF viewer, we'll use base64 encoding in the template
-            encoded_data = base64.b64encode(report_data).decode('utf-8')
-            return render_template('file_viewer.html', 
-                                  report_data=encoded_data,
-                                  filename=filename,
-                                  return_url=url_for('generate_reports'))
+        # For PDF, always force a download with as_attachment=True
+        if mimetype == 'application/pdf' or direct_download:
+            # Force download as attachment regardless of navigation type
+            response = send_file(
+                file_data,
+                mimetype=mimetype,
+                as_attachment=True,
+                download_name=filename
+            )
+            
+            # Add headers to prevent caching which can cause issues on some browsers
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+            response.headers["Content-Disposition"] = f"attachment; filename={filename}"
+            
+            return response
         
-        # Send the file as download
-        response = send_file(
-            file_data,
-            mimetype=mimetype,
-            as_attachment=True,
-            download_name=filename
-        )
-        
-        # Add headers to prevent caching which can cause issues on some browsers
-        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-        response.headers["Pragma"] = "no-cache"
-        response.headers["Expires"] = "0"
-        
-        return response
+        # For non-PDF, follow the standard flow
+        else:
+            # Send the file as download
+            response = send_file(
+                file_data,
+                mimetype=mimetype,
+                as_attachment=True,
+                download_name=filename
+            )
+            
+            # Add headers to prevent caching which can cause issues on some browsers
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+            
+            return response
         
     except Exception as e:
         print(f"Error sending file: {e}")

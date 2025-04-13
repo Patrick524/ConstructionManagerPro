@@ -20,7 +20,7 @@
                     </div>
                     
                     <div class="mb-4">
-                        <a href="{{ url_for('get_report_file') }}" class="btn btn-primary">
+                        <a href="{{ url_for('get_report_file') }}?download=true" class="btn btn-primary">
                             <i class="fas fa-download me-2"></i> Download Now
                         </a>
                     </div>
@@ -43,8 +43,9 @@
         setTimeout(function() {
             // Create a direct link and click it - more reliable than iframe in most browsers
             var link = document.createElement('a');
-            link.href = "{{ url_for('get_report_file') }}?iframe=true";
+            link.href = "{{ url_for('get_report_file') }}?download=true";
             link.download = "{{ filename }}";
+            link.setAttribute('download', '{{ filename }}');
             link.style.display = 'none';
             document.body.appendChild(link);
             link.click();
@@ -55,9 +56,10 @@
             form.action = "{{ url_for('get_report_file') }}";
             form.style.display = 'none';
             
+            // Use the download parameter instead of iframe
             var input = document.createElement('input');
             input.type = 'hidden';
-            input.name = 'iframe';
+            input.name = 'download';
             input.value = 'true';
             form.appendChild(input);
             
