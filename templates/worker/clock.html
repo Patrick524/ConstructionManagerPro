@@ -215,7 +215,7 @@
                                 <div class="list-group-item list-group-item-action">
                                     <div class="d-flex w-100 justify-content-between">
                                         <h6 class="mb-1">{{ session.job.job_code }}</h6>
-                                        <small>{{ session.clock_in.strftime('%m/%d/%Y') }}</small>
+                                        <small class="local-date" data-utc-date="{{ session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ session.clock_in.strftime('%m/%d/%Y') }}</small>
                                     </div>
                                     <p class="mb-1">{{ session.labor_activity.name }}</p>
                                     <small class="time-range" 
@@ -314,6 +314,29 @@
                 el.textContent = localTimeStr;
             } catch (error) {
                 console.error("Error converting time:", error);
+            }
+        });
+        
+        // Convert all dates with class "local-date" to the browser's local date format
+        document.querySelectorAll('.local-date').forEach(el => {
+            const utcDateStr = el.getAttribute('data-utc-date');
+            if (!utcDateStr) return;
+            
+            try {
+                // Parse the UTC date string
+                const utcDate = new Date(utcDateStr);
+                
+                // Format the local date
+                const localDateStr = utcDate.toLocaleDateString(undefined, {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                });
+                
+                // Update the display with only local date
+                el.textContent = localDateStr;
+            } catch (error) {
+                console.error("Error converting date:", error);
             }
         });
         
