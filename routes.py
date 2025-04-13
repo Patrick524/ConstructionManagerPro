@@ -144,6 +144,9 @@ def logout():
 @worker_required
 def worker_weekly_timesheet():
     """Weekly timesheet view allowing workers to enter time for an entire week at once"""
+    print("DEBUG: Weekly timesheet form submission - Request method:", request.method)
+    print("DEBUG: Form data:", request.form)
+    
     form = WeeklyTimesheetForm()
 
     # Check if we're loading a specific job's labor activities
@@ -165,7 +168,16 @@ def worker_weekly_timesheet():
     week_start = form.week_start.data
     week_end = week_start + timedelta(days=6)
 
+    # Debug the validation process
+    if request.method == 'POST':
+        print("DEBUG: Validating form...")
+        is_valid = form.validate()
+        print(f"DEBUG: Form validation result: {is_valid}")
+        if not is_valid:
+            print("DEBUG: Form errors:", form.errors)
+        
     if form.validate_on_submit():
+        print("DEBUG: Form validated successfully, proceeding with submission")
         # Check if any timesheet for this week is already approved/locked
         is_locked = WeeklyApprovalLock.query.filter_by(
             user_id=current_user.id,
