@@ -591,6 +591,7 @@ def get_job_details(job_id):
     job = Job.query.get_or_404(job_id)
     return jsonify({
         'description': job.description,
+        'location': job.location,
         'foreman_name': job.foreman.name if job.foreman else None
     })
 
