@@ -20,74 +20,126 @@ function initDashboardCharts() {
     // Job hours chart (pie chart)
     const jobHoursChart = document.getElementById('job-hours-chart');
     if (jobHoursChart) {
-        const jobLabels = JSON.parse(jobHoursChart.dataset.labels || '[]');
-        const jobData = JSON.parse(jobHoursChart.dataset.values || '[]');
-        
-        new Chart(jobHoursChart, {
-            type: 'pie',
-            data: {
-                labels: jobLabels,
-                datasets: [{
-                    data: jobData,
-                    backgroundColor: [
-                        '#0d6efd', '#6610f2', '#6f42c1', '#d63384', 
-                        '#dc3545', '#fd7e14', '#ffc107', '#198754'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                    },
-                    title: {
-                        display: true,
-                        text: 'Hours by Job'
-                    }
-                }
+        try {
+            console.log('Job chart data attributes:', jobHoursChart.dataset);
+            let jobLabels = [];
+            let jobData = [];
+            
+            try {
+                jobLabels = JSON.parse(jobHoursChart.dataset.labels || '[]');
+                console.log('Parsed job labels:', jobLabels);
+            } catch (e) {
+                console.error('Error parsing job labels:', e);
+                jobLabels = [];
             }
-        });
+            
+            try {
+                jobData = JSON.parse(jobHoursChart.dataset.values || '[]');
+                console.log('Parsed job data:', jobData);
+            } catch (e) {
+                console.error('Error parsing job data:', e);
+                jobData = [];
+            }
+            
+            // Only create chart if we have data
+            if (jobLabels.length > 0 && jobData.length > 0) {
+                new Chart(jobHoursChart, {
+                    type: 'pie',
+                    data: {
+                        labels: jobLabels,
+                        datasets: [{
+                            data: jobData,
+                            backgroundColor: [
+                                '#0d6efd', '#6610f2', '#6f42c1', '#d63384', 
+                                '#dc3545', '#fd7e14', '#ffc107', '#198754'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Hours by Job'
+                            }
+                        }
+                    }
+                });
+            } else {
+                console.log('No job chart data available');
+            }
+        } catch (e) {
+            console.error('Error initializing job hours chart:', e);
+        }
     }
     
     // Trade hours chart (bar chart)
     const tradeHoursChart = document.getElementById('trade-hours-chart');
     if (tradeHoursChart) {
-        const tradeLabels = JSON.parse(tradeHoursChart.dataset.labels || '[]');
-        const tradeData = JSON.parse(tradeHoursChart.dataset.values || '[]');
-        
-        new Chart(tradeHoursChart, {
-            type: 'bar',
-            data: {
-                labels: tradeLabels,
-                datasets: [{
-                    label: 'Hours',
-                    data: tradeData,
-                    backgroundColor: '#0d6efd',
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    title: {
-                        display: true,
-                        text: 'Hours by Trade'
-                    }
-                }
+        try {
+            console.log('Trade chart data attributes:', tradeHoursChart.dataset);
+            let tradeLabels = [];
+            let tradeData = [];
+            
+            try {
+                tradeLabels = JSON.parse(tradeHoursChart.dataset.labels || '[]');
+                console.log('Parsed trade labels:', tradeLabels);
+            } catch (e) {
+                console.error('Error parsing trade labels:', e);
+                tradeLabels = [];
             }
-        });
+            
+            try {
+                tradeData = JSON.parse(tradeHoursChart.dataset.values || '[]');
+                console.log('Parsed trade data:', tradeData);
+            } catch (e) {
+                console.error('Error parsing trade data:', e);
+                tradeData = [];
+            }
+            
+            // Only create chart if we have data
+            if (tradeLabels.length > 0 && tradeData.length > 0) {
+                new Chart(tradeHoursChart, {
+                    type: 'bar',
+                    data: {
+                        labels: tradeLabels,
+                        datasets: [{
+                            label: 'Hours',
+                            data: tradeData,
+                            backgroundColor: '#0d6efd',
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Hours by Trade'
+                            }
+                        }
+                    }
+                });
+            } else {
+                console.log('No trade chart data available');
+            }
+        } catch (e) {
+            console.error('Error initializing trade hours chart:', e);
+        }
     }
     
     // Weekly hours trend (line chart)
