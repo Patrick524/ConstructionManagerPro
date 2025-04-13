@@ -36,7 +36,7 @@
                                         <strong>Activity:</strong> {{ active_session.labor_activity.name }}
                                     </p>
                                     <p class="mb-1">
-                                        <strong>Started:</strong> <span id="localTimeDisplay" data-utc-time="{{ active_session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}">Loading local time...</span>
+                                        <strong>Started:</strong> <span id="localTimeDisplay" data-utc-time="{{ active_session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}Z">Loading local time...</span>
                                         ({{ ((now - active_session.clock_in).total_seconds() / 3600)|round(1) }} hours)
                                     </p>
                                     <p class="mb-1">
@@ -163,10 +163,10 @@
                                         <tr class="{{ 'table-info' if session.is_active else '' }}">
                                             <td>{{ session.job.job_code }}</td>
                                             <td>{{ session.labor_activity.name }}</td>
-                                            <td><span class="local-time" data-utc-time="{{ session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ session.clock_in.strftime('%I:%M %p') }}</span></td>
+                                            <td><span class="local-time" data-utc-time="{{ session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ session.clock_in.strftime('%I:%M %p') }}</span></td>
                                             <td>
                                                 {% if session.clock_out %}
-                                                    <span class="local-time" data-utc-time="{{ session.clock_out.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ session.clock_out.strftime('%I:%M %p') }}</span>
+                                                    <span class="local-time" data-utc-time="{{ session.clock_out.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ session.clock_out.strftime('%I:%M %p') }}</span>
                                                 {% else %}
                                                     <span class="badge bg-info">Active</span>
                                                 {% endif %}
@@ -215,12 +215,12 @@
                                 <div class="list-group-item list-group-item-action">
                                     <div class="d-flex w-100 justify-content-between">
                                         <h6 class="mb-1">{{ session.job.job_code }}</h6>
-                                        <small class="local-date" data-utc-date="{{ session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ session.clock_in.strftime('%m/%d/%Y') }}</small>
+                                        <small class="local-date" data-utc-date="{{ session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}Z">{{ session.clock_in.strftime('%m/%d/%Y') }}</small>
                                     </div>
                                     <p class="mb-1">{{ session.labor_activity.name }}</p>
                                     <small class="time-range" 
-                                         data-start-time="{{ session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}"
-                                         data-end-time="{{ session.clock_out.strftime('%Y-%m-%dT%H:%M:%S') }}"
+                                         data-start-time="{{ session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}Z"
+                                         data-end-time="{{ session.clock_out.strftime('%Y-%m-%dT%H:%M:%S') }}Z"
                                          data-duration="{{ session.get_duration_hours()|round(1) }}">
                                         Loading local time...
                                     </small>
