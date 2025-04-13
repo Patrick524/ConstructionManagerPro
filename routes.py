@@ -213,10 +213,10 @@ def worker_weekly_timesheet():
         entries_created = 0
 
         for i, (day_name, hours_field) in enumerate(days_of_week):
-            # Properly handle None values, empty values, or 0 values - only create entries for positive hours
-            # Convert empty strings to 0 to avoid float validation errors
-            hours_value = hours_field.data if hours_field.data not in [None, ''] else 0
-            if hours_value and float(hours_value) > 0:
+            # With our improved FloatField, empty values are now safely converted to 0.0
+            # So we only need to check for positive hours to create entries
+            hours_value = hours_field.data or 0.0
+            if hours_value > 0:
                 # Calculate the date for this day
                 entry_date = week_start + timedelta(days=i)
 
@@ -226,7 +226,7 @@ def worker_weekly_timesheet():
                     job_id=form.job_id.data,
                     labor_activity_id=form.labor_activity_id.data,
                     date=entry_date,
-                    hours=hours_field.data,
+                    hours=hours_value,  # Use the safely processed value
                     notes=form.notes.data
                 )
                 db.session.add(new_entry)
@@ -422,16 +422,16 @@ def worker_timesheet():
                 activity_id = request.form.get(f'labor_activity_{index}')
                 hours = request.form.get(f'hours_{index}')
 
-                # Convert empty strings to 0 to avoid float validation errors
-                hours_value = hours if hours not in [None, ''] else '0'
-                if activity_id and hours_value and float(hours_value) > 0:
-                    labor_activities.append((int(activity_id), float(hours_value)))
+                # With our improved FloatField handling, this is now cleaner
+                hours_value = float(hours) if hours and hours.strip() else 0.0
+                if activity_id and hours_value > 0:
+                    labor_activities.append((int(activity_id), hours_value))
 
         # Add the first activity if it's valid
-        # Convert empty or None to 0 to avoid float validation errors
-        hours_value = form.hours_1.data if form.hours_1.data not in [None, ''] else 0
-        if form.labor_activity_1.data and hours_value and float(hours_value) > 0:
-            labor_activities.append((form.labor_activity_1.data, float(hours_value)))
+        # With our improved FloatField, we can directly access the data
+        hours_value = form.hours_1.data or 0.0
+        if form.labor_activity_1.data and hours_value > 0:
+            labor_activities.append((form.labor_activity_1.data, hours_value))
 
         # Ensure we have at least one valid labor activity
         if not labor_activities:

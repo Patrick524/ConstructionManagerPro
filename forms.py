@@ -6,19 +6,31 @@ from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationE
 from models import User, Job, LaborActivity
 from datetime import date, timedelta
 
-# Custom FloatField that handles empty inputs
+# Custom FloatField that properly handles empty inputs
 class FloatField(BaseFloatField):
-    """Custom FloatField that properly handles empty strings as None"""
+    """
+    Custom FloatField that properly handles empty strings as None or 0 (based on flag)
+    This provides the cleanest long-term fix for float conversion errors.
+    """
+    def __init__(self, label=None, validators=None, treat_empty_as_zero=False, **kwargs):
+        self.treat_empty_as_zero = treat_empty_as_zero
+        super(FloatField, self).__init__(label, validators, **kwargs)
+    
     def process_formdata(self, valuelist):
-        if valuelist:
-            if valuelist[0] == '':
-                self.data = None
-            else:
-                try:
-                    self.data = float(valuelist[0])
-                except ValueError:
-                    self.data = None
-                    raise ValueError(self.gettext('Not a valid float value'))
+        if not valuelist:
+            self.data = 0.0 if self.treat_empty_as_zero else None
+            return
+            
+        value = valuelist[0].strip()
+        if value == '':
+            self.data = 0.0 if self.treat_empty_as_zero else None
+            return
+            
+        try:
+            self.data = float(value)
+        except ValueError:
+            self.data = None
+            raise ValueError(self.gettext('Not a valid float value'))
     
     def pre_validate(self, form):
         # Skip validation if data is None 
@@ -77,7 +89,7 @@ class TimeEntryForm(FlaskForm):
     
     # These are placeholder for dynamic labor activities - will be handled in JS
     labor_activity_1 = SelectField('Labor Activity', coerce=int, validators=[Optional()])
-    hours_1 = FloatField('Hours', validators=[Optional(), NumberRange(min=0, max=12)])
+    hours_1 = FloatField('Hours', validators=[Optional(), NumberRange(min=0, max=12)], treat_empty_as_zero=True)
     
     notes = TextAreaField('Notes')
     submit = SubmitField('Save Time Entry')
@@ -177,14 +189,15 @@ class WeeklyTimesheetForm(FlaskForm):
     labor_activity_id = SelectField('Labor Activity', coerce=int, validators=[DataRequired()])
     week_start = DateField('Week Starting', validators=[DataRequired()])
     
-    # Daily hours fields with improved validation that properly accepts values like 4 or 4.5
-    monday_hours = FloatField('Monday', validators=[Optional(), NumberRange(min=0, max=12)])
-    tuesday_hours = FloatField('Tuesday', validators=[Optional(), NumberRange(min=0, max=12)])
-    wednesday_hours = FloatField('Wednesday', validators=[Optional(), NumberRange(min=0, max=12)])
-    thursday_hours = FloatField('Thursday', validators=[Optional(), NumberRange(min=0, max=12)]) 
-    friday_hours = FloatField('Friday', validators=[Optional(), NumberRange(min=0, max=12)])
-    saturday_hours = FloatField('Saturday', validators=[Optional(), NumberRange(min=0, max=12)])
-    sunday_hours = FloatField('Sunday', validators=[Optional(), NumberRange(min=0, max=12)])
+    # Daily hours fields with improved validation that properly accepts empty values
+    # treat_empty_as_zero=True ensures empty inputs become 0, which is a safe default
+    monday_hours = FloatField('Monday', validators=[Optional(), NumberRange(min=0, max=12)], treat_empty_as_zero=True)
+    tuesday_hours = FloatField('Tuesday', validators=[Optional(), NumberRange(min=0, max=12)], treat_empty_as_zero=True)
+    wednesday_hours = FloatField('Wednesday', validators=[Optional(), NumberRange(min=0, max=12)], treat_empty_as_zero=True)
+    thursday_hours = FloatField('Thursday', validators=[Optional(), NumberRange(min=0, max=12)], treat_empty_as_zero=True) 
+    friday_hours = FloatField('Friday', validators=[Optional(), NumberRange(min=0, max=12)], treat_empty_as_zero=True)
+    saturday_hours = FloatField('Saturday', validators=[Optional(), NumberRange(min=0, max=12)], treat_empty_as_zero=True)
+    sunday_hours = FloatField('Sunday', validators=[Optional(), NumberRange(min=0, max=12)], treat_empty_as_zero=True)
     
     notes = TextAreaField('Notes for the Week')
     submit = SubmitField('Save Weekly Timesheet')
