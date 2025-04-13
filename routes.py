@@ -1,6 +1,7 @@
 import os
 import csv
 import io
+import base64
 from datetime import datetime, timedelta, date
 from functools import wraps
 from flask import render_template, redirect, url_for, flash, request, jsonify, send_file, session
@@ -18,6 +19,14 @@ import utils
 def inject_now():
     """Inject the current datetime into all templates"""
     return {'now': datetime.utcnow()}
+
+# Template filter to encode binary data as base64
+@app.template_filter('b64encode')
+def b64encode_filter(data):
+    """Convert binary data to base64 string for embedding in templates"""
+    if isinstance(data, bytes):
+        return base64.b64encode(data).decode('utf-8')
+    return base64.b64encode(data.encode('utf-8')).decode('utf-8')
 
 # Helper function to get the Monday of a given week
 def get_week_start(target_date):
@@ -1540,6 +1549,16 @@ def get_report_file():
     # Create a BytesIO object from the data
     file_data = io.BytesIO(report_data)
     file_data.seek(0)
+    
+    # Check if this is an iframe request or direct navigation
+    is_iframe = request.args.get('iframe', 'false') == 'true'
+    
+    # If direct navigation, show a page with a link back
+    if not is_iframe and mimetype == 'application/pdf':
+        return render_template('file_viewer.html', 
+                              report_data=report_data,
+                              filename=filename,
+                              return_url=url_for('generate_reports'))
     
     # Send the file
     return send_file(

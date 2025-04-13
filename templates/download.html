@@ -41,12 +41,16 @@
     window.onload = function() {
         // Start download automatically after 1 second
         setTimeout(function() {
-            window.location.href = "{{ url_for('get_report_file') }}";
+            // Create a hidden iframe to trigger the file download
+            var iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = "{{ url_for('get_report_file') }}?iframe=true";
+            document.body.appendChild(iframe);
             
-            // Redirect back to the reports page after 3 seconds
+            // Redirect back to the reports page after 2 seconds
             setTimeout(function() {
                 window.location.href = "{{ return_url }}";
-            }, 3000);
+            }, 2000);
         }, 1000);
     };
 </script>
