@@ -341,7 +341,7 @@
     function updateLaborActivities() {
         const jobId = document.querySelector('#job_id').value;
         updateJobDetails(jobId);
-        fetch(`/labor_activities/${jobId}`)
+        fetch(`/api/labor_activities/${jobId}`)
             .then(response => response.json())
             .then(data => {
                 const activitySelect = document.querySelector('#labor_activity_id');
