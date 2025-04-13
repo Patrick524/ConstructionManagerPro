@@ -102,10 +102,10 @@ def generate_pdf_report(data, columns, title="Report"):
     doc = SimpleDocTemplate(
         buffer, 
         pagesize=landscape(letter),
-        leftMargin=1.0*inch,
-        rightMargin=1.0*inch,
-        topMargin=1.0*inch,
-        bottomMargin=1.0*inch
+        leftMargin=0.25*inch,
+        rightMargin=0.25*inch,
+        topMargin=0.5*inch,
+        bottomMargin=0.5*inch
     )
 
     # Get styles for paragraphs
