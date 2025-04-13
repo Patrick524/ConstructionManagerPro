@@ -188,6 +188,29 @@ def worker_weekly_timesheet():
         if is_locked:
             flash('Cannot add or edit time entries for this week. It has already been approved.', 'danger')
             return redirect(url_for('worker_weekly_timesheet'))
+        
+        # Check maximum 12 hours per day limit
+        for i, (day_name, hours_field) in enumerate(days_of_week):
+            # Calculate the date for this day
+            entry_date = week_start + timedelta(days=i)
+            
+            # Get hours from current form
+            current_hours = hours_field.data or 0
+            
+            # Get existing hours for this day except for this job/activity
+            existing_hours = db.session.query(db.func.sum(TimeEntry.hours)).filter(
+                TimeEntry.user_id == current_user.id,
+                TimeEntry.date == entry_date,
+                ~((TimeEntry.job_id == form.job_id.data) & 
+                  (TimeEntry.labor_activity_id == form.labor_activity_id.data))
+            ).scalar() or 0
+            
+            total_hours = existing_hours + current_hours
+            
+            if total_hours > 12 and current_hours > 0:
+                day_name_formatted = day_name.capitalize()
+                flash(f'Maximum 12 hours per day exceeded for {day_name_formatted}. You already have {existing_hours:.1f} hours recorded for this day with other jobs/activities.', 'danger')
+                return redirect(url_for('worker_weekly_timesheet'))
 
         # First, delete any existing entries for this week with the same activity
         # This ensures we don't get duplicate entries if the user submits multiple times
@@ -412,6 +435,39 @@ def worker_timesheet():
 
         if is_locked:
             flash('Cannot add or edit time entries for this week. It has already been approved.', 'danger')
+            return redirect(url_for('worker_timesheet'))
+            
+        # Extract all labor activities from the form and calculate total hours
+        total_hours_for_day = 0
+        labor_activities = []
+        for key in request.form.keys():
+            if key.startswith('labor_activity_') and key != 'labor_activity_1':
+                index = key.split('_')[-1]
+                activity_id = request.form.get(f'labor_activity_{index}')
+                hours = request.form.get(f'hours_{index}')
+                hours_value = float(hours) if hours and hours.strip() else 0.0
+                if hours_value > 0:
+                    total_hours_for_day += hours_value
+                    
+        # Add hours from first activity if valid
+        hours_value = form.hours_1.data or 0.0
+        if hours_value > 0:
+            total_hours_for_day += hours_value
+            
+        # Get existing hours for this day from other jobs/activities
+        # that aren't being edited in this form
+        existing_hours = db.session.query(db.func.sum(TimeEntry.hours)).filter(
+            TimeEntry.user_id == current_user.id,
+            TimeEntry.date == form.date.data,
+            TimeEntry.job_id != form.job_id.data  # Only count hours from other jobs
+        ).scalar() or 0
+        
+        # Calculate grand total including existing entries
+        grand_total = total_hours_for_day + existing_hours
+        
+        # Check if total exceeds 12 hours
+        if grand_total > 12 and total_hours_for_day > 0:
+            flash(f'Maximum 12 hours per day exceeded. You already have {existing_hours:.1f} hours recorded for this day with other jobs. The total would be {grand_total:.1f} hours.', 'danger')
             return redirect(url_for('worker_timesheet'))
 
         # Extract all labor activities from the form
@@ -817,6 +873,28 @@ def foreman_enter_time(job_id, user_id):
             form.saturday_hours.data,
             form.sunday_hours.data
         ]
+        
+        # Check maximum 12 hours per day limit
+        for i, date_val in enumerate(dates):
+            # Get hours from current form for this day
+            current_hours = hours_values[i] if hours_values[i] not in [None, ''] else 0
+            
+            if current_hours > 0:
+                # Get existing hours for this day except for this job/activity combination
+                existing_hours = db.session.query(db.func.sum(TimeEntry.hours)).filter(
+                    TimeEntry.user_id == user_id,
+                    TimeEntry.date == date_val,
+                    ~((TimeEntry.job_id == job_id) & 
+                      (TimeEntry.labor_activity_id == form.labor_activity_id.data))
+                ).scalar() or 0
+                
+                total_hours = existing_hours + float(current_hours)
+                
+                if total_hours > 12:
+                    day_name = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][i]
+                    flash(f'Maximum 12 hours per day exceeded for {worker.name} on {day_name}. They already have {existing_hours:.1f} hours recorded for this day. The total would be {total_hours:.1f} hours.', 'danger')
+                    # Pass the week_start to maintain the selected date when redirecting
+                    return redirect(url_for('foreman_dashboard', start_date=week_start.strftime('%m/%d/%Y')))
 
         # First, delete any existing entries for this week with the same activity
         # This ensures we don't get duplicate entries if the foreman submits multiple times
