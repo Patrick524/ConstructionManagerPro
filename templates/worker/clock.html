@@ -220,10 +220,9 @@
                                     <p class="mb-1">{{ session.labor_activity.name }}</p>
                                     <small class="time-range" 
                                          data-start-time="{{ session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}"
-                                         data-end-time="{{ session.clock_out.strftime('%Y-%m-%dT%H:%M:%S') }}">
-                                        {{ session.clock_in.strftime('%I:%M %p') }} - 
-                                        {{ session.clock_out.strftime('%I:%M %p') }}
-                                        ({{ session.get_duration_hours()|round(1) }} hours)
+                                         data-end-time="{{ session.clock_out.strftime('%Y-%m-%dT%H:%M:%S') }}"
+                                         data-duration="{{ session.get_duration_hours()|round(1) }}">
+                                        Loading local time...
                                     </small>
                                 </div>
                             {% endfor %}
@@ -343,8 +342,8 @@
                     hour12: true
                 });
                 
-                // Calculate hours (keep the original calculation from backend)
-                const hours = parseFloat(el.textContent.match(/\(([^)]+)\s*hours\)/)[1]);
+                // Get the duration from the data attribute
+                const hours = el.getAttribute('data-duration');
                 
                 // Update the time range display with just local times 
                 el.textContent = `${startTimeLocal} - ${endTimeLocal} (${hours} hours)`;
