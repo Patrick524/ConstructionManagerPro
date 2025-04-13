@@ -1254,6 +1254,11 @@ def manage_users():
             user.name = form.name.data
             user.email = form.email.data
             user.role = form.role.data
+            # Set the use_clock_in field from the form
+            user.use_clock_in = form.use_clock_in.data
+            
+            # Log the change for debugging
+            print(f"DEBUG: Updated user {user.name} (ID: {user.id}), use_clock_in set to: {user.use_clock_in}")
 
             # Update password if provided
             if form.password.data:
