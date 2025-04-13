@@ -585,6 +585,15 @@ def clock_in():
     
     return redirect(url_for('worker_clock'))
 
+@app.route('/api/job/<int:job_id>')
+@login_required
+def get_job_details(job_id):
+    job = Job.query.get_or_404(job_id)
+    return jsonify({
+        'description': job.description,
+        'foreman_name': job.foreman.name if job.foreman else None
+    })
+
 @app.route('/worker/clock-out', methods=['POST'])
 @login_required
 @worker_required
