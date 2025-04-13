@@ -201,7 +201,9 @@ def worker_weekly_timesheet():
         entries_created = 0
 
         for i, (day_name, hours_field) in enumerate(days_of_week):
-            if hours_field.data and hours_field.data > 0:
+            # Properly handle None values or 0 values - only create entries for positive hours
+            # This fixes the float validation issue
+            if hours_field.data is not None and float(hours_field.data) > 0:
                 # Calculate the date for this day
                 entry_date = week_start + timedelta(days=i)
 
