@@ -111,7 +111,9 @@ def generate_pdf_report(data, columns, title="Report"):
     # Get styles for paragraphs
     styles = getSampleStyleSheet()
     title_style = styles['Heading1']
-    title_style.alignment = 1  # Center alignment for title
+    
+    # Center the title
+    title_style.alignment = 1
 
     # Define Column Headers and their display names
     header_map = {
@@ -151,73 +153,49 @@ def generate_pdf_report(data, columns, title="Report"):
             formatted_row.append(value)
         table_data.append(formatted_row)
 
-    # Determine which columns should be right-aligned (numeric data)
-    numeric_columns = []
-    for i, col in enumerate(columns):
-        if col == 'hours' or col == 'id':
-            numeric_columns.append(i)
-
-    # Set column widths - auto-calculated but with minimums
-    col_widths = [1.2*inch] * len(columns)  # Default width
+    # Create column widths - keeping it fairly simple
+    col_widths = None
     
-    # Give more space to description columns
-    for i, col in enumerate(columns):
-        if 'description' in col or col == 'worker_name':
-            col_widths[i] = 2*inch
-        elif col == 'date':
-            col_widths[i] = 0.9*inch
-        elif col == 'hours':
-            col_widths[i] = 0.7*inch
-            
-    # Create the table with specified column widths
+    # Create the table with auto width
     table = Table(table_data, colWidths=col_widths)
-
-    # Define the base table style
-    style = TableStyle([
-        # Header row styling
-        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),  # Light gray background for header
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+    
+    # Basic table styling - keeping it simple to avoid errors
+    style_list = [
+        # Header styling
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('TOPPADDING', (0, 0), (-1, 0), 12),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),  # Center header cells
         
-        # Cell borders - show all borders
-        ('BOX', (0, 0), (-1, -1), 1, colors.black),
+        # Grid lines
         ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
         
-        # Data rows base styling
+        # Text styling
         ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, -1), 9),
-        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
-        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        
+        # Padding
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
         ('LEFTPADDING', (0, 0), (-1, -1), 6),
         ('RIGHTPADDING', (0, 0), (-1, -1), 6),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-    ])
+    ]
     
-    # Add right alignment for numeric columns
-    for col in numeric_columns:
-        style.add(('ALIGN', (col, 1), (col, -1), 'RIGHT'))
+    # Right-align numeric columns
+    for i, col in enumerate(columns):
+        if col == 'hours' or col == 'id':
+            style_list.append(('ALIGN', (i, 1), (i, -1), 'RIGHT'))
     
-    # Add alternate row coloring for readability
-    row_styles = []
-    # Create a light gray color for alternating rows
-    light_gray = colors.Color(0.9, 0.9, 0.9)
-    
+    # Add simple alternating row colors
     for i in range(1, len(table_data)):
         if i % 2 == 0:
-            row_styles.append(('BACKGROUND', (0, i), (-1, i), colors.white))
-        else:
-            row_styles.append(('BACKGROUND', (0, i), (-1, i), light_gray))
+            style_list.append(('BACKGROUND', (0, i), (-1, i), colors.whitesmoke))
     
-    for cmd in row_styles:
-        style.add(cmd)
-        
-    # Apply all styles at once
-    table.setStyle(style)
-
+    table_style = TableStyle(style_list)
+    
+    # Apply the style
+    table.setStyle(table_style)
+    
     # Build the PDF document content
     elements = []
 
