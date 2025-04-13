@@ -207,7 +207,7 @@ def worker_weekly_timesheet():
             flash('Weekly timesheet updated successfully!', 'success')
 
         # Pass the week_start to maintain the selected date when redirecting
-        return redirect(url_for('worker_history', start_date=week_start.strftime('%Y-%m-%d')))
+        return redirect(url_for('worker_history', start_date=week_start.strftime('%m/%d/%Y')))
 
     # Get job_id from URL parameters if provided
     if job_id and not form.job_id.data:
@@ -430,7 +430,7 @@ def worker_timesheet():
         flash('Time entry saved successfully!', 'success')
         # Pass the date to maintain the selected date when redirecting
         week_start = get_week_start(form.date.data)
-        return redirect(url_for('worker_history', start_date=week_start.strftime('%Y-%m-%d')))
+        return redirect(url_for('worker_history', start_date=week_start.strftime('%m/%d/%Y')))
 
     # Get labor activities for the selected job's trade type
     activities = LaborActivity.query.all()
@@ -450,12 +450,12 @@ def worker_history():
         today = date.today()
         start_date = get_week_start(today)
     else:
-        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        start_date = datetime.strptime(start_date, '%m/%d/%Y').date()
 
     if not end_date:
         end_date = start_date + timedelta(days=6)
     else:
-        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date, '%m/%d/%Y').date()
 
     # Get time entries for the date range
     entries = TimeEntry.query.filter(
@@ -656,7 +656,7 @@ def foreman_dashboard():
         today = date.today()
         start_date = get_week_start(today)
     else:
-        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        start_date = datetime.strptime(start_date, '%m/%d/%Y').date()
 
     end_date = start_date + timedelta(days=6)
 
@@ -745,7 +745,7 @@ def foreman_enter_time(job_id, user_id):
     # Get week start from query parameters or default to current week
     selected_week = request.args.get('week_start')
     if selected_week:
-        form.week_start.data = datetime.strptime(selected_week, '%Y-%m-%d').date()
+        form.week_start.data = datetime.strptime(selected_week, '%m/%d/%Y').date()
     elif not form.week_start.data:
         today = date.today()
         form.week_start.data = get_week_start(today)
@@ -761,9 +761,9 @@ def foreman_enter_time(job_id, user_id):
     ).first()
 
     if existing_approval:
-        flash(f'This week was already approved by {existing_approval.approver.name} on {existing_approval.approved_at.strftime("%Y-%m-%d %H:%M")}. Time entries cannot be modified.', 'warning')
+        flash(f'This week was already approved by {existing_approval.approver.name} on {existing_approval.approved_at.strftime("%m/%d/%Y %H:%M")}. Time entries cannot be modified.', 'warning')
         # Pass the week_start to maintain the selected date when redirecting
-        return redirect(url_for('foreman_dashboard', start_date=week_start.strftime('%Y-%m-%d')))
+        return redirect(url_for('foreman_dashboard', start_date=week_start.strftime('%m/%d/%Y')))
 
     if form.validate_on_submit():
         # Get the dates for each day of the week
@@ -808,7 +808,7 @@ def foreman_enter_time(job_id, user_id):
         db.session.commit()
         flash(f'Time entries for {worker.name} on {job.job_code} successfully saved!', 'success')
         # Pass the week_start to maintain the selected date when redirecting
-        return redirect(url_for('foreman_dashboard', start_date=week_start.strftime('%Y-%m-%d')))
+        return redirect(url_for('foreman_dashboard', start_date=week_start.strftime('%m/%d/%Y')))
 
     # Initialize for template context
     existing_entries = []
@@ -942,7 +942,7 @@ def approve_timesheet(job_id, user_id):
     if not form.week_start.data:
         if url_start_date:
             # Use the start_date from URL
-            form.week_start.data = datetime.strptime(url_start_date, '%Y-%m-%d').date()
+            form.week_start.data = datetime.strptime(url_start_date, '%m/%d/%Y').date()
         else:
             today = date.today()
             form.week_start.data = get_week_start(today)
@@ -958,9 +958,9 @@ def approve_timesheet(job_id, user_id):
     ).first()
 
     if existing_approval:
-        flash(f'This week was already approved by {existing_approval.approver.name} on {existing_approval.approved_at.strftime("%Y-%m-%d %H:%M")}', 'warning')
+        flash(f'This week was already approved by {existing_approval.approver.name} on {existing_approval.approved_at.strftime("%m/%d/%Y %H:%M")}', 'warning')
         # Pass the week_start to maintain the selected date when redirecting
-        return redirect(url_for('foreman_dashboard', start_date=week_start.strftime('%Y-%m-%d')))
+        return redirect(url_for('foreman_dashboard', start_date=week_start.strftime('%m/%d/%Y')))
 
     # Get all time entries for the week
     entries = TimeEntry.query.filter(
@@ -999,7 +999,7 @@ def approve_timesheet(job_id, user_id):
 
         flash(f'Timesheet for {worker.name} on job {job.job_code} successfully approved!', 'success')
         # Pass the week_start to maintain the selected date when redirecting
-        return redirect(url_for('foreman_dashboard', start_date=week_start.strftime('%Y-%m-%d')))
+        return redirect(url_for('foreman_dashboard', start_date=week_start.strftime('%m/%d/%Y')))
 
     # Group entries by date for display
     entries_by_date = {}
@@ -1354,7 +1354,7 @@ def generate_reports():
             'job_labor': 'Job Labor Report',
             'employee_hours': 'Employee Hours Report'
         }
-        report_title = f"{report_titles.get(report_type, 'Report')} ({start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')})"
+        report_title = f"{report_titles.get(report_type, 'Report')} ({start_date.strftime('%m/%d/%Y')} to {end_date.strftime('%m/%d/%Y')})"
 
         # Determine file delivery method (download or email)
         delivery_method = form.delivery_method.data
@@ -1375,7 +1375,7 @@ def generate_reports():
                 email_body = f"""
                 Please find attached the {report_title} you requested.
 
-                Date Range: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}
+                Date Range: {start_date.strftime('%m/%d/%Y')} to {end_date.strftime('%m/%d/%Y')}
                 Report Type: {report_titles.get(report_type, 'Report')}
 
                 This is an automated email from the Construction Timesheet Management System.
@@ -1420,7 +1420,7 @@ def generate_reports():
                 email_body = f"""
                 Please find attached the {report_title} you requested.
 
-                Date Range: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}
+                Date Range: {start_date.strftime('%m/%d/%Y')} to {end_date.strftime('%m/%d/%Y')}
                 Report Type: {report_titles.get(report_type, 'Report')}
 
                 This is an automated email from the Construction Timesheet Management System.
@@ -1476,7 +1476,7 @@ def get_labor_activities(job_id):
 @login_required
 def get_time_entries(date, job_id):
     """API endpoint to get time entries for a specific date and job"""
-    target_date = datetime.strptime(date, '%Y-%m-%d').date()
+    target_date = datetime.strptime(date, '%m/%d/%Y').date()
 
     entries = TimeEntry.query.filter(
         TimeEntry.user_id == current_user.id,
