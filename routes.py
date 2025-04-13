@@ -66,10 +66,14 @@ def admin_required(f):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
+        # Add debug logging for use_clock_in state
         if current_user.is_worker():
+            print(f"DEBUG: Worker {current_user.name} (ID: {current_user.id}) logged in with use_clock_in = {current_user.use_clock_in}")
             if current_user.use_clock_in:
+                print(f"DEBUG: Redirecting worker to clock in/out screen")
                 return redirect(url_for('worker_clock'))
             else:
+                print(f"DEBUG: Redirecting worker to timesheet screen")
                 return redirect(url_for('worker_timesheet'))
         elif current_user.is_foreman():
             return redirect(url_for('foreman_dashboard'))
@@ -86,9 +90,13 @@ def login():
             if next_page:
                 return redirect(next_page)
             elif user.is_worker():
+                # Add debug logging for post-login redirect
+                print(f"DEBUG: Post-login for worker {user.name} (ID: {user.id}) with use_clock_in = {user.use_clock_in}")
                 if user.use_clock_in:
+                    print(f"DEBUG: Redirecting worker to clock in/out screen (post-login)")
                     return redirect(url_for('worker_clock'))
                 else:
+                    print(f"DEBUG: Redirecting worker to timesheet screen (post-login)")
                     return redirect(url_for('worker_timesheet'))
             elif user.is_foreman():
                 return redirect(url_for('foreman_dashboard'))
@@ -1271,8 +1279,12 @@ def manage_users():
             user = User(
                 name=form.name.data,
                 email=form.email.data,
-                role=form.role.data
+                role=form.role.data,
+                use_clock_in=form.use_clock_in.data  # Add the use_clock_in field
             )
+            
+            # Log the creation for debugging
+            print(f"DEBUG: Creating new user {form.name.data}, use_clock_in set to: {form.use_clock_in.data}")
             
             # Set the password
             if form.password.data:
@@ -1304,6 +1316,8 @@ def manage_users():
         form.name.data = user.name
         form.email.data = user.email
         form.role.data = user.role
+        form.use_clock_in.data = user.use_clock_in  # Load the current use_clock_in setting
+        print(f"DEBUG: Editing user {user.name} (ID: {user.id}), current use_clock_in = {user.use_clock_in}")
         editing = True
     else:
         # Not editing (either viewing or adding new)
