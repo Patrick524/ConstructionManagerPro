@@ -53,6 +53,21 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="mb-3">
+                            <label for="location" class="form-label">Location/Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                                {{ form.location(class="form-control", placeholder="Enter job location or address") }}
+                            </div>
+                            {% if form.location.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.location.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
