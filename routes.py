@@ -1,6 +1,7 @@
 import os
 import csv
 import io
+from io import BytesIO
 import base64
 from datetime import datetime, timedelta, date
 from functools import wraps
@@ -1567,12 +1568,12 @@ def get_report_file():
     
     # Get data from session
     report_data = session['report_data']
-    filename = session['report_filename']
-    mimetype = session['report_mimetype']
+    report_filename = session['report_filename']
+    report_mimetype = session['report_mimetype']
     
     # Debug info to track issues
     print(f"DEBUG get_report_file: Got data from session, type={type(report_data)}, length={len(report_data) if isinstance(report_data, bytes) else 'N/A'}")
-    print(f"DEBUG get_report_file: Filename={filename}, Mimetype={mimetype}")
+    print(f"DEBUG get_report_file: Filename={report_filename}, Mimetype={report_mimetype}")
     
     try:
         # Ensure report_data is bytes
@@ -1580,53 +1581,15 @@ def get_report_file():
             print(f"WARNING: report_data is not bytes, it's {type(report_data)}")
             if isinstance(report_data, str):
                 report_data = report_data.encode('utf-8')
-                
-        # Create a BytesIO object from the data
-        file_data = io.BytesIO(report_data)
-        file_data.seek(0)
         
-        # Verify the file_data has content
-        content_check = len(file_data.getvalue())
-        print(f"DEBUG get_report_file: BytesIO created with {content_check} bytes")
-        
-        # Check if this is an iframe request - we'll handle differently
-        is_iframe = request.args.get('iframe', 'false') == 'true'
-        direct_download = request.args.get('download', 'false') == 'true'
-        
-        # For PDF, always force a download with as_attachment=True
-        if mimetype == 'application/pdf' or direct_download:
-            # Force download as attachment regardless of navigation type
-            response = send_file(
-                file_data,
-                mimetype=mimetype,
-                as_attachment=True,
-                download_name=filename
-            )
-            
-            # Add headers to prevent caching which can cause issues on some browsers
-            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-            response.headers["Pragma"] = "no-cache"
-            response.headers["Expires"] = "0"
-            response.headers["Content-Disposition"] = f"attachment; filename={filename}"
-            
-            return response
-        
-        # For non-PDF, follow the standard flow
-        else:
-            # Send the file as download
-            response = send_file(
-                file_data,
-                mimetype=mimetype,
-                as_attachment=True,
-                download_name=filename
-            )
-            
-            # Add headers to prevent caching which can cause issues on some browsers
-            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-            response.headers["Pragma"] = "no-cache"
-            response.headers["Expires"] = "0"
-            
-            return response
+        # SIMPLE, DIRECT FILE SERVING - no conditionals or template rendering
+        # This follows the exact pattern requested
+        return send_file(
+            BytesIO(report_data),
+            mimetype=report_mimetype,
+            as_attachment=True,
+            download_name=report_filename
+        )
         
     except Exception as e:
         print(f"Error sending file: {e}")

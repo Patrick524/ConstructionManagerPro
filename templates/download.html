@@ -41,29 +41,15 @@
     window.onload = function() {
         // Start download automatically after a short delay
         setTimeout(function() {
-            // Create a direct link and click it - more reliable than iframe in most browsers
+            // Direct download - simplest approach with no conditionals
+            window.location.href = "{{ url_for('get_report_file') }}";
+            
+            // Alternative method as fallback (direct link)
             var link = document.createElement('a');
-            link.href = "{{ url_for('get_report_file') }}?download=true";
+            link.href = "{{ url_for('get_report_file') }}";
             link.download = "{{ filename }}";
-            link.setAttribute('download', '{{ filename }}');
             link.style.display = 'none';
             document.body.appendChild(link);
-            link.click();
-            
-            // Alternative method as fallback using a hidden form
-            var form = document.createElement('form');
-            form.method = 'GET';
-            form.action = "{{ url_for('get_report_file') }}";
-            form.style.display = 'none';
-            
-            // Use the download parameter instead of iframe
-            var input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'download';
-            input.value = 'true';
-            form.appendChild(input);
-            
-            document.body.appendChild(form);
             
             // Redirect back to the reports page after delay 
             // Increased delay to ensure download has time to start
