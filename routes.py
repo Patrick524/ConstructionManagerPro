@@ -1108,6 +1108,7 @@ def manage_jobs():
             job = Job(
                 job_code=form.job_code.data,
                 description=form.description.data,
+                location=form.location.data,
                 status=form.status.data,
                 trade_type=form.trade_type.data,
                 foreman_id=form.foreman_id.data if form.foreman_id.data and form.foreman_id.data > 0 else None
