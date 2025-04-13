@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Downloading Report{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Your report is downloading</h4>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <div class="spinner-border text-primary mb-3" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <h5>Your file <strong>{{ filename }}</strong> is being prepared</h5>
+                        <p class="text-muted">The download should begin automatically. If not, click the button below.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <a href="{{ url_for('get_report_file') }}" class="btn btn-primary">
+                            <i class="fas fa-download me-2"></i> Download Now
+                        </a>
+                    </div>
+                    
+                    <div>
+                        <a href="{{ return_url }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i> Return to Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Automatically initiate the download
+    window.onload = function() {
+        // Start download automatically after 1 second
+        setTimeout(function() {
+            window.location.href = "{{ url_for('get_report_file') }}";
+            
+            // Redirect back to the reports page after 3 seconds
+            setTimeout(function() {
+                window.location.href = "{{ return_url }}";
+            }, 3000);
+        }, 1000);
+    };
+</script>
+{% endblock %}
