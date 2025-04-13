@@ -201,9 +201,10 @@ def worker_weekly_timesheet():
         entries_created = 0
 
         for i, (day_name, hours_field) in enumerate(days_of_week):
-            # Properly handle None values or 0 values - only create entries for positive hours
-            # This fixes the float validation issue
-            if hours_field.data is not None and float(hours_field.data) > 0:
+            # Properly handle None values, empty values, or 0 values - only create entries for positive hours
+            # Convert empty strings to 0 to avoid float validation errors
+            hours_value = hours_field.data if hours_field.data not in [None, ''] else 0
+            if hours_value and float(hours_value) > 0:
                 # Calculate the date for this day
                 entry_date = week_start + timedelta(days=i)
 
@@ -409,12 +410,16 @@ def worker_timesheet():
                 activity_id = request.form.get(f'labor_activity_{index}')
                 hours = request.form.get(f'hours_{index}')
 
-                if activity_id and hours and float(hours) > 0:
-                    labor_activities.append((int(activity_id), float(hours)))
+                # Convert empty strings to 0 to avoid float validation errors
+                hours_value = hours if hours not in [None, ''] else '0'
+                if activity_id and hours_value and float(hours_value) > 0:
+                    labor_activities.append((int(activity_id), float(hours_value)))
 
         # Add the first activity if it's valid
-        if form.labor_activity_1.data and form.hours_1.data and form.hours_1.data > 0:
-            labor_activities.append((form.labor_activity_1.data, form.hours_1.data))
+        # Convert empty or None to 0 to avoid float validation errors
+        hours_value = form.hours_1.data if form.hours_1.data not in [None, ''] else 0
+        if form.labor_activity_1.data and hours_value and float(hours_value) > 0:
+            labor_activities.append((form.labor_activity_1.data, float(hours_value)))
 
         # Ensure we have at least one valid labor activity
         if not labor_activities:
@@ -813,14 +818,16 @@ def foreman_enter_time(job_id, user_id):
 
         # Now create new entries for days with hours > 0
         for i, date_val in enumerate(dates):
-            if hours_values[i] > 0:
+            # Convert None or empty string to 0 to avoid comparison errors
+            hours_value = hours_values[i] if hours_values[i] not in [None, ''] else 0
+            if hours_value and float(hours_value) > 0:
                 # Create a new entry
                 entry = TimeEntry(
                     user_id=user_id,
                     job_id=job_id,
                     labor_activity_id=form.labor_activity_id.data,
                     date=date_val,
-                    hours=hours_values[i],
+                    hours=float(hours_value),  # Use the converted value
                     notes=form.notes.data
                 )
                 db.session.add(entry)
