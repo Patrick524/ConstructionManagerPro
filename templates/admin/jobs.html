@@ -141,6 +141,7 @@
                             <tr>
                                 <th data-sort="job_code">Job Code <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="description">Description <i class="fas fa-sort text-muted"></i></th>
+                                <th data-sort="location">Location <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="trade_type">Trade <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="foreman">Foreman <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="status">Status <i class="fas fa-sort text-muted"></i></th>
@@ -154,6 +155,13 @@
                                     <tr class="trade-{{ job.trade_type }}">
                                         <td data-job_code="{{ job.job_code }}">{{ job.job_code }}</td>
                                         <td data-description="{{ job.description }}">{{ job.description }}</td>
+                                        <td data-location="{{ job.location }}">
+                                            {% if job.location %}
+                                                <i class="fas fa-map-marker-alt text-danger me-1"></i>{{ job.location }}
+                                            {% else %}
+                                                <span class="text-muted">No location</span>
+                                            {% endif %}
+                                        </td>
                                         <td data-trade_type="{{ job.trade_type }}">
                                             <span class="badge bg-{{ job.trade_type }}">{{ job.trade_type|capitalize }}</span>
                                         </td>
@@ -192,7 +200,7 @@
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="7" class="text-center py-4">
+                                    <td colspan="8" class="text-center py-4">
                                         <i class="fas fa-briefcase fa-3x text-muted mb-3 d-block"></i>
                                         <h5>No jobs found</h5>
                                         <p class="mb-3">Start by adding your first job using the button above</p>

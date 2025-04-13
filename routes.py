@@ -1095,6 +1095,7 @@ def manage_jobs():
             job = Job.query.get_or_404(job_id)
             job.job_code = form.job_code.data
             job.description = form.description.data
+            job.location = form.location.data
             job.status = form.status.data
             job.trade_type = form.trade_type.data
             # Handle foreman assignment
@@ -1125,6 +1126,7 @@ def manage_jobs():
         job = Job.query.get_or_404(job_id)
         form.job_code.data = job.job_code
         form.description.data = job.description
+        form.location.data = job.location
         form.status.data = job.status
         form.trade_type.data = job.trade_type
         form.foreman_id.data = job.foreman_id if job.foreman_id else 0
