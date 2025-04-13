@@ -1062,22 +1062,36 @@ def admin_dashboard():
         ).scalar() or 0
 
     # Get hours by job for the current week (for chart)
-    job_hours = db.session.query(
+    job_hours_query = db.session.query(
         Job.job_code,
         db.func.sum(TimeEntry.hours).label('total_hours')
     ).join(TimeEntry, Job.id == TimeEntry.job_id).filter(
         TimeEntry.date >= week_start,
         TimeEntry.date <= week_end
     ).group_by(Job.job_code).all()
+    
+    # Convert to JSON-friendly format
+    job_hours = []
+    if job_hours_query:
+        job_labels = [job.job_code for job in job_hours_query]
+        job_values = [float(job.total_hours) for job in job_hours_query]
+        job_hours = list(zip(job_labels, job_values))
 
     # Get hours by trade category for the current week (for chart)
-    trade_hours = db.session.query(
+    trade_hours_query = db.session.query(
         LaborActivity.trade_category,
         db.func.sum(TimeEntry.hours).label('total_hours')
     ).join(TimeEntry, LaborActivity.id == TimeEntry.labor_activity_id).filter(
         TimeEntry.date >= week_start,
         TimeEntry.date <= week_end
     ).group_by(LaborActivity.trade_category).all()
+    
+    # Convert to JSON-friendly format
+    trade_hours = []
+    if trade_hours_query:
+        trade_labels = [trade.trade_category.capitalize() for trade in trade_hours_query]
+        trade_values = [float(trade.total_hours) for trade in trade_hours_query]
+        trade_hours = list(zip(trade_labels, trade_values))
 
     return render_template(
         'admin/dashboard.html',
