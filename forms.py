@@ -1,9 +1,19 @@
-from flask_wtf import FlaskForm
+from flask_wtf import FlaskForm as BaseFlaskForm
 from wtforms import StringField, PasswordField, SubmitField, SelectField, FloatField, EmailField
 from wtforms import TextAreaField, HiddenField, DateField, BooleanField, FieldList, FormField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, NumberRange, Optional
 from models import User, Job, LaborActivity
 from datetime import date, timedelta
+
+class FlaskForm(BaseFlaskForm):
+    """Custom base form class that adds automatic handling of empty values"""
+    def __init__(self, *args, **kwargs):
+        # If data is provided, process it before validation
+        if len(args) > 0 and args[0] is not None and hasattr(self, 'process_data'):
+            args = list(args)
+            args[0] = self.process_data(args[0])
+            args = tuple(args)
+        super(FlaskForm, self).__init__(*args, **kwargs)
 
 class LoginForm(FlaskForm):
     """Form for user login"""
@@ -36,8 +46,8 @@ class TimeEntryForm(FlaskForm):
     date = DateField('Date', validators=[DataRequired()])
     
     # These are placeholder for dynamic labor activities - will be handled in JS
-    labor_activity_1 = SelectField('Labor Activity', coerce=int)
-    hours_1 = FloatField('Hours', validators=[NumberRange(min=0, max=12)])
+    labor_activity_1 = SelectField('Labor Activity', coerce=int, validators=[Optional()])
+    hours_1 = FloatField('Hours', validators=[Optional(), NumberRange(min=0, max=12)])
     
     notes = TextAreaField('Notes')
     submit = SubmitField('Save Time Entry')
@@ -51,6 +61,19 @@ class TimeEntryForm(FlaskForm):
         # Set the first labor activity field with all activities
         self.labor_activity_1.choices = [(activity.id, activity.name) 
                                         for activity in LaborActivity.query.all()]
+                                        
+    def process_data(self, data):
+        """Process form data before validation - convert empty strings to None for hours fields"""
+        # Handle standard hours_1 field
+        if 'hours_1' in data and data['hours_1'] == '':
+            data['hours_1'] = None
+            
+        # Handle dynamically added hours_N fields
+        for key in list(data.keys()):
+            if key.startswith('hours_') and key != 'hours_1' and data[key] == '':
+                data[key] = None
+        
+        return data
 
 class ApprovalForm(FlaskForm):
     """Form for approving time entries"""
@@ -151,21 +174,28 @@ class WeeklyTimesheetForm(FlaskForm):
     def get_total_hours(self):
         """Calculate total hours for the week"""
         total = 0
-        if self.monday_hours.data is not None:
-            total += self.monday_hours.data
-        if self.tuesday_hours.data is not None:
-            total += self.tuesday_hours.data
-        if self.wednesday_hours.data is not None:
-            total += self.wednesday_hours.data
-        if self.thursday_hours.data is not None:
-            total += self.thursday_hours.data
-        if self.friday_hours.data is not None:
-            total += self.friday_hours.data
-        if self.saturday_hours.data is not None:
-            total += self.saturday_hours.data
-        if self.sunday_hours.data is not None:
-            total += self.sunday_hours.data
+        # Helper function to safely convert None or empty string to 0
+        def safe_hours(val):
+            if val in [None, '']:
+                return 0
+            return float(val)
+            
+        total += safe_hours(self.monday_hours.data)
+        total += safe_hours(self.tuesday_hours.data)
+        total += safe_hours(self.wednesday_hours.data)
+        total += safe_hours(self.thursday_hours.data)
+        total += safe_hours(self.friday_hours.data)
+        total += safe_hours(self.saturday_hours.data)
+        total += safe_hours(self.sunday_hours.data)
         return total
+        
+    def process_data(self, data):
+        """Process form data before validation - convert empty strings to None for hours fields"""
+        for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']:
+            field_name = f'{day}_hours'
+            if field_name in data and data[field_name] == '':
+                data[field_name] = None
+        return data
         
 class ClockInForm(FlaskForm):
     """Form for clock in"""
