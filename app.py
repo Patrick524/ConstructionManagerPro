@@ -18,6 +18,7 @@ login_manager = LoginManager()
 
 # Create the app
 app = Flask(__name__)
+app.config['FLASK_APP'] = 'main.py'
 app.secret_key = os.environ.get("SESSION_SECRET", "temporary_secret_key_for_development")
 
 # Configure the database
@@ -36,6 +37,10 @@ app.config["PERMANENT_SESSION_LIFETIME"] = 3600  # Session expires after 1 hour
 # Initialize extensions with the app
 db.init_app(app)
 login_manager.init_app(app)
+
+# Initialize Flask-Migrate
+from flask_migrate import Migrate
+migrate = Migrate(app, db)
 login_manager.login_view = 'login'
 login_manager.login_message_category = 'info'
 
