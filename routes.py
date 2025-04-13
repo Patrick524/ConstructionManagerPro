@@ -1433,15 +1433,19 @@ def generate_reports():
                 # Redirect to download endpoint
                 return redirect(url_for('download_report'))
         else:  # PDF format
+            print(f"DEBUG: Generating PDF report - format explicitly set to: {report_format}")
+            
             # Generate PDF report
             pdf_buffer = utils.generate_pdf_report(data_dicts, columns, title=report_title)
 
             # Generate filename
             filename = f"{report_type}_{start_date.strftime('%m%d%Y')}_{end_date.strftime('%m%d%Y')}.pdf"
+            print(f"DEBUG: PDF filename generated: {filename}")
 
             # Check if we should email the report
             if delivery_method == 'email':
                 recipient_email = form.recipient_email.data
+                print(f"DEBUG: Emailing PDF report to: {recipient_email}")
 
                 # Create email body
                 email_body = f"""
@@ -1477,6 +1481,16 @@ def generate_reports():
                     flash('Error: Generated PDF is empty', 'danger')
                     return redirect(url_for('generate_reports'))
                 
+                print(f"DEBUG: Verified PDF data exists, proceeding with session storage")
+                
+                # Clear any previous report data to avoid conflicts
+                if 'report_data' in session:
+                    del session['report_data']
+                if 'report_filename' in session:
+                    del session['report_filename']
+                if 'report_mimetype' in session:
+                    del session['report_mimetype']
+                    
                 # Store the file data in session - PDF data is already bytes, no need to encode
                 session['report_data'] = pdf_data
                 session['report_filename'] = filename
@@ -1484,12 +1498,10 @@ def generate_reports():
                 
                 # Debug log for confirmation
                 print(f"DEBUG: Successfully stored PDF in session, type: {type(pdf_data)}")
-                
-                # Explicit debug confirmation of PDF mimetype
-                print(f"DEBUG: Setting PDF mimetype to 'application/pdf' for file: {filename}")
+                print(f"DEBUG: Session values - filename: {session['report_filename']}, mimetype: {session['report_mimetype']}")
                 
                 # Set a flash message
-                flash('Report generated successfully. Download will begin shortly.', 'success')
+                flash('PDF report generated successfully. Download will begin shortly.', 'success')
                 
                 # Redirect to download endpoint
                 return redirect(url_for('download_report'))
@@ -1571,7 +1583,7 @@ def get_report_file():
     
     # Get data from session
     report_data = session['report_data']
-    report_filename = session['report_filename']
+    report_filename = session['report_filename'] 
     report_mimetype = session['report_mimetype']
     
     # Debug info to track issues
@@ -1585,14 +1597,35 @@ def get_report_file():
             if isinstance(report_data, str):
                 report_data = report_data.encode('utf-8')
         
-        # SIMPLE, DIRECT FILE SERVING - no conditionals or template rendering
-        # This follows the exact pattern requested
-        return send_file(
-            BytesIO(report_data),
-            mimetype=report_mimetype,
-            as_attachment=True,
-            download_name=report_filename
-        )
+        # Check if this is a PDF file - use additional detection beyond just checking mimetype
+        is_pdf = report_mimetype == 'application/pdf' or report_filename.lower().endswith('.pdf')
+        
+        if is_pdf:
+            print(f"DEBUG: Detected PDF file, using direct file delivery with strict PDF mimetype")
+            # For PDFs, enforce the correct mimetype and force download
+            response = send_file(
+                BytesIO(report_data),
+                mimetype='application/pdf',  # Always use this exact mimetype for PDFs
+                as_attachment=True,
+                download_name=report_filename
+            )
+            
+            # Add headers to ensure browser treats it as a download
+            response.headers["Content-Disposition"] = f"attachment; filename={report_filename}"
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response.headers["Pragma"] = "no-cache" 
+            response.headers["Expires"] = "0"
+            
+            return response
+        else:
+            # For other formats (CSV, etc.)
+            print(f"DEBUG: Non-PDF format detected ({report_mimetype}), using standard file delivery")
+            return send_file(
+                BytesIO(report_data),
+                mimetype=report_mimetype,
+                as_attachment=True,
+                download_name=report_filename
+            )
         
     except Exception as e:
         print(f"Error sending file: {e}")

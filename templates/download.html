@@ -20,10 +20,43 @@
                     </div>
                     
                     <div class="mb-4">
-                        <a href="{{ url_for('get_report_file') }}?download=true" class="btn btn-primary">
+                        <a href="{{ url_for('get_report_file') }}" 
+                           class="btn btn-primary" 
+                           download="{{ filename }}"
+                           target="_blank"
+                           id="download-btn">
                             <i class="fas fa-download me-2"></i> Download Now
                         </a>
                     </div>
+                    
+                    <script>
+                        // Add special behavior for PDF files to force download
+                        document.addEventListener('DOMContentLoaded', function() {
+                            var downloadBtn = document.getElementById('download-btn');
+                            var isPdf = "{{ mimetype }}" === "application/pdf" || "{{ filename }}".toLowerCase().endsWith(".pdf");
+                            
+                            // For PDFs, add onclick handler to force download
+                            if (isPdf) {
+                                downloadBtn.onclick = function(e) {
+                                    e.preventDefault();
+                                    
+                                    // Get URL from button href
+                                    var url = this.getAttribute('href');
+                                    console.log("Manual download initiated for PDF: " + url);
+                                    
+                                    // Create invisible link that forces download
+                                    var link = document.createElement('a');
+                                    link.href = url;
+                                    link.setAttribute('download', "{{ filename }}");
+                                    link.style.display = 'none';
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    
+                                    return false;
+                                };
+                            }
+                        });
+                    </script>
                     
                     <div>
                         <a href="{{ return_url }}" class="btn btn-outline-secondary">
@@ -37,19 +70,37 @@
 </div>
 
 <script>
-    // Automatically initiate the download
+    // Automatically initiate the download with PDF-specific handling
     window.onload = function() {
+        // Check if this is a PDF file
+        var isPdf = "{{ mimetype }}" === "application/pdf" || "{{ filename }}".toLowerCase().endsWith(".pdf");
+        console.log("File type detected:", isPdf ? "PDF" : "{{ mimetype }}");
+        
         // Start download automatically after a short delay
         setTimeout(function() {
-            // Direct download - simplest approach with no conditionals
-            window.location.href = "{{ url_for('get_report_file') }}";
-            
-            // Alternative method as fallback (direct link)
-            var link = document.createElement('a');
-            link.href = "{{ url_for('get_report_file') }}";
-            link.download = "{{ filename }}";
-            link.style.display = 'none';
-            document.body.appendChild(link);
+            if (isPdf) {
+                console.log("Starting PDF download with forced attachment");
+                // For PDFs, use a more reliable approach to force download
+                var pdfUrl = "{{ url_for('get_report_file') }}";
+                
+                // Create an anchor that forces download
+                var link = document.createElement('a');
+                link.href = pdfUrl;
+                link.setAttribute('download', "{{ filename }}");
+                link.setAttribute('target', '_blank');
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                
+                // Also try window.location as backup
+                setTimeout(function() {
+                    window.location.href = pdfUrl;
+                }, 500);
+            } else {
+                // For non-PDF files, just use standard download
+                console.log("Starting standard download for {{ mimetype }}");
+                window.location.href = "{{ url_for('get_report_file') }}";
+            }
             
             // Redirect back to the reports page after delay 
             // Increased delay to ensure download has time to start
