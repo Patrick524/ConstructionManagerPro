@@ -110,10 +110,20 @@ def generate_pdf_report(data, columns, title="Report"):
 
     # Get styles for paragraphs
     styles = getSampleStyleSheet()
-    title_style = styles['Heading1']
     
-    # Center the title
-    title_style.alignment = 1
+    # Create an enhanced title style
+    title_style = styles['Heading1'].clone('CustomTitle')
+    title_style.alignment = 1  # Center the title
+    title_style.fontSize = 16
+    title_style.spaceAfter = 12
+    title_style.spaceBefore = 6
+    title_style.textColor = colors.Color(0.2, 0.2, 0.6)  # Dark blue
+    
+    # Create a subtitle style for timestamp
+    subtitle_style = styles['Normal'].clone('Subtitle')
+    subtitle_style.fontSize = 10
+    subtitle_style.alignment = 1  # Center
+    subtitle_style.spaceAfter = 20  # More space after timestamp
 
     # Define Column Headers and their display names
     header_map = {
@@ -153,32 +163,60 @@ def generate_pdf_report(data, columns, title="Report"):
             formatted_row.append(value)
         table_data.append(formatted_row)
 
-    # Create column widths - keeping it fairly simple
-    col_widths = None
+    # Create better column widths for a more balanced layout
+    col_widths = []
     
-    # Create the table with auto width
+    # Adjust widths based on column type
+    for col in columns:
+        if col == 'id':
+            col_widths.append(0.7*inch)  # ID columns are narrow
+        elif col == 'date':
+            col_widths.append(1.0*inch)  # Date columns have fixed width
+        elif col == 'hours':
+            col_widths.append(0.8*inch)  # Hours columns are narrow
+        elif col == 'approved':
+            col_widths.append(0.9*inch)  # Boolean columns
+        elif 'description' in col or col == 'job_description':
+            col_widths.append(2.5*inch)  # Description columns need more space
+        elif col == 'worker_name':
+            col_widths.append(1.8*inch)  # Name columns need moderate space
+        else:
+            col_widths.append(1.5*inch)  # Default width for other columns
+    
+    # Create the table with specified widths
     table = Table(table_data, colWidths=col_widths)
     
-    # Basic table styling - keeping it simple to avoid errors
+    # Create a dark color for the header (similar to #333)
+    dark_header = colors.Color(0.2, 0.2, 0.2)
+    # Create a light gray for zebra striping (similar to #f9f9f9)
+    light_gray = colors.Color(0.98, 0.98, 0.98)
+    
+    # Basic table styling with improved appearance
     style_list = [
-        # Header styling
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        # Header styling - dark background with white text
+        ('BACKGROUND', (0, 0), (-1, 0), dark_header),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'),  # Center header cells
+        ('FONTSIZE', (0, 0), (-1, 0), 10),     # Slightly larger font for header
         
         # Grid lines
         ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+        ('BOX', (0, 0), (-1, -1), 1, colors.black),  # Thicker outer border
         
         # Text styling
         ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
         
-        # Padding
-        ('TOPPADDING', (0, 0), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ('LEFTPADDING', (0, 0), (-1, -1), 6),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        # Padding - add more padding for better readability
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+        
+        # Extra padding for header row
+        ('TOPPADDING', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
     ]
     
     # Right-align numeric columns
@@ -186,10 +224,12 @@ def generate_pdf_report(data, columns, title="Report"):
         if col == 'hours' or col == 'id':
             style_list.append(('ALIGN', (i, 1), (i, -1), 'RIGHT'))
     
-    # Add simple alternating row colors
+    # Add zebra striping - alternating light gray and white backgrounds
     for i in range(1, len(table_data)):
         if i % 2 == 0:
-            style_list.append(('BACKGROUND', (0, i), (-1, i), colors.whitesmoke))
+            style_list.append(('BACKGROUND', (0, i), (-1, i), colors.white))
+        else:
+            style_list.append(('BACKGROUND', (0, i), (-1, i), light_gray))
     
     table_style = TableStyle(style_list)
     
@@ -201,19 +241,26 @@ def generate_pdf_report(data, columns, title="Report"):
 
     # Add title
     elements.append(Paragraph(title, title_style))
-    elements.append(Spacer(1, 12))
 
-    # Add timestamp
+    # Add timestamp with improved style
     timestamp = Paragraph(f"Generated: {datetime.now().strftime('%m/%d/%Y %H:%M:%S')}", 
-                          styles['Normal'])
+                          subtitle_style)
     elements.append(timestamp)
-    elements.append(Spacer(1, 12))
 
     # Add the table
     elements.append(table)
 
-    # Build and return the PDF
-    doc.build(elements)
+    # Create a function to add a footer to each page
+    def add_footer(canvas, doc):
+        canvas.saveState()
+        footer_text = "Construction Timesheet Management System © 2025"
+        canvas.setFont('Helvetica', 8)
+        canvas.setFillColor(colors.Color(0.7, 0.7, 0.7))  # Light gray color
+        canvas.drawCentredString(doc.pagesize[0]/2, 0.25*inch, footer_text)
+        canvas.restoreState()
+
+    # Build the PDF with the footer function
+    doc.build(elements, onFirstPage=add_footer, onLaterPages=add_footer)
     buffer.seek(0)
     return buffer
 
