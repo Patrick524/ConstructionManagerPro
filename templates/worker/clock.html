@@ -125,7 +125,7 @@
                             <div class="d-inline-block p-3 rounded-circle bg-light text-dark">
                                 <i class="fas fa-clipboard-check fa-2x"></i>
                             </div>
-                            <p class="mt-2">{{ active_session is not none }}</p>
+                            <p class="mt-2">{{ 'Yes' if active_session is not none else 'No' }}</p>
                             <p class="text-muted">Active</p>
                         </div>
                     </div>
