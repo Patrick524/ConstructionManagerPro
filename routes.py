@@ -1475,11 +1475,14 @@ def generate_reports():
                 if not pdf_data:
                     flash('Error: Generated PDF is empty', 'danger')
                     return redirect(url_for('generate_reports'))
-                    
-                # Store the file data in session for download
+                
+                # Store the file data in session - PDF data is already bytes, no need to encode
                 session['report_data'] = pdf_data
                 session['report_filename'] = filename
                 session['report_mimetype'] = 'application/pdf'
+                
+                # Debug log for confirmation
+                print(f"DEBUG: Successfully stored PDF in session, type: {type(pdf_data)}")
                 
                 # Set a flash message
                 flash('Report generated successfully. Download will begin shortly.', 'success')
@@ -1567,10 +1570,23 @@ def get_report_file():
     filename = session['report_filename']
     mimetype = session['report_mimetype']
     
+    # Debug info to track issues
+    print(f"DEBUG get_report_file: Got data from session, type={type(report_data)}, length={len(report_data) if isinstance(report_data, bytes) else 'N/A'}")
+    
     try:
+        # Ensure report_data is bytes
+        if not isinstance(report_data, bytes):
+            print(f"WARNING: report_data is not bytes, it's {type(report_data)}")
+            if isinstance(report_data, str):
+                report_data = report_data.encode('utf-8')
+                
         # Create a BytesIO object from the data
         file_data = io.BytesIO(report_data)
         file_data.seek(0)
+        
+        # Verify the file_data has content
+        content_check = len(file_data.getvalue())
+        print(f"DEBUG get_report_file: BytesIO created with {content_check} bytes")
         
         # Check if this is an iframe request or direct navigation
         is_iframe = request.args.get('iframe', 'false') == 'true'

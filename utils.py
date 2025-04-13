@@ -249,11 +249,9 @@ def generate_pdf_report(data, columns, title="Report"):
 
     # Add the table
     elements.append(table)
-
-    # Apply zebra striping to the table
-    for i in range(1, len(table_data)):  # Start from 1 to skip header
-        if i % 2 == 0:  # Every other row
-            style_list.append(('BACKGROUND', (0, i), (-1, i), colors.whitesmoke))
+    
+    # We already applied zebra striping earlier, no need to do it again
+    # Removed duplicate zebra striping that was causing issues
 
     # Create a function to add a footer to the bottom-right corner of each page
     def add_footer(canvas, doc):
@@ -282,10 +280,26 @@ def generate_pdf_report(data, columns, title="Report"):
     pdf_data = buffer.getvalue()
     buffer.close()
     
+    # Debug help - log the type and size before return
+    print(f"DEBUG: PDF data type: {type(pdf_data)}, size: {len(pdf_data)} bytes")
+    if len(pdf_data) == 0:
+        print("ERROR: Generated PDF is empty!")
+    
     # Return a new buffer with the content
-    new_buffer = io.BytesIO(pdf_data)
-    new_buffer.seek(0)
-    return new_buffer
+    try:
+        new_buffer = io.BytesIO(pdf_data)
+        new_buffer.seek(0)
+        
+        # Verify buffer has content
+        size_check = len(new_buffer.getvalue())
+        print(f"DEBUG: Final PDF buffer size check: {size_check} bytes")
+        
+        return new_buffer
+    except Exception as e:
+        print(f"ERROR in generate_pdf_report: {str(e)}")
+        # Return an empty buffer rather than None to avoid crashes
+        empty_buffer = io.BytesIO()
+        return empty_buffer
 
 def send_email_with_attachment(recipient_email, subject, body, attachment_data=None, attachment_filename=None, attachment_mimetype=None):
     """
