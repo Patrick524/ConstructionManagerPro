@@ -1,9 +1,29 @@
 from flask_wtf import FlaskForm as BaseFlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField, FloatField, EmailField
+from wtforms import StringField, PasswordField, SubmitField, SelectField, FloatField as BaseFloatField, EmailField
 from wtforms import TextAreaField, HiddenField, DateField, BooleanField, FieldList, FormField
+from wtforms import widgets, Field
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, NumberRange, Optional
 from models import User, Job, LaborActivity
 from datetime import date, timedelta
+
+# Custom FloatField that handles empty inputs
+class FloatField(BaseFloatField):
+    """Custom FloatField that properly handles empty strings as None"""
+    def process_formdata(self, valuelist):
+        if valuelist:
+            if valuelist[0] == '':
+                self.data = None
+            else:
+                try:
+                    self.data = float(valuelist[0])
+                except ValueError:
+                    self.data = None
+                    raise ValueError(self.gettext('Not a valid float value'))
+    
+    def pre_validate(self, form):
+        if self.data is None:
+            return
+        super().pre_validate(form)
 
 class FlaskForm(BaseFlaskForm):
     """Custom base form class that adds automatic handling of empty values"""
