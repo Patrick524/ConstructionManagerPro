@@ -302,15 +302,35 @@
             try {
                 // Parse the UTC time
                 const utcDate = new Date(utcTimeStr);
+                const now = new Date();
                 
-                // Format the local time
-                const localTimeStr = utcDate.toLocaleTimeString(undefined, {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                });
+                // Check if this is from today
+                const isToday = utcDate.getDate() === now.getDate() && 
+                                utcDate.getMonth() === now.getMonth() && 
+                                utcDate.getFullYear() === now.getFullYear();
                 
-                // Update the display with only local time
+                // Format the local time - with date if not today
+                let localTimeStr;
+                
+                if (isToday) {
+                    // Today - just show time
+                    localTimeStr = utcDate.toLocaleTimeString(undefined, {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                } else {
+                    // Not today - show date and time
+                    localTimeStr = utcDate.toLocaleString(undefined, {
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                }
+                
+                // Update the display with the formatted local time
                 el.textContent = localTimeStr;
             } catch (error) {
                 console.error("Error converting time:", error);
@@ -351,24 +371,66 @@
                 // Parse the UTC time strings
                 const startDate = new Date(startTimeStr);
                 const endDate = new Date(endTimeStr);
+                const now = new Date();
+                
+                // Check if both dates are from today
+                const isSameDay = startDate.getDate() === endDate.getDate() && 
+                                  startDate.getMonth() === endDate.getMonth() && 
+                                  startDate.getFullYear() === endDate.getFullYear();
+                                  
+                const isToday = startDate.getDate() === now.getDate() && 
+                               startDate.getMonth() === now.getMonth() && 
+                               startDate.getFullYear() === now.getFullYear();
                 
                 // Format the local times
-                const startTimeLocal = startDate.toLocaleTimeString(undefined, {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                });
+                let startTimeLocal, endTimeLocal;
                 
-                const endTimeLocal = endDate.toLocaleTimeString(undefined, {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                });
+                if (isToday) {
+                    // Today - just show time
+                    startTimeLocal = startDate.toLocaleTimeString(undefined, {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                    
+                    endTimeLocal = endDate.toLocaleTimeString(undefined, {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                } else {
+                    // Not today - include date with time
+                    startTimeLocal = startDate.toLocaleString(undefined, {
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                    
+                    if (isSameDay) {
+                        // End time on same day - just show time
+                        endTimeLocal = endDate.toLocaleTimeString(undefined, {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
+                        });
+                    } else {
+                        // End time on different day - show full date and time
+                        endTimeLocal = endDate.toLocaleString(undefined, {
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
+                        });
+                    }
+                }
                 
                 // Get the duration from the data attribute
                 const hours = el.getAttribute('data-duration');
                 
-                // Update the time range display with just local times 
+                // Update the time range display with the properly formatted times
                 el.textContent = `${startTimeLocal} - ${endTimeLocal} (${hours} hours)`;
             } catch (error) {
                 console.error("Error converting time range:", error);
