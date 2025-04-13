@@ -293,7 +293,80 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Leaflet JavaScript -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
 <script>
+    // Maps objects to keep track of map instances
+    let activeSessionMap = null;
+    let jobSelectMap = null;
+    
+    // Function to initialize Leaflet map
+    function initMap(containerId, location) {
+        // Clear existing map if any
+        if (containerId === 'activeSessionMap' && activeSessionMap) {
+            activeSessionMap.remove();
+            activeSessionMap = null;
+        } else if (containerId === 'jobSelectMap' && jobSelectMap) {
+            jobSelectMap.remove();
+            jobSelectMap = null;
+        }
+        
+        const container = document.getElementById(containerId);
+        if (!container) return null;
+        
+        // Initialize map
+        const map = L.map(container).setView([0, 0], 13);
+        
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Geocode the location and center map
+        if (location) {
+            geocodeLocation(location, map);
+        }
+        
+        // Store map reference
+        if (containerId === 'activeSessionMap') {
+            activeSessionMap = map;
+        } else if (containerId === 'jobSelectMap') {
+            jobSelectMap = map;
+        }
+        
+        return map;
+    }
+    
+    // Function to geocode location using Nominatim API
+    function geocodeLocation(address, map) {
+        const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;
+        
+        fetch(nominatimUrl)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.length > 0) {
+                    const result = data[0];
+                    const lat = parseFloat(result.lat);
+                    const lon = parseFloat(result.lon);
+                    
+                    // Center map and add marker
+                    map.setView([lat, lon], 13);
+                    L.marker([lat, lon]).addTo(map)
+                        .bindPopup(address)
+                        .openPopup();
+                } else {
+                    console.warn('Location not found:', address);
+                }
+            })
+            .catch(error => {
+                console.error('Error geocoding address:', error);
+            });
+    }
+    
+    // This code is now in the main DOMContentLoaded event listener below
+    
     // Function to update job details panel
     function updateJobDetails(jobId) {
         const panel = document.getElementById('jobDetailsPanel');
@@ -301,7 +374,6 @@
         const locationContainer = document.getElementById('jobLocationContainer');
         const location = document.getElementById('jobLocation');
         const mapContainer = document.getElementById('jobMapContainer');
-        const map = document.getElementById('jobMap');
         const foreman = document.getElementById('jobForeman');
 
         if (!jobId) {
@@ -319,10 +391,12 @@
                 if (data.location) {
                     location.textContent = data.location;
                     locationContainer.classList.remove('d-none');
-                    
-                    // Set up map iframe
-                    map.src = `https://www.google.com/maps/embed/v1/place?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&q=${encodeURIComponent(data.location)}`;
                     mapContainer.classList.remove('d-none');
+                    
+                    // Initialize or update map with the location
+                    setTimeout(() => {
+                        initMap('jobSelectMap', data.location);
+                    }, 100);
                 } else {
                     locationContainer.classList.add('d-none');
                     mapContainer.classList.add('d-none');
@@ -546,11 +620,21 @@
 
     // Add event listeners
     document.addEventListener('DOMContentLoaded', function() {
+        // Initialize job select and labor activities
         const jobSelect = document.querySelector('#job_id');
         if (jobSelect) {
             jobSelect.addEventListener('change', updateLaborActivities);
             // Initial load
             updateLaborActivities();
+        }
+        
+        // Initialize active session map if available
+        const activeMapContainer = document.getElementById('activeSessionMap');
+        if (activeMapContainer) {
+            const location = activeMapContainer.getAttribute('data-location');
+            if (location) {
+                initMap('activeSessionMap', location);
+            }
         }
 
         // Display local time
