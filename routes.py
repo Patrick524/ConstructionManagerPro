@@ -1485,6 +1485,9 @@ def generate_reports():
                 # Debug log for confirmation
                 print(f"DEBUG: Successfully stored PDF in session, type: {type(pdf_data)}")
                 
+                # Explicit debug confirmation of PDF mimetype
+                print(f"DEBUG: Setting PDF mimetype to 'application/pdf' for file: {filename}")
+                
                 # Set a flash message
                 flash('Report generated successfully. Download will begin shortly.', 'success')
                 
