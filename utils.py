@@ -259,7 +259,7 @@ def format_date(date_obj):
 def format_datetime(datetime_obj):
     """Format a datetime for display."""
     if datetime_obj:
-        return datetime_obj.strftime('%Y-%m-%d %H:%M')
+        return datetime_obj.strftime('%m/%d/%Y %H:%M')
     return ''
 
 def get_labor_activities_for_job(job_id):

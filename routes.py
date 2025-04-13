@@ -1365,7 +1365,7 @@ def generate_reports():
             csv_data = utils.generate_csv_report(data_dicts, columns)
 
             # Generate filename
-            filename = f"{report_type}_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.csv"
+            filename = f"{report_type}_{start_date.strftime('%m%d%Y')}_{end_date.strftime('%m%d%Y')}.csv"
 
             # Check if we should email the report
             if delivery_method == 'email':
