@@ -21,7 +21,7 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body p-0">
-                    <object data="{{ url_for('get_report_file') }}" type="application/pdf" width="100%" height="800px">
+                    <object data="data:application/pdf;base64,{{ report_data }}" type="application/pdf" width="100%" height="800px">
                         <p>Unable to display PDF. <a href="{{ url_for('get_report_file') }}" download="{{ filename }}">Download</a> instead.</p>
                     </object>
                 </div>

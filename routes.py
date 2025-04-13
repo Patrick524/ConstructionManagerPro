@@ -1567,27 +1567,42 @@ def get_report_file():
     filename = session['report_filename']
     mimetype = session['report_mimetype']
     
-    # Create a BytesIO object from the data
-    file_data = io.BytesIO(report_data)
-    file_data.seek(0)
-    
-    # Check if this is an iframe request or direct navigation
-    is_iframe = request.args.get('iframe', 'false') == 'true'
-    
-    # If direct navigation, show a page with a link back
-    if not is_iframe and mimetype == 'application/pdf':
-        return render_template('file_viewer.html', 
-                              report_data=report_data,
-                              filename=filename,
-                              return_url=url_for('generate_reports'))
-    
-    # Send the file
-    return send_file(
-        file_data,
-        mimetype=mimetype,
-        as_attachment=True,
-        download_name=filename
-    )
+    try:
+        # Create a BytesIO object from the data
+        file_data = io.BytesIO(report_data)
+        file_data.seek(0)
+        
+        # Check if this is an iframe request or direct navigation
+        is_iframe = request.args.get('iframe', 'false') == 'true'
+        
+        # If direct navigation and PDF, show a page with embedded PDF viewer
+        if not is_iframe and mimetype == 'application/pdf':
+            # For PDF viewer, we'll use base64 encoding in the template
+            encoded_data = base64.b64encode(report_data).decode('utf-8')
+            return render_template('file_viewer.html', 
+                                  report_data=encoded_data,
+                                  filename=filename,
+                                  return_url=url_for('generate_reports'))
+        
+        # Send the file as download
+        response = send_file(
+            file_data,
+            mimetype=mimetype,
+            as_attachment=True,
+            download_name=filename
+        )
+        
+        # Add headers to prevent caching which can cause issues on some browsers
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        
+        return response
+        
+    except Exception as e:
+        print(f"Error sending file: {e}")
+        flash(f'Error downloading file: {str(e)}', 'danger')
+        return redirect(url_for('generate_reports'))
 
 @app.route('/debug')
 def debug_route():
