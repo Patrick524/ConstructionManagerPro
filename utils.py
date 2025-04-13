@@ -98,14 +98,14 @@ def generate_pdf_report(data, columns, title="Report"):
     # Create a buffer for the PDF
     buffer = io.BytesIO()
 
-    # Create the PDF document with landscape orientation for better readability
+    # Create the PDF document with landscape orientation and 1-inch margins
     doc = SimpleDocTemplate(
         buffer, 
         pagesize=landscape(letter),
-        leftMargin=0.5*inch,
-        rightMargin=0.5*inch,
-        topMargin=0.5*inch,
-        bottomMargin=0.5*inch
+        leftMargin=1.0*inch,
+        rightMargin=1.0*inch,
+        topMargin=1.0*inch,
+        bottomMargin=1.0*inch
     )
 
     # Get styles for paragraphs
@@ -208,7 +208,7 @@ def generate_pdf_report(data, columns, title="Report"):
         ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
         ('FONTSIZE', (0, 1), (-1, -1), 9),
         
-        # Padding - add more padding for better readability
+        # Padding - increased for better readability (8px)
         ('TOPPADDING', (0, 0), (-1, -1), 8),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
         ('LEFTPADDING', (0, 0), (-1, -1), 8),
@@ -250,13 +250,19 @@ def generate_pdf_report(data, columns, title="Report"):
     # Add the table
     elements.append(table)
 
-    # Create a function to add a footer to each page
+    # Create a function to add a footer to the bottom-right corner of each page
     def add_footer(canvas, doc):
         canvas.saveState()
         footer_text = "Construction Timesheet Management System © 2025"
-        canvas.setFont('Helvetica', 8)
-        canvas.setFillColor(colors.Color(0.7, 0.7, 0.7))  # Light gray color
-        canvas.drawCentredString(doc.pagesize[0]/2, 0.25*inch, footer_text)
+        # Use a smaller font size (7pt)
+        canvas.setFont('Helvetica', 7)
+        # Use a lighter gray color
+        canvas.setFillColor(colors.Color(0.75, 0.75, 0.75))
+        # Position at bottom-right with 0.5 inch margin
+        text_width = canvas.stringWidth(footer_text, 'Helvetica', 7)
+        x_position = doc.pagesize[0] - 0.5*inch - text_width
+        y_position = 0.3*inch
+        canvas.drawString(x_position, y_position, footer_text)
         canvas.restoreState()
 
     # Build the PDF with the footer function
