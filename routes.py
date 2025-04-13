@@ -1469,8 +1469,15 @@ def generate_reports():
 
                 return redirect(url_for('generate_reports'))
             else:
+                # Get PDF data and validate
+                pdf_data = pdf_buffer.getvalue()
+                print(f"DEBUG: PDF size before storing in session: {len(pdf_data)} bytes")
+                if not pdf_data:
+                    flash('Error: Generated PDF is empty', 'danger')
+                    return redirect(url_for('generate_reports'))
+                    
                 # Store the file data in session for download
-                session['report_data'] = pdf_buffer.getvalue()
+                session['report_data'] = pdf_data
                 session['report_filename'] = filename
                 session['report_mimetype'] = 'application/pdf'
                 

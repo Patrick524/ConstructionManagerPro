@@ -273,7 +273,19 @@ def generate_pdf_report(data, columns, title="Report"):
     # Build the PDF with the footer function
     doc.build(elements, onFirstPage=add_footer, onLaterPages=add_footer)
     buffer.seek(0)
-    return buffer
+    
+    # Get PDF size and log it
+    pdf_size = len(buffer.getvalue())
+    print(f"DEBUG: Generated PDF size: {pdf_size} bytes")
+    
+    # Create a new buffer with the content
+    pdf_data = buffer.getvalue()
+    buffer.close()
+    
+    # Return a new buffer with the content
+    new_buffer = io.BytesIO(pdf_data)
+    new_buffer.seek(0)
+    return new_buffer
 
 def send_email_with_attachment(recipient_email, subject, body, attachment_data=None, attachment_filename=None, attachment_mimetype=None):
     """
