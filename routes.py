@@ -175,7 +175,9 @@ def worker_weekly_timesheet():
     # Default to current week if no week start provided
     if not form.week_start.data:
         today = date.today()
-        form.week_start.data = get_week_start(today)
+        # Always use this formula for current week start (Monday)
+        form.week_start.data = today - timedelta(days=today.weekday())
+        print(f"DEBUG: Setting current week start to: {form.week_start.data} (Today is {today})")
 
     week_start = form.week_start.data
     week_end = week_start + timedelta(days=6)

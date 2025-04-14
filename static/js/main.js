@@ -109,6 +109,8 @@ function setupWeekNavigation() {
                 const day = String(today.getDate()).padStart(2, '0');
                 const currentMonday = `${year}-${month}-${day}`;
                 
+                console.log(`Current Week: Today=${new Date().toISOString().split('T')[0]}, Current Monday=${currentMonday}`);
+                
                 // Update URL and reload
                 const url = new URL(window.location);
                 url.searchParams.set('start_date', currentMonday);
@@ -123,7 +125,10 @@ function setupWeekNavigation() {
  * Always align to Monday (the start of the week)
  */
 function navigateToWeek(startDate, dayOffset) {
+    // Create a date from the current start date
     const date = new Date(startDate);
+    
+    // Apply the day offset (7 days for next week, -7 days for previous week)
     date.setDate(date.getDate() + dayOffset);
     
     // Align to Monday (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
@@ -136,6 +141,8 @@ function navigateToWeek(startDate, dayOffset) {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const newStartDate = `${year}-${month}-${day}`;
+    
+    console.log(`Navigation: ${startDate} offset=${dayOffset} → new date=${newStartDate}`);
     
     // Update URL and reload
     const url = new URL(window.location);
