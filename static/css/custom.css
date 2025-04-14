@@ -144,29 +144,38 @@
     color: var(--bs-primary);
 }
 
+/* Dashboard Legend styling - Added to address the user request */
+.dashboard-legend { /* Assumed class name for the legend container */
+    background-color: #2C2C3E;
+    color: #FFFFFF;
+    padding: 1rem; /* Maintain existing padding */
+    border-radius: 0.5rem; /* Maintain existing border-radius */
+}
+
+
 /* Mobile optimizations */
 @media (max-width: 768px) {
     .container {
         padding-left: 15px;
         padding-right: 15px;
     }
-    
+
     .table-responsive {
         font-size: 0.9rem;
     }
-    
+
     .btn {
         padding: 0.5rem 0.75rem;
     }
-    
+
     .dashboard-widget-value {
         font-size: 2rem;
     }
-    
+
     .dashboard-widget {
         padding: 1rem;
     }
-    
+
     .activity-entry {
         padding: 0.75rem;
     }
@@ -184,6 +193,12 @@
     --bs-danger: #cc0000;
     --bs-light: #f8f9fa;
     --bs-dark: #212529;
-    
+
     font-weight: bold;
+}
+
+.card {
+    margin-bottom: 1.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease-in-out;
 }
