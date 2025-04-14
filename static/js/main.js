@@ -75,18 +75,50 @@ function setupWeekNavigation() {
     const nextWeekBtn = document.getElementById('next-week');
     const currentWeekBtn = document.getElementById('current-week');
     
+    // Highlight the current week button if we're on the current week
+    function updateCurrentWeekHighlight() {
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // If Sunday (0), go back 6 days, otherwise go back (dayOfWeek - 1) days
+        const thisMonday = new Date(today);
+        thisMonday.setDate(today.getDate() - daysToSubtract);
+        
+        // Format as YYYY-MM-DD for comparison
+        const thisMondayStr = thisMonday.toISOString().slice(0, 10);
+        
+        // Get the displayed week start date from the alert element
+        const weekAlert = document.querySelector('.alert[data-current-week-start]');
+        if (weekAlert && weekAlert.dataset.currentWeekStart) {
+            // If the displayed week is the current week, highlight the Current Week button
+            if (weekAlert.dataset.currentWeekStart === thisMondayStr) {
+                currentWeekBtn.classList.add('btn-primary');
+                currentWeekBtn.classList.remove('btn-outline-primary');
+            } else {
+                currentWeekBtn.classList.remove('btn-primary');
+                currentWeekBtn.classList.add('btn-outline-primary');
+            }
+        }
+    }
+    
     if (prevWeekBtn && nextWeekBtn && currentWeekBtn) {
         // Extract the start date from the alert - this contains the Monday set by the backend
         const weekAlert = document.querySelector('.alert[data-current-week-start]');
         
         if (weekAlert && weekAlert.dataset.currentWeekStart) {
-            // Use the date directly from the backend, which should already be a Monday
-            const currentWeekStart = new Date(weekAlert.dataset.currentWeekStart);
+            // Always get a fresh date from the DOM when needed
+            function getCurrentWeekStart() {
+                return new Date(weekAlert.dataset.currentWeekStart);
+            }
             
             console.log(`Week navigation initialized with start date: ${weekAlert.dataset.currentWeekStart}`);
             
+            // Update the current week highlight
+            updateCurrentWeekHighlight();
+            
             // Set up previous week button
-            prevWeekBtn.addEventListener('click', function() {
+            prevWeekBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const currentWeekStart = getCurrentWeekStart();
                 const prevWeek = new Date(currentWeekStart);
                 prevWeek.setDate(prevWeek.getDate() - 7);
                 
@@ -102,7 +134,9 @@ function setupWeekNavigation() {
             });
             
             // Set up next week button
-            nextWeekBtn.addEventListener('click', function() {
+            nextWeekBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const currentWeekStart = getCurrentWeekStart();
                 const nextWeek = new Date(currentWeekStart);
                 nextWeek.setDate(nextWeek.getDate() + 7);
                 
@@ -119,7 +153,8 @@ function setupWeekNavigation() {
             
             // Set up current week button - for the current week, we don't include any date params
             // This will let the backend use its default logic to calculate the current week
-            currentWeekBtn.addEventListener('click', function() {
+            currentWeekBtn.addEventListener('click', function(e) {
+                e.preventDefault();
                 // Remove any start_date from the URL if present, to let backend use its default logic
                 const url = new URL(window.location);
                 url.searchParams.delete('start_date');
