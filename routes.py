@@ -1381,8 +1381,8 @@ def admin_dashboard():
         recent_approvals=recent_approvals,
         job_hours=job_hours,
         trade_hours=trade_hours,
-        week_start=start_date,
-        week_end=end_date
+        start_date=start_date,
+        end_date=end_date
     )
 
 @app.route('/admin/jobs', methods=['GET', 'POST'])
