@@ -575,7 +575,6 @@ def worker_timesheet(entry_id=None):
 def worker_history():
     # Get date range parameters from query string
     start_date_str = request.args.get('start_date')
-    end_date_str = request.args.get('end_date')
     
     # Default to current week
     today = date.today()
@@ -587,27 +586,22 @@ def worker_history():
         try:
             # Try both common formats: %m/%d/%Y and %Y-%m-%d
             if '/' in start_date_str:
-                start_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
+                parsed_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
             elif '-' in start_date_str:
-                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                parsed_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
             else:
                 print(f"WARNING: Invalid date format in start_date: {start_date_str}")
+                parsed_date = None
+                
+            # Always align to Monday
+            if parsed_date:
+                start_date = get_week_start(parsed_date)
+                print(f"DEBUG: Aligned date {parsed_date} to Monday: {start_date}")
         except ValueError as e:
             print(f"WARNING: Error parsing start_date '{start_date_str}': {str(e)}")
-
-    # Safely parse end_date with a fallback
+    
+    # Always calculate end_date as Sunday (start_date + 6 days)
     end_date = start_date + timedelta(days=6)
-    if end_date_str:
-        try:
-            # Try both common formats: %m/%d/%Y and %Y-%m-%d
-            if '/' in end_date_str:
-                end_date = datetime.strptime(end_date_str, '%m/%d/%Y').date()
-            elif '-' in end_date_str:
-                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-            else:
-                print(f"WARNING: Invalid date format in end_date: {end_date_str}")
-        except ValueError as e:
-            print(f"WARNING: Error parsing end_date '{end_date_str}': {str(e)}")
 
     # Get time entries for the date range
     entries = TimeEntry.query.filter(
@@ -813,14 +807,21 @@ def foreman_dashboard():
         try:
             # Try both common formats: %m/%d/%Y and %Y-%m-%d
             if '/' in start_date_str:
-                start_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
+                parsed_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
             elif '-' in start_date_str:
-                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                parsed_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
             else:
                 print(f"WARNING: Invalid date format in start_date: {start_date_str}")
+                parsed_date = None
+                
+            # Always align to Monday
+            if parsed_date:
+                start_date = get_week_start(parsed_date)
+                print(f"DEBUG: Aligned date {parsed_date} to Monday: {start_date}")
         except ValueError as e:
             print(f"WARNING: Error parsing start_date '{start_date_str}': {str(e)}")
     
+    # Always calculate end_date as Sunday (start_date + 6 days)
     end_date = start_date + timedelta(days=6)
 
     # Get all active jobs
@@ -923,11 +924,18 @@ def foreman_enter_time(job_id, user_id):
         try:
             # Try both common formats: %m/%d/%Y and %Y-%m-%d
             if '/' in selected_week:
-                form.week_start.data = datetime.strptime(selected_week, '%m/%d/%Y').date()
+                parsed_date = datetime.strptime(selected_week, '%m/%d/%Y').date()
             elif '-' in selected_week:
-                form.week_start.data = datetime.strptime(selected_week, '%Y-%m-%d').date()
+                parsed_date = datetime.strptime(selected_week, '%Y-%m-%d').date()
             else:
                 print(f"WARNING: Invalid date format in week_start: {selected_week}")
+                parsed_date = None
+                
+            # Always align to Monday
+            if parsed_date:
+                form.week_start.data = get_week_start(parsed_date)
+                print(f"DEBUG: Aligned date {parsed_date} to Monday: {form.week_start.data}")
+            else:
                 # Fall back to current week
                 today = date.today()
                 form.week_start.data = get_week_start(today)
@@ -937,6 +945,7 @@ def foreman_enter_time(job_id, user_id):
             today = date.today()
             form.week_start.data = get_week_start(today)
     elif not form.week_start.data:
+        # Default to current week
         today = date.today()
         form.week_start.data = get_week_start(today)
 
@@ -1159,11 +1168,18 @@ def approve_timesheet(job_id, user_id):
             try:
                 # Try both common formats: %m/%d/%Y and %Y-%m-%d
                 if '/' in url_start_date:
-                    form.week_start.data = datetime.strptime(url_start_date, '%m/%d/%Y').date()
+                    parsed_date = datetime.strptime(url_start_date, '%m/%d/%Y').date()
                 elif '-' in url_start_date:
-                    form.week_start.data = datetime.strptime(url_start_date, '%Y-%m-%d').date()
+                    parsed_date = datetime.strptime(url_start_date, '%Y-%m-%d').date()
                 else:
                     print(f"WARNING: Invalid date format in start_date: {url_start_date}")
+                    parsed_date = None
+                
+                # Always align to Monday
+                if parsed_date:
+                    form.week_start.data = get_week_start(parsed_date)
+                    print(f"DEBUG: Aligned date {parsed_date} to Monday: {form.week_start.data}")
+                else:
                     # Fall back to current week
                     today = date.today()
                     form.week_start.data = get_week_start(today)
