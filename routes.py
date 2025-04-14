@@ -55,11 +55,14 @@ def get_week_range_for_offset(week_offset=0):
     Returns:
         Tuple of (start_date, end_date) as date objects representing Monday and Sunday of the week
     """
-    today = datetime.today()
+    today = datetime.today().date()
+    print(f"DEBUG: Today's date is {today}")
     base_monday = today - timedelta(days=today.weekday())
+    print(f"DEBUG: Base Monday for current week is {base_monday}")
     start = base_monday + timedelta(weeks=week_offset)
     end = start + timedelta(days=6)
-    return start.date(), end.date()
+    print(f"DEBUG: Week range with offset {week_offset} is {start} to {end}")
+    return start, end
 
 # Custom decorators for role-based access control
 def worker_required(f):
