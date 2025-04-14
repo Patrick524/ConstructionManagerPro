@@ -535,20 +535,40 @@ def worker_timesheet():
 @worker_required
 def worker_history():
     # Get date range parameters from query string
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
+    start_date_str = request.args.get('start_date')
+    end_date_str = request.args.get('end_date')
+    
+    # Default to current week
+    today = date.today()
+    default_start_date = get_week_start(today)
+    
+    # Safely parse start_date with a fallback
+    start_date = default_start_date
+    if start_date_str:
+        try:
+            # Try both common formats: %m/%d/%Y and %Y-%m-%d
+            if '/' in start_date_str:
+                start_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
+            elif '-' in start_date_str:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            else:
+                print(f"WARNING: Invalid date format in start_date: {start_date_str}")
+        except ValueError as e:
+            print(f"WARNING: Error parsing start_date '{start_date_str}': {str(e)}")
 
-    # Default to current week if no dates provided
-    if not start_date:
-        today = date.today()
-        start_date = get_week_start(today)
-    else:
-        start_date = datetime.strptime(start_date, '%m/%d/%Y').date()
-
-    if not end_date:
-        end_date = start_date + timedelta(days=6)
-    else:
-        end_date = datetime.strptime(end_date, '%m/%d/%Y').date()
+    # Safely parse end_date with a fallback
+    end_date = start_date + timedelta(days=6)
+    if end_date_str:
+        try:
+            # Try both common formats: %m/%d/%Y and %Y-%m-%d
+            if '/' in end_date_str:
+                end_date = datetime.strptime(end_date_str, '%m/%d/%Y').date()
+            elif '-' in end_date_str:
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            else:
+                print(f"WARNING: Invalid date format in end_date: {end_date_str}")
+        except ValueError as e:
+            print(f"WARNING: Error parsing end_date '{end_date_str}': {str(e)}")
 
     # Get time entries for the date range
     entries = TimeEntry.query.filter(
@@ -742,15 +762,26 @@ def clock_out():
 @foreman_required
 def foreman_dashboard():
     # Get date range parameters from query string
-    start_date = request.args.get('start_date')
-
-    # Default to current week if no dates provided
-    if not start_date:
-        today = date.today()
-        start_date = get_week_start(today)
-    else:
-        start_date = datetime.strptime(start_date, '%m/%d/%Y').date()
-
+    start_date_str = request.args.get('start_date')
+    
+    # Default to current week
+    today = date.today()
+    default_start_date = get_week_start(today)
+    
+    # Safely parse start_date with a fallback
+    start_date = default_start_date
+    if start_date_str:
+        try:
+            # Try both common formats: %m/%d/%Y and %Y-%m-%d
+            if '/' in start_date_str:
+                start_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
+            elif '-' in start_date_str:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            else:
+                print(f"WARNING: Invalid date format in start_date: {start_date_str}")
+        except ValueError as e:
+            print(f"WARNING: Error parsing start_date '{start_date_str}': {str(e)}")
+    
     end_date = start_date + timedelta(days=6)
 
     # Get all active jobs
@@ -838,7 +869,22 @@ def foreman_enter_time(job_id, user_id):
     # Get week start from query parameters or default to current week
     selected_week = request.args.get('week_start')
     if selected_week:
-        form.week_start.data = datetime.strptime(selected_week, '%m/%d/%Y').date()
+        try:
+            # Try both common formats: %m/%d/%Y and %Y-%m-%d
+            if '/' in selected_week:
+                form.week_start.data = datetime.strptime(selected_week, '%m/%d/%Y').date()
+            elif '-' in selected_week:
+                form.week_start.data = datetime.strptime(selected_week, '%Y-%m-%d').date()
+            else:
+                print(f"WARNING: Invalid date format in week_start: {selected_week}")
+                # Fall back to current week
+                today = date.today()
+                form.week_start.data = get_week_start(today)
+        except ValueError as e:
+            print(f"WARNING: Error parsing week_start '{selected_week}': {str(e)}")
+            # Fall back to current week
+            today = date.today()
+            form.week_start.data = get_week_start(today)
     elif not form.week_start.data:
         today = date.today()
         form.week_start.data = get_week_start(today)
@@ -1058,8 +1104,23 @@ def approve_timesheet(job_id, user_id):
     # Default to current week if no week start provided
     if not form.week_start.data:
         if url_start_date:
-            # Use the start_date from URL
-            form.week_start.data = datetime.strptime(url_start_date, '%m/%d/%Y').date()
+            # Use the start_date from URL with robust parsing
+            try:
+                # Try both common formats: %m/%d/%Y and %Y-%m-%d
+                if '/' in url_start_date:
+                    form.week_start.data = datetime.strptime(url_start_date, '%m/%d/%Y').date()
+                elif '-' in url_start_date:
+                    form.week_start.data = datetime.strptime(url_start_date, '%Y-%m-%d').date()
+                else:
+                    print(f"WARNING: Invalid date format in start_date: {url_start_date}")
+                    # Fall back to current week
+                    today = date.today()
+                    form.week_start.data = get_week_start(today)
+            except ValueError as e:
+                print(f"WARNING: Error parsing start_date '{url_start_date}': {str(e)}")
+                # Fall back to current week
+                today = date.today()
+                form.week_start.data = get_week_start(today)
         else:
             today = date.today()
             form.week_start.data = get_week_start(today)
