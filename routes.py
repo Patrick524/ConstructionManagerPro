@@ -855,13 +855,25 @@ def foreman_dashboard():
                     TimeEntry.date >= start_date,
                     TimeEntry.date <= end_date
                 ).distinct().count()
+                
+            # Check if worker has any entries with notes for this job and week
+            has_notes = db.session.query(TimeEntry).\
+                filter(
+                    TimeEntry.user_id == worker.id,
+                    TimeEntry.job_id == job.id,
+                    TimeEntry.date >= start_date,
+                    TimeEntry.date <= end_date,
+                    TimeEntry.notes.isnot(None),
+                    db.func.trim(TimeEntry.notes) != ''
+                ).first() is not None
 
             workers_data.append({
                 'worker': worker,
                 'is_approved': is_approved,
                 'total_hours': total_hours,
                 'days_with_entries': days_with_entries,
-                'has_all_days': days_with_entries == 7  # A full week has 7 days
+                'has_all_days': days_with_entries == 7,  # A full week has 7 days
+                'has_notes': has_notes  # Flag to indicate if worker has any notes
             })
 
         job_data.append({

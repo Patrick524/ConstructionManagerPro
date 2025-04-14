@@ -71,7 +71,14 @@
                                     <tbody>
                                         {% for worker_data in job_item.workers %}
                                             <tr>
-                                                <td>{{ worker_data.worker.name }}</td>
+                                                <td>
+                                                    {{ worker_data.worker.name }}
+                                                    {% if worker_data.has_notes %}
+                                                    <span class="ms-2 text-info" title="Worker has notes">
+                                                        <i class="fas fa-sticky-note"></i>
+                                                    </span>
+                                                    {% endif %}
+                                                </td>
                                                 <td>{{ worker_data.total_hours }}</td>
                                                 <td>
                                                     <div class="progress" style="height: 20px;">
@@ -163,6 +170,10 @@
                         <p class="mb-1">
                             <i class="fas fa-clock text-info me-2"></i>
                             Click the <i class="fas fa-clock"></i> icon to enter time on behalf of a worker.
+                        </p>
+                        <p class="mb-1">
+                            <i class="fas fa-sticky-note text-info me-2"></i>
+                            The <i class="fas fa-sticky-note"></i> icon indicates that a worker has added notes to their time entries.
                         </p>
                         <p class="mb-1">
                             <i class="fas fa-exclamation-triangle text-warning me-2"></i>
