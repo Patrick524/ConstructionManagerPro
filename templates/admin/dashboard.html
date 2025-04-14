@@ -44,34 +44,40 @@
 
 <!-- Overview Widgets -->
 <div class="row mb-4">
-    <div class="col-md-3">
+    <div class="col-md-3 mb-4 mb-md-0">
         <div class="dashboard-widget">
             <h5 class="dashboard-widget-title">Active Jobs</h5>
             <div class="dashboard-widget-value">{{ active_jobs_count }}</div>
-            <a href="{{ url_for('manage_jobs') }}" class="btn btn-sm btn-outline-primary">Manage Jobs</a>
+            <div class="mt-auto">
+                <a href="{{ url_for('manage_jobs') }}" class="btn btn-sm btn-outline-primary">Manage Jobs</a>
+            </div>
         </div>
     </div>
     
-    <div class="col-md-3">
+    <div class="col-md-3 mb-4 mb-md-0">
         <div class="dashboard-widget">
             <h5 class="dashboard-widget-title">Field Workers</h5>
             <div class="dashboard-widget-value">{{ total_workers }}</div>
-            <a href="{{ url_for('manage_users') }}" class="btn btn-sm btn-outline-primary">Manage Users</a>
+            <div class="mt-auto">
+                <a href="{{ url_for('manage_users') }}" class="btn btn-sm btn-outline-primary">Manage Users</a>
+            </div>
         </div>
     </div>
     
-    <div class="col-md-3">
+    <div class="col-md-3 mb-4 mb-md-0">
         <div class="dashboard-widget">
             <h5 class="dashboard-widget-title">Weekly Hours</h5>
             <div class="dashboard-widget-value">{{ "%.2f"|format(weekly_hours) }}</div>
-            <a href="{{ url_for('generate_reports') }}" class="btn btn-sm btn-outline-primary">View Reports</a>
+            <div class="mt-auto">
+                <a href="{{ url_for('generate_reports') }}" class="btn btn-sm btn-outline-primary">View Reports</a>
+            </div>
         </div>
     </div>
     
-    <div class="col-md-3">
+    <div class="col-md-3 mb-4 mb-md-0">
         <div class="dashboard-widget">
             <h5 class="dashboard-widget-title">Quick Actions</h5>
-            <div class="btn-group-vertical w-100">
+            <div class="mt-auto d-flex flex-column">
                 <a href="{{ url_for('manage_jobs') }}?status=new" class="btn btn-sm btn-outline-primary mb-2">Add New Job</a>
                 <a href="{{ url_for('manage_activities') }}?status=new" class="btn btn-sm btn-outline-primary mb-2">Add Labor Activity</a>
                 <a href="{{ url_for('generate_reports') }}" class="btn btn-sm btn-outline-primary">Generate Reports</a>
@@ -82,15 +88,17 @@
 
 <!-- Charts Row -->
 <div class="row mb-4">
-    <div class="col-md-6">
-        <div class="card h-100">
+    <div class="col-md-6 mb-4 mb-md-0">
+        <div class="card">
             <div class="card-header bg-secondary text-white">
                 <h5 class="mb-0">Hours by Job</h5>
             </div>
             <div class="card-body">
                 {% if job_hours and job_hours|length > 0 %}
                 <script id="job-hours-data" type="application/json">{{ job_hours|tojson }}</script>
-                <canvas id="job-hours-chart" height="250"></canvas>
+                <div style="position: relative; height: 250px; width: 100%;">
+                    <canvas id="job-hours-chart"></canvas>
+                </div>
                 {% else %}
                 <div class="text-center py-5">
                     <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
@@ -102,15 +110,17 @@
         </div>
     </div>
     
-    <div class="col-md-6">
-        <div class="card h-100">
+    <div class="col-md-6 mb-4 mb-md-0">
+        <div class="card">
             <div class="card-header bg-secondary text-white">
                 <h5 class="mb-0">Hours by Trade</h5>
             </div>
             <div class="card-body">
                 {% if trade_hours and trade_hours|length > 0 %}
                 <script id="trade-hours-data" type="application/json">{{ trade_hours|tojson }}</script>
-                <canvas id="trade-hours-chart" height="250"></canvas>
+                <div style="position: relative; height: 250px; width: 100%;">
+                    <canvas id="trade-hours-chart"></canvas>
+                </div>
                 {% else %}
                 <div class="text-center py-5">
                     <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
