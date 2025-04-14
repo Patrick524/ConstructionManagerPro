@@ -117,23 +117,18 @@ function setupWeekNavigation() {
                 window.location.href = url.toString();
             });
             
-            // Set up current week button - calculate the Monday of the current week
+            // Set up current week button - for the current week, we don't include any date params
+            // This will let the backend use its default logic to calculate the current week
             currentWeekBtn.addEventListener('click', function() {
-                const today = new Date();
-                
-                // Align to Monday (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-                const dayOfWeek = today.getDay();
-                const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // If Sunday (0), go back 6 days, otherwise go back (dayOfWeek - 1) days
-                today.setDate(today.getDate() - daysToSubtract);
-                
-                // Format as YYYY-MM-DD
-                const currentMondayStr = today.toISOString().slice(0, 10);
-                
-                console.log(`Current Week: Today=${new Date().toISOString().slice(0, 10)}, Current Monday=${currentMondayStr}`);
-                
-                // Update URL and reload
+                // Remove any start_date from the URL if present, to let backend use its default logic
                 const url = new URL(window.location);
-                url.searchParams.set('start_date', currentMondayStr);
+                url.searchParams.delete('start_date');
+                url.searchParams.delete('week_offset');
+                
+                // Log what we're doing
+                console.log(`Current Week: Removing date parameters to let backend calculate current week`);
+                
+                // Update URL and reload, which will use backend's current week calculation
                 window.location.href = url.toString();
             });
         } else {
