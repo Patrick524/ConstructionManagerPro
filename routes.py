@@ -826,13 +826,15 @@ def clock_out():
 def foreman_dashboard():
     # Get date range parameters from query string
     start_date_str = request.args.get('start_date')
+    week_offset_str = request.args.get('week_offset', '0')
     
-    # Default to current week
-    today = date.today()
-    default_start_date = get_week_start(today)
+    try:
+        week_offset = int(week_offset_str)
+    except ValueError:
+        week_offset = 0
+        print(f"WARNING: Invalid week_offset value: {week_offset_str}, defaulting to 0")
     
-    # Safely parse start_date with a fallback
-    start_date = default_start_date
+    # If a specific start_date is provided, parse it and find its week offset
     if start_date_str:
         try:
             # Try both common formats: %m/%d/%Y and %Y-%m-%d
@@ -844,15 +846,25 @@ def foreman_dashboard():
                 print(f"WARNING: Invalid date format in start_date: {start_date_str}")
                 parsed_date = None
                 
-            # Always align to Monday
+            # Use the parsed date to calculate the appropriate week
             if parsed_date:
-                start_date = get_week_start(parsed_date)
-                print(f"DEBUG: Aligned date {parsed_date} to Monday: {start_date}")
+                # Always align to Monday
+                monday_date = get_week_start(parsed_date)
+                print(f"DEBUG: Aligned date {parsed_date} to Monday: {monday_date}")
+                # Use this explicitly provided date
+                start_date, end_date = monday_date, monday_date + timedelta(days=6)
+            else:
+                # Fall back to the current week with offset
+                start_date, end_date = get_week_range_for_offset(week_offset)
         except ValueError as e:
             print(f"WARNING: Error parsing start_date '{start_date_str}': {str(e)}")
-    
-    # Always calculate end_date as Sunday (start_date + 6 days)
-    end_date = start_date + timedelta(days=6)
+            # Fall back to the current week with offset
+            start_date, end_date = get_week_range_for_offset(week_offset)
+    else:
+        # No specific date provided, use the week_offset
+        start_date, end_date = get_week_range_for_offset(week_offset)
+        
+    print(f"DEBUG: Week calculation for foreman dashboard - date range: {start_date} to {end_date}, week_offset: {week_offset}")
 
     # Get all active jobs
     jobs = Job.query.filter_by(status='active').all()
@@ -1316,15 +1328,14 @@ def admin_dashboard():
         WeeklyApprovalLock.approved_at.desc()
     ).limit(10).all()
 
-    # Get current week's total hours
-    today = date.today()
-    week_start = get_week_start(today)
-    week_end = week_start + timedelta(days=6)
+    # Get current week's total hours using the improved week calculation
+    start_date, end_date = get_week_range_for_offset(0)
+    print(f"DEBUG: Admin dashboard - calculating for week: {start_date} to {end_date}")
 
     weekly_hours = db.session.query(db.func.sum(TimeEntry.hours)).\
         filter(
-            TimeEntry.date >= week_start,
-            TimeEntry.date <= week_end
+            TimeEntry.date >= start_date,
+            TimeEntry.date <= end_date
         ).scalar() or 0
 
     # Get hours by job for the current week (for chart)
@@ -1332,8 +1343,8 @@ def admin_dashboard():
         Job.job_code,
         db.func.sum(TimeEntry.hours).label('total_hours')
     ).join(TimeEntry, Job.id == TimeEntry.job_id).filter(
-        TimeEntry.date >= week_start,
-        TimeEntry.date <= week_end
+        TimeEntry.date >= start_date,
+        TimeEntry.date <= end_date
     ).group_by(Job.job_code).all()
     
     # Convert to JSON-friendly format
@@ -1348,8 +1359,8 @@ def admin_dashboard():
         LaborActivity.trade_category,
         db.func.sum(TimeEntry.hours).label('total_hours')
     ).join(TimeEntry, LaborActivity.id == TimeEntry.labor_activity_id).filter(
-        TimeEntry.date >= week_start,
-        TimeEntry.date <= week_end
+        TimeEntry.date >= start_date,
+        TimeEntry.date <= end_date
     ).group_by(LaborActivity.trade_category).all()
     
     # Convert to JSON-friendly format
@@ -1367,8 +1378,8 @@ def admin_dashboard():
         recent_approvals=recent_approvals,
         job_hours=job_hours,
         trade_hours=trade_hours,
-        week_start=week_start,
-        week_end=week_end
+        week_start=start_date,
+        week_end=end_date
     )
 
 @app.route('/admin/jobs', methods=['GET', 'POST'])
