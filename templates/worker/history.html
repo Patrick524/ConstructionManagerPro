@@ -82,7 +82,7 @@
                                                 </td>
                                                 <td>
                                                     {% if entry.job_id not in approved_jobs %}
-                                                        <a href="{{ url_for('worker_timesheet', date=entry.date.strftime('%Y-%m-%d'), job_id=entry.job_id) }}" 
+                                                        <a href="{{ url_for('worker_timesheet', entry_id=entry.id) }}" 
                                                            class="btn btn-sm btn-outline-primary">
                                                             <i class="fas fa-edit"></i> Edit
                                                         </a>

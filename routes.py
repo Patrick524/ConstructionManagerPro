@@ -415,13 +415,34 @@ def worker_weekly_timesheet():
     return render_template('worker/weekly_timesheet.html', form=form)
 
 @app.route('/worker/timesheet', methods=['GET', 'POST'])
+@app.route('/worker/timesheet/edit/<int:entry_id>', methods=['GET', 'POST'])
 @login_required
 @worker_required
-def worker_timesheet():
+def worker_timesheet(entry_id=None):
     form = TimeEntryForm()
-
-    # Default to today's date
-    if not form.date.data:
+    
+    # If entry_id is provided, this is an edit request
+    editing = False
+    entry_to_edit = None
+    
+    if entry_id:
+        # Load the existing time entry
+        entry_to_edit = TimeEntry.query.filter_by(
+            id=entry_id,
+            user_id=current_user.id  # Ensure users can only edit their own entries
+        ).first_or_404()
+        
+        editing = True
+        
+        # Pre-populate the form with the entry's data if this is a GET request
+        if request.method == 'GET':
+            form.job_id.data = entry_to_edit.job_id
+            form.date.data = entry_to_edit.date
+            form.labor_activity_1.data = entry_to_edit.labor_activity_id
+            form.hours_1.data = entry_to_edit.hours
+            form.notes.data = entry_to_edit.notes
+    # Default to today's date for new entries
+    elif not form.date.data:
         form.date.data = date.today()
 
     if form.validate_on_submit():
@@ -528,7 +549,13 @@ def worker_timesheet():
     # Get labor activities for the selected job's trade type
     activities = LaborActivity.query.all()
 
-    return render_template('worker/timesheet.html', form=form, activities=activities)
+    return render_template(
+        'worker/timesheet.html', 
+        form=form, 
+        activities=activities, 
+        editing=editing,
+        entry_to_edit=entry_to_edit
+    )
 
 @app.route('/worker/history')
 @login_required
@@ -1741,24 +1768,39 @@ def get_labor_activities(job_id):
 @login_required
 def get_time_entries(date, job_id):
     """API endpoint to get time entries for a specific date and job"""
-    target_date = datetime.strptime(date, '%m/%d/%Y').date()
+    try:
+        # Try to parse the date with both common formats
+        if '/' in date:
+            target_date = datetime.strptime(date, '%m/%d/%Y').date()
+        elif '-' in date:
+            target_date = datetime.strptime(date, '%Y-%m-%d').date()
+        else:
+            print(f"WARNING: Invalid date format in API call: {date}")
+            return jsonify({'error': f'Invalid date format: {date}'}), 400
+    except ValueError as e:
+        print(f"ERROR: Invalid date format in API call: {date}, error: {str(e)}")
+        return jsonify({'error': f'Error parsing date: {str(e)}'}), 400
 
-    entries = TimeEntry.query.filter(
-        TimeEntry.user_id == current_user.id,
-        TimeEntry.job_id == job_id,
-        TimeEntry.date == target_date
-    ).all()
+    try:
+        entries = TimeEntry.query.filter(
+            TimeEntry.user_id == current_user.id,
+            TimeEntry.job_id == job_id,
+            TimeEntry.date == target_date
+        ).all()
 
-    # Return JSON response with time entries
-    return jsonify([
-        {
-            'id': entry.id,
-            'labor_activity_id': entry.labor_activity_id,
-            'hours': entry.hours,
-            'notes': entry.notes
-        }
-        for entry in entries
-    ])
+        # Return JSON response with time entries
+        return jsonify([
+            {
+                'id': entry.id,
+                'labor_activity_id': entry.labor_activity_id,
+                'hours': entry.hours,
+                'notes': entry.notes
+            }
+            for entry in entries
+        ])
+    except Exception as e:
+        print(f"Error loading time entries: {str(e)}")
+        return jsonify({'error': f'Error loading entries: {str(e)}'}), 500
 
 # Error handlers
 @app.errorhandler(404)
