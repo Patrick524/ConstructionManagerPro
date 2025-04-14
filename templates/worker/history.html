@@ -134,25 +134,29 @@
 
 <div class="row mt-4">
     <div class="col-12">
-        <div class="card bg-light">
-            <div class="card-body">
-                <h5><i class="fas fa-info-circle me-2"></i>Time Entry Status</h5>
-                <div class="row mt-3">
+        <div class="card" style="box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);">
+            <div class="card-header" style="background-color: #1f1f2e; color: #e0e0e0;">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Time Entry Status</h5>
+            </div>
+            <div class="card-body" style="background-color: #1f1f2e; color: #e0e0e0;">
+                <div class="row">
                     <div class="col-md-6">
-                        <div class="d-flex align-items-center mb-2">
-                            <span class="badge bg-warning me-2">Pending</span>
-                            <span>Time has been submitted but not yet approved</span>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <span class="badge bg-success me-2">Approved</span>
-                            <span>Time has been approved by foreman and cannot be changed</span>
+                        <div class="list-group mb-3">
+                            <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
+                                <span class="badge bg-warning me-3 px-3 py-2 fs-6 fw-bold">Pending</span>
+                                <span class="fw-bold">Time has been submitted but not yet approved</span>
+                            </div>
+                            <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
+                                <span class="badge bg-success me-3 px-3 py-2 fs-6 fw-bold">Approved</span>
+                                <span class="fw-bold">Time has been approved by foreman and cannot be changed</span>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <p class="mb-0">
-                            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
-                            Make sure all your time for the week is entered by Sunday night.
-                        </p>
+                        <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
+                            <i class="fas fa-exclamation-triangle text-warning me-3 fa-lg"></i>
+                            <span class="fw-bold">Make sure all your time for the week is entered by Sunday night.</span>
+                        </div>
                     </div>
                 </div>
             </div>
