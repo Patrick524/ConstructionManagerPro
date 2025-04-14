@@ -45,6 +45,22 @@ def get_week_start(target_date):
     """
     return target_date - timedelta(days=target_date.weekday())
 
+def get_week_range_for_offset(week_offset=0):
+    """
+    Returns the start and end dates for a week based on an offset from the current week.
+    
+    Args:
+        week_offset: Integer, number of weeks to offset from current week (negative for past, positive for future)
+        
+    Returns:
+        Tuple of (start_date, end_date) as date objects representing Monday and Sunday of the week
+    """
+    today = datetime.today()
+    base_monday = today - timedelta(days=today.weekday())
+    start = base_monday + timedelta(weeks=week_offset)
+    end = start + timedelta(days=6)
+    return start.date(), end.date()
+
 # Custom decorators for role-based access control
 def worker_required(f):
     @wraps(f)
@@ -577,13 +593,15 @@ def worker_timesheet(entry_id=None):
 def worker_history():
     # Get date range parameters from query string
     start_date_str = request.args.get('start_date')
+    week_offset_str = request.args.get('week_offset', '0')
     
-    # Default to current week
-    today = date.today()
-    default_start_date = get_week_start(today)
+    try:
+        week_offset = int(week_offset_str)
+    except ValueError:
+        week_offset = 0
+        print(f"WARNING: Invalid week_offset value: {week_offset_str}, defaulting to 0")
     
-    # Safely parse start_date with a fallback
-    start_date = default_start_date
+    # If a specific start_date is provided, parse it and find its week offset
     if start_date_str:
         try:
             # Try both common formats: %m/%d/%Y and %Y-%m-%d
@@ -595,15 +613,25 @@ def worker_history():
                 print(f"WARNING: Invalid date format in start_date: {start_date_str}")
                 parsed_date = None
                 
-            # Always align to Monday
+            # Use the parsed date to calculate the appropriate week
             if parsed_date:
-                start_date = get_week_start(parsed_date)
-                print(f"DEBUG: Aligned date {parsed_date} to Monday: {start_date}")
+                # Always align to Monday
+                monday_date = get_week_start(parsed_date)
+                print(f"DEBUG: Aligned date {parsed_date} to Monday: {monday_date}")
+                # Use this explicitly provided date
+                start_date, end_date = monday_date, monday_date + timedelta(days=6)
+            else:
+                # Fall back to the current week with offset
+                start_date, end_date = get_week_range_for_offset(week_offset)
         except ValueError as e:
             print(f"WARNING: Error parsing start_date '{start_date_str}': {str(e)}")
-    
-    # Always calculate end_date as Sunday (start_date + 6 days)
-    end_date = start_date + timedelta(days=6)
+            # Fall back to the current week with offset
+            start_date, end_date = get_week_range_for_offset(week_offset)
+    else:
+        # No specific date provided, use the week_offset
+        start_date, end_date = get_week_range_for_offset(week_offset)
+        
+    print(f"DEBUG: Week calculation - date range: {start_date} to {end_date}, week_offset: {week_offset}")
 
     # Get time entries for the date range
     entries = TimeEntry.query.filter(
