@@ -134,26 +134,26 @@
 
 <div class="row mt-4">
     <div class="col-12">
-        <div class="card" style="box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);">
-            <div class="card-header" style="background-color: #1f1f2e; color: #e0e0e0;">
+        <div class="card shadow-sm">
+            <div class="card-header" style="background-color: #1f1f2e; color: #e0e0e0; border-bottom: 1px solid #2c2c2c;">
                 <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Time Entry Status</h5>
             </div>
-            <div class="card-body" style="background-color: #1f1f2e; color: #e0e0e0;">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="list-group mb-3">
-                            <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
-                                <span class="badge bg-warning me-3 px-3 py-2 fs-6 fw-bold">Pending</span>
-                                <span class="fw-bold">Time has been submitted but not yet approved</span>
-                            </div>
-                            <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
-                                <span class="badge bg-success me-3 px-3 py-2 fs-6 fw-bold">Approved</span>
-                                <span class="fw-bold">Time has been approved by foreman and cannot be changed</span>
-                            </div>
+            <div class="card-body" style="background-color: #1f1f1f; color: #e0e0e0;">
+                <div class="d-flex flex-column gap-3">
+                    <div class="p-3" style="background-color: #252525; border-radius: 8px; border: 1px solid #2c2c2c;">
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-warning me-3 px-3 py-2 fs-6">Pending</span>
+                            <span class="fw-bold">Time has been submitted but not yet approved</span>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0; border: 1px solid #2c2c2c; border-radius: 6px; margin-bottom: 8px;">
+                    <div class="p-3" style="background-color: #252525; border-radius: 8px; border: 1px solid #2c2c2c;">
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-success me-3 px-3 py-2 fs-6">Approved</span>
+                            <span class="fw-bold">Time has been approved by foreman and cannot be changed</span>
+                        </div>
+                    </div>
+                    <div class="p-3" style="background-color: #252525; border-radius: 8px; border: 1px solid #2c2c2c;">
+                        <div class="d-flex align-items-center">
                             <i class="fas fa-exclamation-triangle text-warning me-3 fa-lg"></i>
                             <span class="fw-bold">Make sure all your time for the week is entered by Sunday night.</span>
                         </div>
