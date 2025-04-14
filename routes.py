@@ -1334,9 +1334,40 @@ def admin_dashboard():
         WeeklyApprovalLock.approved_at.desc()
     ).limit(10).all()
 
-    # Get current week's total hours using the improved week calculation
-    start_date, end_date = get_week_range_for_offset(0)
-    print(f"DEBUG: Admin dashboard - calculating for week: {start_date} to {end_date}")
+    # Get start_date from URL if provided for week navigation
+    url_start_date = request.args.get('start_date')
+    
+    if url_start_date:
+        # Parse the start_date from URL with robust parsing
+        try:
+            # Try both common formats: %m/%d/%Y and %Y-%m-%d
+            if '/' in url_start_date:
+                parsed_date = datetime.strptime(url_start_date, '%m/%d/%Y').date()
+            elif '-' in url_start_date:
+                parsed_date = datetime.strptime(url_start_date, '%Y-%m-%d').date()
+            else:
+                print(f"WARNING: Invalid date format in start_date: {url_start_date}")
+                parsed_date = None
+            
+            # Always align to Monday and get the week range
+            if parsed_date:
+                monday_date = get_week_start(parsed_date)
+                start_date = monday_date
+                end_date = monday_date + timedelta(days=6)
+                print(f"DEBUG: Admin dashboard - using provided date: {start_date} to {end_date}")
+            else:
+                # Fall back to current week if parse fails
+                start_date, end_date = get_week_range_for_offset(0)
+                print(f"DEBUG: Admin dashboard - date parse failed, using current week: {start_date} to {end_date}")
+        except ValueError as e:
+            print(f"ERROR: Date parsing error: {e}")
+            # Fall back to current week
+            start_date, end_date = get_week_range_for_offset(0)
+            print(f"DEBUG: Admin dashboard - date parse error, using current week: {start_date} to {end_date}")
+    else:
+        # No date provided, use current week
+        start_date, end_date = get_week_range_for_offset(0)
+        print(f"DEBUG: Admin dashboard - calculating for current week: {start_date} to {end_date}")
 
     weekly_hours = db.session.query(db.func.sum(TimeEntry.hours)).\
         filter(
