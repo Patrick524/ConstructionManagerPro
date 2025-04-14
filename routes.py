@@ -200,6 +200,17 @@ def worker_weekly_timesheet():
 
     week_start = form.week_start.data
     week_end = week_start + timedelta(days=6)
+    
+    # Define days of the week for both validation and form processing
+    days_of_week = [
+        ('monday', form.monday_hours),
+        ('tuesday', form.tuesday_hours),
+        ('wednesday', form.wednesday_hours),
+        ('thursday', form.thursday_hours),
+        ('friday', form.friday_hours),
+        ('saturday', form.saturday_hours),
+        ('sunday', form.sunday_hours)
+    ]
 
     # Debug the validation process
     if request.method == 'POST':
@@ -256,15 +267,7 @@ def worker_weekly_timesheet():
         ).delete()
 
         # Create time entries for each day of the week that has hours
-        days_of_week = [
-            ('monday', form.monday_hours),
-            ('tuesday', form.tuesday_hours),
-            ('wednesday', form.wednesday_hours),
-            ('thursday', form.thursday_hours),
-            ('friday', form.friday_hours),
-            ('saturday', form.saturday_hours),
-            ('sunday', form.sunday_hours)
-        ]
+        # Note: days_of_week is already defined above
 
         entries_created = 0
 
