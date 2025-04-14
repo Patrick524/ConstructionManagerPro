@@ -70,84 +70,89 @@ function setupHighContrastMode() {
  * Setup week navigation for screens with date ranges
  */
 function setupWeekNavigation() {
+    // Look for the week navigation elements
     const prevWeekBtn = document.getElementById('prev-week');
     const nextWeekBtn = document.getElementById('next-week');
     const currentWeekBtn = document.getElementById('current-week');
     
     if (prevWeekBtn && nextWeekBtn && currentWeekBtn) {
-        // Get current start date from URL or data attribute
-        const urlParams = new URLSearchParams(window.location.search);
-        let startDate = urlParams.get('start_date');
+        // Extract the start date from the alert - this contains the Monday set by the backend
+        const weekAlert = document.querySelector('.alert[data-current-week-start]');
         
-        if (!startDate) {
-            const dateElement = document.querySelector('[data-current-week-start]');
-            startDate = dateElement ? dateElement.dataset.currentWeekStart : null;
-        }
-        
-        if (startDate) {
+        if (weekAlert && weekAlert.dataset.currentWeekStart) {
+            // Use the date directly from the backend, which should already be a Monday
+            const currentWeekStart = new Date(weekAlert.dataset.currentWeekStart);
+            
+            console.log(`Week navigation initialized with start date: ${weekAlert.dataset.currentWeekStart}`);
+            
             // Set up previous week button
             prevWeekBtn.addEventListener('click', function() {
-                navigateToWeek(startDate, -7);
+                const prevWeek = new Date(currentWeekStart);
+                prevWeek.setDate(prevWeek.getDate() - 7);
+                
+                // Format as YYYY-MM-DD
+                const prevWeekStr = prevWeek.toISOString().slice(0, 10);
+                
+                console.log(`Previous Week: ${currentWeekStart.toISOString().slice(0, 10)} → ${prevWeekStr}`);
+                
+                // Update URL and reload
+                const url = new URL(window.location);
+                url.searchParams.set('start_date', prevWeekStr);
+                window.location.href = url.toString();
             });
             
             // Set up next week button
             nextWeekBtn.addEventListener('click', function() {
-                navigateToWeek(startDate, 7);
+                const nextWeek = new Date(currentWeekStart);
+                nextWeek.setDate(nextWeek.getDate() + 7);
+                
+                // Format as YYYY-MM-DD
+                const nextWeekStr = nextWeek.toISOString().slice(0, 10);
+                
+                console.log(`Next Week: ${currentWeekStart.toISOString().slice(0, 10)} → ${nextWeekStr}`);
+                
+                // Update URL and reload
+                const url = new URL(window.location);
+                url.searchParams.set('start_date', nextWeekStr);
+                window.location.href = url.toString();
             });
             
-            // Set up current week button - ensure it aligns to Monday of current week
+            // Set up current week button - calculate the Monday of the current week
             currentWeekBtn.addEventListener('click', function() {
                 const today = new Date();
+                
                 // Align to Monday (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
                 const dayOfWeek = today.getDay();
                 const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // If Sunday (0), go back 6 days, otherwise go back (dayOfWeek - 1) days
                 today.setDate(today.getDate() - daysToSubtract);
                 
-                // Convert to YYYY-MM-DD format
-                const year = today.getFullYear();
-                const month = String(today.getMonth() + 1).padStart(2, '0');
-                const day = String(today.getDate()).padStart(2, '0');
-                const currentMonday = `${year}-${month}-${day}`;
+                // Format as YYYY-MM-DD
+                const currentMondayStr = today.toISOString().slice(0, 10);
                 
-                console.log(`Current Week: Today=${new Date().toISOString().split('T')[0]}, Current Monday=${currentMonday}`);
+                console.log(`Current Week: Today=${new Date().toISOString().slice(0, 10)}, Current Monday=${currentMondayStr}`);
                 
                 // Update URL and reload
                 const url = new URL(window.location);
-                url.searchParams.set('start_date', currentMonday);
+                url.searchParams.set('start_date', currentMondayStr);
                 window.location.href = url.toString();
             });
+        } else {
+            console.error("Week alert element with data-current-week-start not found. Week navigation may not work correctly.");
         }
     }
 }
 
 /**
- * Navigate to a different week based on offset from start date
- * Always align to Monday (the start of the week)
+ * Get the Monday of a given date
+ * @param {Date} date - The date to get the Monday for
+ * @returns {Date} - The Monday of the week containing the given date
  */
-function navigateToWeek(startDate, dayOffset) {
-    // Create a date from the current start date
-    const date = new Date(startDate);
-    
-    // Apply the day offset (7 days for next week, -7 days for previous week)
-    date.setDate(date.getDate() + dayOffset);
-    
-    // Align to Monday (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+function getMondayOfWeek(date) {
     const dayOfWeek = date.getDay();
     const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // If Sunday (0), go back 6 days, otherwise go back (dayOfWeek - 1) days
-    date.setDate(date.getDate() - daysToSubtract);
-    
-    // Convert to YYYY-MM-DD format
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const newStartDate = `${year}-${month}-${day}`;
-    
-    console.log(`Navigation: ${startDate} offset=${dayOffset} → new date=${newStartDate}`);
-    
-    // Update URL and reload
-    const url = new URL(window.location);
-    url.searchParams.set('start_date', newStartDate);
-    window.location.href = url.toString();
+    const result = new Date(date);
+    result.setDate(date.getDate() - daysToSubtract);
+    return result;
 }
 
 /**
