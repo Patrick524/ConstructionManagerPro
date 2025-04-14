@@ -54,7 +54,7 @@
                         </div>
                         <span class="badge bg-primary">{{ job_item.workers|length }} Workers</span>
                     </div>
-                    
+
                     <div class="card-body approval-card-body p-0">
                         {% if job_item.workers %}
                             <div class="table-responsive">
@@ -148,23 +148,23 @@
 
 <div class="row mt-4">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header bg-dark text-white">
+        <div class="card" style="box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);">
+            <div class="card-header" style="background-color: #1f1f2e; color: #e0e0e0;">
                 <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Dashboard Legend</h5>
             </div>
-            <div class="card-body bg-light">
+            <div class="card-body" style="background-color: #1f1f2e; color: #e0e0e0;">
                 <div class="row">
                     <div class="col-md-6">
                         <div class="list-group mb-3">
-                            <div class="list-group-item d-flex align-items-center bg-dark bg-opacity-10">
+                            <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
                                 <span class="badge bg-warning me-3 px-3 py-2 fs-6 fw-bold">Incomplete</span>
                                 <span class="fw-bold">Worker hasn't submitted time for all 7 days</span>
                             </div>
-                            <div class="list-group-item d-flex align-items-center bg-dark bg-opacity-10">
+                            <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
                                 <span class="badge bg-primary me-3 px-3 py-2 fs-6 fw-bold">Ready for Approval</span>
                                 <span class="fw-bold">Worker has submitted time for all 7 days</span>
                             </div>
-                            <div class="list-group-item d-flex align-items-center bg-dark bg-opacity-10">
+                            <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
                                 <span class="badge bg-success me-3 px-3 py-2 fs-6 fw-bold">Approved</span>
                                 <span class="fw-bold">Time has been approved and is now locked</span>
                             </div>
@@ -172,19 +172,19 @@
                     </div>
                     <div class="col-md-6">
                         <div class="list-group">
-                            <div class="list-group-item d-flex align-items-center bg-dark bg-opacity-10">
+                            <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
                                 <i class="fas fa-clock text-info me-3 fa-lg"></i>
                                 <span class="fw-bold">Click the <i class="fas fa-clock"></i> icon to enter time on behalf of a worker.</span>
                             </div>
-                            <div class="list-group-item d-flex align-items-center bg-dark bg-opacity-10">
+                            <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
                                 <i class="fas fa-sticky-note text-warning me-3 fa-lg"></i>
                                 <span class="fw-bold">The <i class="fas fa-sticky-note text-warning"></i> icon indicates that a worker has added notes to their time entries.</span>
                             </div>
-                            <div class="list-group-item d-flex align-items-center bg-dark bg-opacity-10">
+                            <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
                                 <i class="fas fa-exclamation-triangle text-warning me-3 fa-lg"></i>
                                 <span class="fw-bold">You can now approve timesheets with missing entries.</span>
                             </div>
-                            <div class="list-group-item d-flex align-items-center bg-dark bg-opacity-10">
+                            <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
                                 <i class="fas fa-lock text-secondary me-3 fa-lg"></i>
                                 <span class="fw-bold">Once approved, time entries are locked and cannot be modified.</span>
                             </div>
