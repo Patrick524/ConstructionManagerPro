@@ -31,6 +31,18 @@ def b64encode_filter(data):
 
 # Helper function to get the Monday of a given week
 def get_week_start(target_date):
+    """
+    Returns the date of the Monday at the start of the week containing target_date.
+    
+    Python's weekday() returns 0 for Monday, 1 for Tuesday, etc. So to get to the previous
+    Monday, we just subtract the weekday value.
+    
+    Args:
+        target_date: A date object
+        
+    Returns:
+        A date object representing the Monday of the week
+    """
     return target_date - timedelta(days=target_date.weekday())
 
 # Custom decorators for role-based access control

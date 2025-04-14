@@ -95,9 +95,24 @@ function setupWeekNavigation() {
                 navigateToWeek(startDate, 7);
             });
             
-            // Set up current week button
+            // Set up current week button - ensure it aligns to Monday of current week
             currentWeekBtn.addEventListener('click', function() {
-                window.location.href = window.location.pathname;
+                const today = new Date();
+                // Align to Monday (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+                const dayOfWeek = today.getDay();
+                const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // If Sunday (0), go back 6 days, otherwise go back (dayOfWeek - 1) days
+                today.setDate(today.getDate() - daysToSubtract);
+                
+                // Convert to YYYY-MM-DD format
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                const currentMonday = `${year}-${month}-${day}`;
+                
+                // Update URL and reload
+                const url = new URL(window.location);
+                url.searchParams.set('start_date', currentMonday);
+                window.location.href = url.toString();
             });
         }
     }
@@ -105,10 +120,16 @@ function setupWeekNavigation() {
 
 /**
  * Navigate to a different week based on offset from start date
+ * Always align to Monday (the start of the week)
  */
 function navigateToWeek(startDate, dayOffset) {
     const date = new Date(startDate);
     date.setDate(date.getDate() + dayOffset);
+    
+    // Align to Monday (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+    const dayOfWeek = date.getDay();
+    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // If Sunday (0), go back 6 days, otherwise go back (dayOfWeek - 1) days
+    date.setDate(date.getDate() - daysToSubtract);
     
     // Convert to YYYY-MM-DD format
     const year = date.getFullYear();
