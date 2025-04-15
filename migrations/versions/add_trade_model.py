@@ -17,41 +17,51 @@ depends_on = None
 
 
 def upgrade():
-    # Create the trade table
-    op.create_table('trade',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('name', sa.String(length=50), nullable=False),
-        sa.Column('is_active', sa.Boolean(), nullable=True, default=True),
-        sa.Column('created_at', sa.DateTime(), nullable=True),
-        sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('name')
-    )
+    # Skip creating the trade table as it already exists
     
-    # Add trade_id column to labor_activity table
-    op.add_column('labor_activity', 
-        sa.Column('trade_id', sa.Integer(), nullable=True)
-    )
+    # Add trade_id column to labor_activity table if it doesn't exist
+    try:
+        op.add_column('labor_activity', 
+            sa.Column('trade_id', sa.Integer(), nullable=True)
+        )
+    except Exception as e:
+        print(f"Column may already exist: {e}")
     
     # Add is_active column to labor_activity table if it doesn't exist
-    op.add_column('labor_activity',
-        sa.Column('is_active', sa.Boolean(), nullable=True, server_default=sa.text('true'))
-    )
+    try:
+        op.add_column('labor_activity',
+            sa.Column('is_active', sa.Boolean(), nullable=True, server_default=sa.text('true'))
+        )
+    except Exception as e:
+        print(f"Column may already exist: {e}")
     
-    # Create a foreign key from labor_activity.trade_id to trade.id
-    op.create_foreign_key(
-        'fk_labor_activity_trade',
-        'labor_activity', 'trade',
-        ['trade_id'], ['id']
-    )
+    # Create a foreign key from labor_activity.trade_id to trade.id if it doesn't exist
+    try:
+        op.create_foreign_key(
+            'fk_labor_activity_trade',
+            'labor_activity', 'trade',
+            ['trade_id'], ['id']
+        )
+    except Exception as e:
+        print(f"Foreign key may already exist: {e}")
 
 
 def downgrade():
-    # Remove the foreign key
-    op.drop_constraint('fk_labor_activity_trade', 'labor_activity', type_='foreignkey')
+    # Remove the foreign key if it exists
+    try:
+        op.drop_constraint('fk_labor_activity_trade', 'labor_activity', type_='foreignkey')
+    except Exception as e:
+        print(f"Foreign key may not exist: {e}")
     
-    # Remove the columns from labor_activity
-    op.drop_column('labor_activity', 'trade_id')
-    op.drop_column('labor_activity', 'is_active')
-    
-    # Drop the trade table
-    op.drop_table('trade')
+    # Remove the columns from labor_activity if they exist
+    try:
+        op.drop_column('labor_activity', 'trade_id')
+    except Exception as e:
+        print(f"Column may not exist: {e}")
+        
+    try:
+        op.drop_column('labor_activity', 'is_active')
+    except Exception as e:
+        print(f"Column may not exist: {e}")
+        
+    # Don't drop the trade table as it was not created by this migration
