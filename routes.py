@@ -1506,26 +1506,59 @@ def delete_job(job_id):
 @login_required
 @admin_required
 def manage_activities():
-    form = LaborActivityForm()
-
-    if form.validate_on_submit():
+    activity_form = LaborActivityForm()
+    trade_form = TradeForm()
+    editing_trade = request.args.get('edit_trade')
+    
+    # Handle activity form submission
+    if 'submit_activity' in request.form and activity_form.validate():
         # Check if we're editing an existing activity
         activity_id = request.args.get('edit')
 
         if activity_id:
             activity = LaborActivity.query.get_or_404(activity_id)
-            activity.name = form.name.data
-            activity.trade_category = form.trade_category.data
+            activity.name = activity_form.name.data
+            activity.trade_category = activity_form.trade_category.data
+            activity.is_active = activity_form.is_active.data
+            
+            # If trade_id is provided, associate with the trade
+            if activity_form.trade_id.data and activity_form.trade_id.data > 0:
+                activity.trade_id = activity_form.trade_id.data
+                
             flash('Labor activity updated successfully!', 'success')
         else:
             # Create new activity
             activity = LaborActivity(
-                name=form.name.data,
-                trade_category=form.trade_category.data
+                name=activity_form.name.data,
+                trade_category=activity_form.trade_category.data,
+                is_active=activity_form.is_active.data
             )
+            
+            # If trade_id is provided, associate with the trade
+            if activity_form.trade_id.data and activity_form.trade_id.data > 0:
+                activity.trade_id = activity_form.trade_id.data
+                
             db.session.add(activity)
             flash('New labor activity created successfully!', 'success')
 
+        db.session.commit()
+        return redirect(url_for('manage_activities'))
+    
+    # Handle trade form submission
+    if 'submit_trade' in request.form and trade_form.validate():
+        if editing_trade:
+            trade = Trade.query.get_or_404(editing_trade)
+            trade.name = trade_form.name.data
+            trade.is_active = trade_form.is_active.data
+            flash('Trade updated successfully!', 'success')
+        else:
+            trade = Trade(
+                name=trade_form.name.data,
+                is_active=trade_form.is_active.data
+            )
+            db.session.add(trade)
+            flash('New trade created successfully!', 'success')
+            
         db.session.commit()
         return redirect(url_for('manage_activities'))
 
@@ -1533,9 +1566,21 @@ def manage_activities():
     activity_id = request.args.get('edit')
     if activity_id:
         activity = LaborActivity.query.get_or_404(activity_id)
-        form.name.data = activity.name
-        form.trade_category.data = activity.trade_category
+        activity_form.name.data = activity.name
+        activity_form.trade_category.data = activity.trade_category
+        activity_form.is_active.data = activity.is_active
+        if activity.trade_id:
+            activity_form.trade_id.data = activity.trade_id
+    
+    # Check if we're editing a trade
+    if editing_trade:
+        trade = Trade.query.get_or_404(editing_trade)
+        trade_form.name.data = trade.name
+        trade_form.is_active.data = trade.is_active
 
+    # Get all trades
+    trades = Trade.query.order_by(Trade.name).all()
+    
     # Get all activities grouped by trade category
     activities_by_trade = {}
     activities = LaborActivity.query.order_by(LaborActivity.trade_category, LaborActivity.name).all()
@@ -1547,10 +1592,41 @@ def manage_activities():
 
     return render_template(
         'admin/activities.html',
-        form=form,
+        activity_form=activity_form,
+        trade_form=trade_form,
         activities_by_trade=activities_by_trade,
-        editing=bool(activity_id)
+        trades=trades,
+        editing_activity=bool(activity_id),
+        editing_trade=bool(editing_trade)
     )
+
+@app.route('/admin/toggle_trade/<int:id>', methods=['POST'])
+@login_required
+@admin_required
+def toggle_trade(id):
+    trade = Trade.query.get_or_404(id)
+    trade.is_active = not trade.is_active
+    
+    # Optionally, toggle all associated labor activities as well
+    if not trade.is_active:
+        for activity in trade.labor_activities:
+            activity.is_active = False
+    
+    db.session.commit()
+    
+    flash(f"Trade '{trade.name}' {'enabled' if trade.is_active else 'disabled'} successfully.", "success")
+    return redirect(url_for('manage_activities'))
+
+@app.route('/admin/toggle_activity/<int:id>', methods=['POST'])
+@login_required
+@admin_required
+def toggle_activity(id):
+    activity = LaborActivity.query.get_or_404(id)
+    activity.is_active = not activity.is_active
+    db.session.commit()
+    
+    flash(f"Activity '{activity.name}' {'enabled' if activity.is_active else 'disabled'} successfully.", "success")
+    return redirect(url_for('manage_activities'))
 
 @app.route('/admin/users', methods=['GET', 'POST'])
 @login_required
@@ -1874,7 +1950,11 @@ def generate_reports():
 @login_required
 def get_labor_activities(job_id):
     job = Job.query.get_or_404(job_id)
-    activities = LaborActivity.query.filter_by(trade_category=job.trade_type).all()
+    # Only get active labor activities for the job's trade type
+    activities = LaborActivity.query.filter_by(
+        trade_category=job.trade_type, 
+        is_active=True
+    ).all()
 
     # Return JSON response with labor activities for the job's trade type
     return jsonify([

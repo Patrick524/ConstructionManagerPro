@@ -1,44 +1,167 @@
 {% extends "base.html" %}
 
-{% block title %}Manage Labor Activities - Construction Timesheet{% endblock %}
+{% block title %}Manage Trades & Activities - Construction Timesheet{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
-    <div class="col-md-8">
+    <div class="col-md-6">
         <h1 class="page-title">
-            <i class="fas fa-tasks text-primary me-2"></i>Manage Labor Activities
+            <i class="fas fa-tools text-primary me-2"></i>Manage Trades & Activities
         </h1>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-6">
         <div class="d-flex justify-content-md-end align-items-center h-100">
+            <button class="btn btn-outline-primary me-2" data-bs-toggle="collapse" data-bs-target="#tradeFormContainer">
+                <i class="fas fa-plus me-2"></i>{{ 'Update Trade' if editing_trade else 'Add Trade' }}
+            </button>
             <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#activityFormContainer">
-                <i class="fas fa-plus me-2"></i>{{ 'Update Activity' if editing else 'Add Activity' }}
+                <i class="fas fa-plus me-2"></i>{{ 'Update Activity' if editing_activity else 'Add Activity' }}
             </button>
         </div>
     </div>
 </div>
 
+<!-- Trade Management Section -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="collapse {{ 'show' if editing or request.args.get('status') == 'new' else '' }}" id="activityFormContainer">
+        <div class="collapse {{ 'show' if editing_trade or request.args.get('status') == 'new_trade' else '' }}" id="tradeFormContainer">
             <div class="card mb-4">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">{{ 'Edit Labor Activity' if editing else 'Add Labor Activity' }}</h5>
+                    <h5 class="mb-0">{{ 'Edit Trade' if editing_trade else 'Add Trade' }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('manage_activities', edit_trade=request.args.get('edit_trade')) }}">
+                        {{ trade_form.hidden_tag() }}
+                        <input type="hidden" name="submit_trade" value="1">
+                        
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="name" class="form-label">Trade Name</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-hard-hat"></i></span>
+                                    {{ trade_form.name(class="form-control", placeholder="Enter trade name") }}
+                                </div>
+                                {% if trade_form.name.errors %}
+                                    <div class="text-danger">
+                                        {% for error in trade_form.name.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Status</label>
+                                <div class="form-check form-switch mt-2">
+                                    {{ trade_form.is_active(class="form-check-input") }}
+                                    <label class="form-check-label" for="is_active">
+                                        Enabled
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>{{ 'Update Trade' if editing_trade else 'Save Trade' }}
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#tradeFormContainer">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Trades List -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">Available Trades</h5>
+            </div>
+            <div class="card-body">
+                {% if trades %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Trade Name</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for trade in trades %}
+                                    <tr>
+                                        <td>{{ trade.name }}</td>
+                                        <td>
+                                            <span class="badge {{ 'bg-success' if trade.is_active else 'bg-secondary' }}">
+                                                {{ 'Active' if trade.is_active else 'Disabled' }}
+                                            </span>
+                                        </td>
+                                        <td>{{ trade.created_at.strftime('%Y-%m-%d') }}</td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a href="{{ url_for('manage_activities', edit_trade=trade.id) }}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </a>
+                                                <form method="POST" action="{{ url_for('toggle_trade', id=trade.id) }}" class="d-inline" 
+                                                      onsubmit="return confirm('Are you sure you want to {{ 'disable' if trade.is_active else 'enable' }} this trade?');">
+                                                    <button type="submit" class="btn btn-sm {{ 'btn-outline-danger' if trade.is_active else 'btn-outline-success' }}">
+                                                        <i class="fas {{ 'fa-toggle-off' if trade.is_active else 'fa-toggle-on' }}"></i>
+                                                        {{ 'Disable' if trade.is_active else 'Enable' }}
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-hard-hat fa-3x text-muted mb-3 d-block"></i>
+                        <h5>No trades found</h5>
+                        <p class="mb-3">Start by adding your first trade</p>
+                        <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#tradeFormContainer">
+                            <i class="fas fa-plus me-2"></i>Add Trade
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Activity Form -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="collapse {{ 'show' if editing_activity or request.args.get('status') == 'new' else '' }}" id="activityFormContainer">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{{ 'Edit Labor Activity' if editing_activity else 'Add Labor Activity' }}</h5>
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('manage_activities', edit=request.args.get('edit')) }}">
-                        {{ form.hidden_tag() }}
+                        {{ activity_form.hidden_tag() }}
+                        <input type="hidden" name="submit_activity" value="1">
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="name" class="form-label">Activity Name</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-clipboard-list"></i></span>
-                                    {{ form.name(class="form-control", placeholder="Enter activity name") }}
+                                    {{ activity_form.name(class="form-control", placeholder="Enter activity name") }}
                                 </div>
-                                {% if form.name.errors %}
+                                {% if activity_form.name.errors %}
                                     <div class="text-danger">
-                                        {% for error in form.name.errors %}
+                                        {% for error in activity_form.name.errors %}
                                             <small>{{ error }}</small>
                                         {% endfor %}
                                     </div>
@@ -49,11 +172,11 @@
                                 <label for="trade_category" class="form-label">Trade Category</label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-hard-hat"></i></span>
-                                    {{ form.trade_category(class="form-select") }}
+                                    {{ activity_form.trade_category(class="form-select") }}
                                 </div>
-                                {% if form.trade_category.errors %}
+                                {% if activity_form.trade_category.errors %}
                                     <div class="text-danger">
-                                        {% for error in form.trade_category.errors %}
+                                        {% for error in activity_form.trade_category.errors %}
                                             <small>{{ error }}</small>
                                         {% endfor %}
                                     </div>
@@ -61,9 +184,36 @@
                             </div>
                         </div>
                         
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="trade_id" class="form-label">Associated Trade (Optional)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-link"></i></span>
+                                    {{ activity_form.trade_id(class="form-select") }}
+                                </div>
+                                {% if activity_form.trade_id.errors %}
+                                    <div class="text-danger">
+                                        {% for error in activity_form.trade_id.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Status</label>
+                                <div class="form-check form-switch mt-2">
+                                    {{ activity_form.is_active(class="form-check-input") }}
+                                    <label class="form-check-label" for="is_active">
+                                        Enabled
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="d-flex justify-content-between">
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>{{ 'Update Activity' if editing else 'Save Activity' }}
+                                <i class="fas fa-save me-2"></i>{{ 'Update Activity' if editing_activity else 'Save Activity' }}
                             </button>
                             <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#activityFormContainer">
                                 Cancel
@@ -76,6 +226,7 @@
     </div>
 </div>
 
+<!-- Activities List -->
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -116,6 +267,8 @@
                                         <thead>
                                             <tr>
                                                 <th>Name</th>
+                                                <th>Associated Trade</th>
+                                                <th>Status</th>
                                                 <th>Created</th>
                                                 <th>Actions</th>
                                             </tr>
@@ -124,11 +277,26 @@
                                             {% for activity in activities %}
                                                 <tr class="activity-row" data-search-text="{{ activity.name.lower() }} {{ trade.lower() }}">
                                                     <td>{{ activity.name }}</td>
+                                                    <td>{{ activity.trade.name if activity.trade else 'None' }}</td>
+                                                    <td>
+                                                        <span class="badge {{ 'bg-success' if activity.is_active else 'bg-secondary' }}">
+                                                            {{ 'Active' if activity.is_active else 'Disabled' }}
+                                                        </span>
+                                                    </td>
                                                     <td>{{ activity.created_at.strftime('%Y-%m-%d') }}</td>
                                                     <td>
-                                                        <a href="{{ url_for('manage_activities', edit=activity.id) }}" class="btn btn-sm btn-outline-primary">
-                                                            <i class="fas fa-edit"></i> Edit
-                                                        </a>
+                                                        <div class="btn-group">
+                                                            <a href="{{ url_for('manage_activities', edit=activity.id) }}" class="btn btn-sm btn-outline-primary">
+                                                                <i class="fas fa-edit"></i> Edit
+                                                            </a>
+                                                            <form method="POST" action="{{ url_for('toggle_activity', id=activity.id) }}" class="d-inline"
+                                                                  onsubmit="return confirm('Are you sure you want to {{ 'disable' if activity.is_active else 'enable' }} this activity?');">
+                                                                <button type="submit" class="btn btn-sm {{ 'btn-outline-danger' if activity.is_active else 'btn-outline-success' }}">
+                                                                    <i class="fas {{ 'fa-toggle-off' if activity.is_active else 'fa-toggle-on' }}"></i>
+                                                                    {{ 'Disable' if activity.is_active else 'Enable' }}
+                                                                </button>
+                                                            </form>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             {% endfor %}
@@ -156,9 +324,9 @@
 <div class="row mt-4">
     <div class="col-12">
         <div class="alert alert-info" role="alert">
-            <h5><i class="fas fa-info-circle me-2"></i>About Labor Activities</h5>
-            <p>Labor activities define the specific types of work that can be performed on a job. These are organized by trade category.</p>
-            <p class="mb-0">When workers log time, they'll select from activities that match the trade type of the job they're working on.</p>
+            <h5><i class="fas fa-info-circle me-2"></i>About Trades and Labor Activities</h5>
+            <p>Trades represent specialized construction disciplines (like electrical or plumbing). Labor activities define specific work types within those trades.</p>
+            <p class="mb-0">Disabled trades and activities won't appear in timesheet forms, which helps keep the interface clean and relevant.</p>
         </div>
     </div>
 </div>

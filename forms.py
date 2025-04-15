@@ -178,10 +178,10 @@ class LaborActivityForm(FlaskForm):
     
     def __init__(self, *args, **kwargs):
         super(LaborActivityForm, self).__init__(*args, **kwargs)
-        # Populate trade choices from the database
+        # Populate trade choices from the database - only active trades
         from models import Trade
         self.trade_id.choices = [(0, '-- Select Trade --')] + [
-            (trade.id, trade.name) for trade in Trade.query.order_by(Trade.name).all()
+            (trade.id, trade.name) for trade in Trade.query.filter_by(is_active=True).order_by(Trade.name).all()
         ]
 
 class UserManagementForm(FlaskForm):
@@ -270,7 +270,8 @@ class ClockInForm(FlaskForm):
                               for job in Job.query.filter_by(status='active').all()]
         
         # Default to the first labor activity, but this will be dynamically updated via JavaScript
-        activities = LaborActivity.query.all()
+        # Only show active labor activities
+        activities = LaborActivity.query.filter_by(is_active=True).all()
         if activities:
             self.labor_activity_id.choices = [(activity.id, activity.name) for activity in activities]
         else:
