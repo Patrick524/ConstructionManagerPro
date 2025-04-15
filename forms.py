@@ -175,14 +175,6 @@ class LaborActivityForm(FlaskForm):
     trade_id = SelectField('Trade', coerce=int, validators=[Optional()])
     is_active = BooleanField('Enabled', default=True)
     submit = SubmitField('Save Activity')
-    
-    def __init__(self, *args, **kwargs):
-        super(LaborActivityForm, self).__init__(*args, **kwargs)
-        # Populate trade choices from the database - only active trades
-        from models import Trade
-        self.trade_id.choices = [(0, '-- Select Trade --')] + [
-            (trade.id, trade.name) for trade in Trade.query.filter_by(is_active=True).order_by(Trade.name).all()
-        ]
 
 class UserManagementForm(FlaskForm):
     """Form for admin to edit users"""

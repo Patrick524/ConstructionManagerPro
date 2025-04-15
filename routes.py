@@ -1510,6 +1510,11 @@ def manage_activities():
     trade_form = TradeForm()
     editing_trade = request.args.get('edit_trade')
     
+    # Dynamically populate trade choices from the database - only active trades
+    activity_form.trade_id.choices = [(0, '-- Select Trade --')] + [
+        (trade.id, trade.name) for trade in Trade.query.filter_by(is_active=True).order_by(Trade.name).all()
+    ]
+    
     # Handle activity form submission
     if 'submit_activity' in request.form and activity_form.validate():
         # Check if we're editing an existing activity
