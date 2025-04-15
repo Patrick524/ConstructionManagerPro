@@ -154,6 +154,12 @@ class JobForm(FlaskForm):
         foremen = User.query.filter_by(role='foreman').all()
         self.foreman_id.choices = [(0, '-- Select Foreman --')] + [(f.id, f.name) for f in foremen]
 
+class TradeForm(FlaskForm):
+    """Form for creating/editing trades"""
+    name = StringField('Trade Name', validators=[DataRequired(), Length(min=2, max=50)])
+    is_active = BooleanField('Enabled', default=True)
+    submit = SubmitField('Save Trade')
+
 class LaborActivityForm(FlaskForm):
     """Form for creating/editing labor activities"""
     name = StringField('Activity Name', validators=[DataRequired(), Length(min=2, max=100)])
@@ -166,7 +172,17 @@ class LaborActivityForm(FlaskForm):
         ('masonry', 'Masonry'),
         ('other', 'Other')
     ], validators=[DataRequired()])
+    trade_id = SelectField('Trade', coerce=int, validators=[Optional()])
+    is_active = BooleanField('Enabled', default=True)
     submit = SubmitField('Save Activity')
+    
+    def __init__(self, *args, **kwargs):
+        super(LaborActivityForm, self).__init__(*args, **kwargs)
+        # Populate trade choices from the database
+        from models import Trade
+        self.trade_id.choices = [(0, '-- Select Trade --')] + [
+            (trade.id, trade.name) for trade in Trade.query.order_by(Trade.name).all()
+        ]
 
 class UserManagementForm(FlaskForm):
     """Form for admin to edit users"""
