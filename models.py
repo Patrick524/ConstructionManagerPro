@@ -35,6 +35,16 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return f'<User {self.name}>'
 
+class Trade(db.Model):
+    """Trade categories for construction work"""
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)  # e.g. drywall, electrical, plumbing
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<Trade {self.name}>'
+
 class Job(db.Model):
     """Job model representing construction projects"""
     id = db.Column(db.Integer, primary_key=True)
@@ -57,10 +67,13 @@ class LaborActivity(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     trade_category = db.Column(db.String(50), nullable=False, default='drywall')
+    trade_id = db.Column(db.Integer, db.ForeignKey('trade.id'), nullable=True)  # Link to Trade model
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_active = db.Column(db.Boolean, default=True)  # New field to enable/disable activities
     
     # Relationships
     time_entries = db.relationship('TimeEntry', backref='labor_activity', lazy='dynamic')
+    trade = db.relationship('Trade', backref='labor_activities', lazy='joined')
     
     def __repr__(self):
         return f'<LaborActivity {self.name} ({self.trade_category})>'
