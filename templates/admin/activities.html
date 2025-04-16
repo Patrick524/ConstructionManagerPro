@@ -330,6 +330,47 @@
     </div>
 </div>
 
+<!-- Disabled Trades Section -->
+{% if disabled_trades %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">Disabled Trades</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Trade</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trade in disabled_trades %}
+                                <tr>
+                                    <td>{{ trade.name }}</td>
+                                    <td>{{ trade.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('toggle_trade', id=trade.id) }}">
+                                            <button type="submit" class="btn btn-success btn-sm">
+                                                <i class="fas fa-toggle-on me-1"></i> Enable
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="row mt-4">
     <div class="col-12">
         <div class="alert alert-info" role="alert">

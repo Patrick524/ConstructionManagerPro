@@ -1608,8 +1608,11 @@ def manage_activities():
         trade_form.name.data = trade.name
         trade_form.is_active.data = trade.is_active
 
-    # Get all trades for display - but only show active ones
-    trades = Trade.query.filter_by(is_active=True).order_by(Trade.name).all()
+    # Get active trades for display
+    active_trades = Trade.query.filter_by(is_active=True).order_by(Trade.name).all()
+    
+    # Get disabled trades for a separate display section
+    disabled_trades = Trade.query.filter_by(is_active=False).order_by(Trade.name).all()
     
     # Get activities grouped by trade category - only active activities
     activities_by_trade = {}
@@ -1625,7 +1628,8 @@ def manage_activities():
         activity_form=activity_form,
         trade_form=trade_form,
         activities_by_trade=activities_by_trade,
-        trades=trades,
+        trades=active_trades,
+        disabled_trades=disabled_trades,
         editing_activity=bool(activity_id),
         editing_trade=bool(editing_trade)
     )
