@@ -1996,6 +1996,21 @@ def get_labor_activities(job_id):
         for activity in activities
     ])
 
+@app.route('/admin/geocode')
+@login_required
+@admin_required
+def geocode():
+    """API endpoint to geocode an address using Nominatim"""
+    address = request.args.get('addr', '')
+    if not address:
+        return jsonify({'error': 'No address provided'}), 400
+    
+    result = utils.geocode_address(address)
+    if result:
+        return jsonify(result)
+    else:
+        return jsonify({'error': 'Could not geocode address'}), 404
+
 @app.route('/api/time_entries/<date>/<int:job_id>')
 @login_required
 def get_time_entries(date, job_id):

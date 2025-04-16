@@ -402,3 +402,60 @@ def get_labor_activities_for_job(job_id):
 
     activities = LaborActivity.query.filter_by(trade_category=job.trade_type).all()
     return activities
+
+def geocode_address(address):
+    """
+    Geocode an address using Nominatim (OpenStreetMap).
+    
+    Args:
+        address (str): The address to geocode
+        
+    Returns:
+        dict: A dictionary with 'lat' and 'lon' keys, or None if geocoding failed
+    """
+    import urllib.parse
+    import urllib.request
+    import json
+    import time
+    
+    # Don't try to geocode if address is empty
+    if not address or address.strip() == '':
+        return None
+    
+    try:
+        # URL encode the address
+        encoded_address = urllib.parse.quote(address)
+        
+        # Build the Nominatim API URL
+        # Format: https://nominatim.openstreetmap.org/search?q={address}&format=json&limit=1
+        url = f"https://nominatim.openstreetmap.org/search?q={encoded_address}&format=json&limit=1"
+        
+        # Set a user agent (required by Nominatim's ToS)
+        headers = {
+            'User-Agent': 'ConstructionTimesheetApp/1.0',
+            'Accept': 'application/json'
+        }
+        
+        # Create request
+        req = urllib.request.Request(url, headers=headers)
+        
+        # Send request and get response
+        with urllib.request.urlopen(req) as response:
+            # Parse JSON response
+            data = json.loads(response.read().decode())
+            
+            # Check if we got any results
+            if data and len(data) > 0:
+                result = data[0]
+                return {
+                    'lat': float(result['lat']),
+                    'lon': float(result['lon']),
+                    'display_name': result.get('display_name', address)
+                }
+            else:
+                print(f"No geocoding results found for address: {address}")
+                return None
+    
+    except Exception as e:
+        print(f"Error geocoding address '{address}': {str(e)}")
+        return None

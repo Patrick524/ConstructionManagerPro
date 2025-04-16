@@ -129,6 +129,9 @@ class JobForm(FlaskForm):
     job_code = StringField('Job Code', validators=[DataRequired(), Length(min=2, max=20)])
     description = StringField('Description', validators=[DataRequired(), Length(min=2, max=255)])
     location = StringField('Job Location', validators=[Optional(), Length(max=255)])
+    # Hidden fields for latitude and longitude
+    latitude = FloatField('Latitude', validators=[Optional()], render_kw={'type': 'hidden'})
+    longitude = FloatField('Longitude', validators=[Optional()], render_kw={'type': 'hidden'})
     status = SelectField('Status', choices=[
         ('active', 'Active'),
         ('complete', 'Complete'),
