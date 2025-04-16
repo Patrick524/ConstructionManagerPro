@@ -1511,12 +1511,31 @@ def manage_activities():
     trade_form = TradeForm()
     editing_trade = request.args.get('edit_trade')
     
-    # Dynamically populate trade choices from the database - only active trades
+    # Get active trades for both dropdowns
+    active_trades = Trade.query.filter_by(is_active=True).order_by(Trade.name).all()
+    
+    # 1. Dynamically populate trade_id choices from the database - only active trades
     activity_form.trade_id.choices = [(0, '-- Select Trade --')] + [
-        (trade.id, trade.name) for trade in Trade.query.filter_by(is_active=True).order_by(Trade.name).all()
+        (trade.id, trade.name) for trade in active_trades
     ]
     
-    # Important: Re-populate choices *before* validation to ensure POST requests can validate properly
+    # 2. Dynamically populate trade_category choices based on active trades
+    # First, get unique categories from active trades, falling back to defaults if none found
+    unique_categories = set(trade.name.lower() for trade in active_trades)
+    if not unique_categories:
+        # Fallback categories if no trades exist
+        unique_categories = {'drywall', 'electrical', 'plumbing', 'carpentry', 'painting', 'masonry', 'other'}
+    
+    # Always include "other" category
+    if 'other' not in unique_categories:
+        unique_categories.add('other')
+    
+    # Set the choices for trade_category
+    activity_form.trade_category.choices = [
+        (cat, cat.capitalize()) for cat in sorted(unique_categories)
+    ]
+    
+    # Important: Choices must be populated *before* validation for POST requests
     
     # Handle activity form submission
     if 'submit' in request.form:
