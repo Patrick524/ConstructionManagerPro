@@ -1506,6 +1506,7 @@ def delete_job(job_id):
 @login_required
 @admin_required
 def manage_activities():
+    # Initialize forms
     activity_form = LaborActivityForm()
     trade_form = TradeForm()
     editing_trade = request.args.get('edit_trade')
@@ -1515,39 +1516,44 @@ def manage_activities():
         (trade.id, trade.name) for trade in Trade.query.filter_by(is_active=True).order_by(Trade.name).all()
     ]
     
+    # Important: Re-populate choices *before* validation to ensure POST requests can validate properly
+    
     # Handle activity form submission
-    if 'submit_activity' in request.form and activity_form.validate():
-        # Check if we're editing an existing activity
-        activity_id = request.args.get('edit')
+    if 'submit' in request.form:
+        # WTForms validation needs choices set properly before validation
+        # This ensures any POSTed trade_id is considered valid during validation
+        if activity_form.validate():
+            # Check if we're editing an existing activity
+            activity_id = request.args.get('edit')
 
-        if activity_id:
-            activity = LaborActivity.query.get_or_404(activity_id)
-            activity.name = activity_form.name.data
-            activity.trade_category = activity_form.trade_category.data
-            activity.is_active = activity_form.is_active.data
-            
-            # If trade_id is provided, associate with the trade
-            if activity_form.trade_id.data and activity_form.trade_id.data > 0:
-                activity.trade_id = activity_form.trade_id.data
+            if activity_id:
+                activity = LaborActivity.query.get_or_404(activity_id)
+                activity.name = activity_form.name.data
+                activity.trade_category = activity_form.trade_category.data
+                activity.is_active = activity_form.is_active.data
                 
-            flash('Labor activity updated successfully!', 'success')
-        else:
-            # Create new activity
-            activity = LaborActivity(
-                name=activity_form.name.data,
-                trade_category=activity_form.trade_category.data,
-                is_active=activity_form.is_active.data
-            )
-            
-            # If trade_id is provided, associate with the trade
-            if activity_form.trade_id.data and activity_form.trade_id.data > 0:
-                activity.trade_id = activity_form.trade_id.data
+                # If trade_id is provided, associate with the trade
+                if activity_form.trade_id.data and activity_form.trade_id.data > 0:
+                    activity.trade_id = activity_form.trade_id.data
+                    
+                flash('Labor activity updated successfully!', 'success')
+            else:
+                # Create new activity
+                activity = LaborActivity(
+                    name=activity_form.name.data,
+                    trade_category=activity_form.trade_category.data,
+                    is_active=activity_form.is_active.data
+                )
                 
-            db.session.add(activity)
-            flash('New labor activity created successfully!', 'success')
+                # If trade_id is provided, associate with the trade
+                if activity_form.trade_id.data and activity_form.trade_id.data > 0:
+                    activity.trade_id = activity_form.trade_id.data
+                    
+                db.session.add(activity)
+                flash('New labor activity created successfully!', 'success')
 
-        db.session.commit()
-        return redirect(url_for('manage_activities'))
+            db.session.commit()
+            return redirect(url_for('manage_activities'))
     
     # Handle trade form submission
     if 'submit_trade' in request.form and trade_form.validate():
