@@ -1608,12 +1608,12 @@ def manage_activities():
         trade_form.name.data = trade.name
         trade_form.is_active.data = trade.is_active
 
-    # Get all trades
-    trades = Trade.query.order_by(Trade.name).all()
+    # Get all trades for display - but only show active ones
+    trades = Trade.query.filter_by(is_active=True).order_by(Trade.name).all()
     
-    # Get all activities grouped by trade category
+    # Get activities grouped by trade category - only active activities
     activities_by_trade = {}
-    activities = LaborActivity.query.order_by(LaborActivity.trade_category, LaborActivity.name).all()
+    activities = LaborActivity.query.filter_by(is_active=True).order_by(LaborActivity.trade_category, LaborActivity.name).all()
 
     for activity in activities:
         if activity.trade_category not in activities_by_trade:
