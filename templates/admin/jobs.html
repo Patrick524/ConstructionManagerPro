@@ -353,40 +353,7 @@
             });
         }
 
-        // Initialize the map
-        function initMap(lat, lng) {
-            // Create map
-            map = L.map('map-container').setView([lat, lng], 15);
-            
-            // Add tile layer (OpenStreetMap)
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
-            
-            // Add marker
-            marker = L.marker([lat, lng], {draggable: true}).addTo(map);
-            
-            // Update coordinates when marker is dragged
-            marker.on('dragend', function(event) {
-                const position = marker.getLatLng();
-                latitudeField.value = position.lat;
-                longitudeField.value = position.lng;
-            });
-            
-            // Force map to recalculate its size (needed sometimes for container display changes)
-            setTimeout(() => {
-                map.invalidateSize();
-            }, 250);
-        }
-        
-        // Update marker position
-        function updateMarker(lat, lng) {
-            if (map && marker) {
-                marker.setLatLng([lat, lng]);
-                map.setView([lat, lng], 15);
-                map.invalidateSize();
-            }
-        }
+        // Coordinates are stored in hidden form fields and used when the job is saved
     });
 </script>
 {% endblock %}
