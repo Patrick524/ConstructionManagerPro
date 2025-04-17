@@ -66,7 +66,7 @@
                                 <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
                                 {{ form.location(class="form-control", placeholder="Enter job location or address", id="job-location") }}
                                 <button type="button" class="btn btn-secondary" id="geocode-btn">
-                                    <i class="fas fa-search-location"></i> Find on Map
+                                    <i class="fas fa-search-location"></i> Get Coordinates
                                 </button>
                             </div>
                             {% if form.location.errors %}
@@ -81,8 +81,7 @@
                             {{ form.latitude() }}
                             {{ form.longitude() }}
                             
-                            <!-- Map container (initially hidden) -->
-                            <div id="map-container" class="mt-3"></div>
+                            <!-- Coordinates are stored in hidden fields above -->
                         </div>
                         
                         <div class="row">
@@ -236,11 +235,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""></script>
-
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Setup search functionality
@@ -298,16 +292,13 @@
             });
         });
 
-        // Map functionality
-        let map = null;
-        let marker = null;
-        const mapContainer = document.getElementById('map-container');
+        // Geocoding functionality
         const latitudeField = document.getElementById('latitude');
         const longitudeField = document.getElementById('longitude');
         const locationField = document.getElementById('job-location');
         const geocodeBtn = document.getElementById('geocode-btn');
 
-        // Initialize map if we have latitude and longitude values
+        // Log coordinates if we have latitude and longitude values
         if (latitudeField && longitudeField && 
             latitudeField.value && longitudeField.value && 
             !isNaN(parseFloat(latitudeField.value)) && 
@@ -315,10 +306,7 @@
             
             const lat = parseFloat(latitudeField.value);
             const lng = parseFloat(longitudeField.value);
-            
-            // Show map container and initialize map
-            mapContainer.style.display = 'block';
-            initMap(lat, lng);
+            console.log('Existing coordinates:', lat, lng);
         }
 
         // Geocode button click handler
@@ -346,13 +334,9 @@
                             latitudeField.value = data.lat;
                             longitudeField.value = data.lon;
                             
-                            // Initialize or update map
-                            mapContainer.style.display = 'block';
-                            if (!map) {
-                                initMap(data.lat, data.lon);
-                            } else {
-                                updateMarker(data.lat, data.lon);
-                            }
+                            // Show success alert
+                            alert(`Coordinates retrieved successfully! Latitude: ${data.lat}, Longitude: ${data.lon}`);
+                            console.log('Coordinates saved:', data.lat, data.lon);
                         } else {
                             alert('Location not found. Please try a different address.');
                         }
@@ -364,7 +348,7 @@
                     .finally(() => {
                         // Reset button state
                         geocodeBtn.disabled = false;
-                        geocodeBtn.innerHTML = '<i class="fas fa-search-location"></i> Find on Map';
+                        geocodeBtn.innerHTML = '<i class="fas fa-search-location"></i> Get Coordinates';
                     });
             });
         }
