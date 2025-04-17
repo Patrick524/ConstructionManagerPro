@@ -2009,7 +2009,7 @@ def get_labor_activities(job_id):
 @admin_required
 def geocode():
     """API endpoint to geocode an address using Nominatim"""
-    address = request.args.get('addr', '')
+    address = request.args.get('address', '')
     if not address:
         return jsonify({'error': 'No address provided'}), 400
     

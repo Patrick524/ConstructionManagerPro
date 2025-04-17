@@ -2,6 +2,25 @@
 
 {% block title %}Manage Jobs - Construction Timesheet{% endblock %}
 
+{% block extra_head %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+<style>
+    #map-container {
+        height: 250px;
+        margin-bottom: 15px;
+        border-radius: 0.25rem;
+        display: none;
+    }
+    .leaflet-container {
+        border-radius: 0.25rem;
+        border: 1px solid #dee2e6;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
@@ -58,7 +77,10 @@
                             <label for="location" class="form-label">Location/Address</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
-                                {{ form.location(class="form-control", placeholder="Enter job location or address") }}
+                                {{ form.location(class="form-control", placeholder="Enter job location or address", id="job-location") }}
+                                <button type="button" class="btn btn-secondary" id="geocode-btn">
+                                    <i class="fas fa-search-location"></i> Find on Map
+                                </button>
                             </div>
                             {% if form.location.errors %}
                                 <div class="text-danger">
@@ -67,6 +89,13 @@
                                     {% endfor %}
                                 </div>
                             {% endif %}
+                            
+                            <!-- Hidden lat/long fields from the form -->
+                            {{ form.latitude() }}
+                            {{ form.longitude() }}
+                            
+                            <!-- Map container (initially hidden) -->
+                            <div id="map-container" class="mt-3"></div>
                         </div>
                         
                         <div class="row">
@@ -220,6 +249,11 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Setup search functionality
@@ -276,6 +310,112 @@
                 rows.forEach(row => tbody.appendChild(row));
             });
         });
+
+        // Map functionality
+        let map = null;
+        let marker = null;
+        const mapContainer = document.getElementById('map-container');
+        const latitudeField = document.getElementById('latitude');
+        const longitudeField = document.getElementById('longitude');
+        const locationField = document.getElementById('job-location');
+        const geocodeBtn = document.getElementById('geocode-btn');
+
+        // Initialize map if we have latitude and longitude values
+        if (latitudeField && longitudeField && 
+            latitudeField.value && longitudeField.value && 
+            !isNaN(parseFloat(latitudeField.value)) && 
+            !isNaN(parseFloat(longitudeField.value))) {
+            
+            const lat = parseFloat(latitudeField.value);
+            const lng = parseFloat(longitudeField.value);
+            
+            // Show map container and initialize map
+            mapContainer.style.display = 'block';
+            initMap(lat, lng);
+        }
+
+        // Geocode button click handler
+        if (geocodeBtn && locationField) {
+            geocodeBtn.addEventListener('click', function() {
+                const location = locationField.value.trim();
+                
+                if (!location) {
+                    alert('Please enter a location or address to geocode.');
+                    return;
+                }
+                
+                // Show loading state
+                geocodeBtn.disabled = true;
+                geocodeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching...';
+                
+                // Call our geocoding endpoint
+                fetch(`/admin/geocode?address=${encodeURIComponent(location)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            alert(`Geocoding error: ${data.error}`);
+                        } else if (data.lat && data.lon) {
+                            // Update hidden fields
+                            latitudeField.value = data.lat;
+                            longitudeField.value = data.lon;
+                            
+                            // Initialize or update map
+                            mapContainer.style.display = 'block';
+                            if (!map) {
+                                initMap(data.lat, data.lon);
+                            } else {
+                                updateMarker(data.lat, data.lon);
+                            }
+                        } else {
+                            alert('Location not found. Please try a different address.');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Geocoding error:', err);
+                        alert('An error occurred while trying to geocode the address. Please try again.');
+                    })
+                    .finally(() => {
+                        // Reset button state
+                        geocodeBtn.disabled = false;
+                        geocodeBtn.innerHTML = '<i class="fas fa-search-location"></i> Find on Map';
+                    });
+            });
+        }
+
+        // Initialize the map
+        function initMap(lat, lng) {
+            // Create map
+            map = L.map('map-container').setView([lat, lng], 15);
+            
+            // Add tile layer (OpenStreetMap)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Add marker
+            marker = L.marker([lat, lng], {draggable: true}).addTo(map);
+            
+            // Update coordinates when marker is dragged
+            marker.on('dragend', function(event) {
+                const position = marker.getLatLng();
+                latitudeField.value = position.lat;
+                longitudeField.value = position.lng;
+            });
+            
+            // Force map to recalculate its size (needed sometimes for container display changes)
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 250);
+        }
+        
+        // Update marker position
+        function updateMarker(lat, lng) {
+            if (map && marker) {
+                marker.setLatLng([lat, lng]);
+                map.setView([lat, lng], 15);
+                map.invalidateSize();
+            }
+        }
     });
 </script>
 {% endblock %}
