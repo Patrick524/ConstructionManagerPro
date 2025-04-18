@@ -744,6 +744,30 @@ def clock_in():
     form = ClockInForm()
     
     if form.validate_on_submit():
+        # Get location data from form
+        latitude = request.form.get('latitude')
+        longitude = request.form.get('longitude')
+        accuracy = request.form.get('accuracy')
+        
+        # Get job information for distance calculation
+        job = Job.query.get(form.job_id.data)
+        distance_m = None
+        
+        # Calculate distance if we have both user location and job coordinates
+        if latitude and longitude and job.latitude and job.longitude:
+            try:
+                # Convert string values to float
+                lat1 = float(latitude)
+                lon1 = float(longitude)
+                lat2 = float(job.latitude)
+                lon2 = float(job.longitude)
+                
+                # Calculate the distance
+                distance_m = utils.calculate_distance(lat1, lon1, lat2, lon2)
+            except (ValueError, TypeError) as e:
+                print(f"Error calculating distance: {str(e)}")
+                # Continue without distance if calculation fails
+        
         # Create new clock session
         session = ClockSession(
             user_id=current_user.id,
@@ -751,19 +775,44 @@ def clock_in():
             labor_activity_id=form.labor_activity_id.data,
             notes=form.notes.data,
             clock_in=datetime.utcnow(),
-            is_active=True
+            is_active=True,
+            # Store location data
+            clock_in_latitude=float(latitude) if latitude else None,
+            clock_in_longitude=float(longitude) if longitude else None,
+            clock_in_accuracy=float(accuracy) if accuracy else None,
+            clock_in_distance_m=round(distance_m) if distance_m is not None else None
         )
         
         db.session.add(session)
         db.session.commit()
         
-        flash('You have successfully clocked in!', 'success')
+        # Return JSON response if it's an AJAX request
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({
+                'ok': True,
+                'distance_m': round(distance_m) if distance_m is not None else None,
+                'message': 'Clocked in successfully'
+            })
+        
+        # Otherwise, use the regular flash message and redirect
+        if distance_m is not None:
+            flash(f'You have successfully clocked in! Distance from job site: {round(distance_m)} meters.', 'success')
+        else:
+            flash('You have successfully clocked in!', 'success')
+        
         return redirect(url_for('worker_clock'))
     
     # If form validation fails
     for field, errors in form.errors.items():
         for error in errors:
             flash(f"Error in {getattr(form, field).label.text}: {error}", "danger")
+    
+    # Return JSON error if it's an AJAX request
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({
+            'ok': False,
+            'message': 'Form validation failed'
+        }), 400
     
     return redirect(url_for('worker_clock'))
 
@@ -774,7 +823,9 @@ def get_job_details(job_id):
     return jsonify({
         'description': job.description,
         'location': job.location,
-        'foreman_name': job.foreman.name if job.foreman else None
+        'foreman_name': job.foreman.name if job.foreman else None,
+        'latitude': job.latitude,
+        'longitude': job.longitude
     })
 
 @app.route('/worker/clock-out', methods=['POST'])
@@ -803,6 +854,40 @@ def clock_out():
         # Update notes if provided
         if form.notes.data:
             active_session.notes = form.notes.data
+            
+        # Get location data from form
+        latitude = request.form.get('latitude')
+        longitude = request.form.get('longitude')
+        accuracy = request.form.get('accuracy')
+        
+        # Get job information for distance calculation
+        job = Job.query.get(active_session.job_id)
+        distance_m = None
+        
+        # Calculate distance if we have both user location and job coordinates
+        if latitude and longitude and job.latitude and job.longitude:
+            try:
+                # Convert string values to float
+                lat1 = float(latitude)
+                lon1 = float(longitude)
+                lat2 = float(job.latitude)
+                lon2 = float(job.longitude)
+                
+                # Calculate the distance
+                distance_m = utils.calculate_distance(lat1, lon1, lat2, lon2)
+            except (ValueError, TypeError) as e:
+                print(f"Error calculating distance: {str(e)}")
+                # Continue without distance if calculation fails
+        
+        # Store location data
+        if latitude:
+            active_session.clock_out_latitude = float(latitude)
+        if longitude:
+            active_session.clock_out_longitude = float(longitude)
+        if accuracy:
+            active_session.clock_out_accuracy = float(accuracy)
+        if distance_m is not None:
+            active_session.clock_out_distance_m = round(distance_m)
         
         # Clock out
         active_session.clock_out_session()
@@ -815,13 +900,35 @@ def clock_out():
         db.session.commit()
         
         hours = active_session.get_duration_hours()
-        flash(f'You have successfully clocked out! {hours:.2f} hours recorded.', 'success')
+        
+        # Return JSON response if it's an AJAX request
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({
+                'ok': True,
+                'distance_m': round(distance_m) if distance_m is not None else None,
+                'hours': round(hours, 2),
+                'message': 'Clocked out successfully'
+            })
+        
+        # Otherwise, use the regular flash message and redirect
+        if distance_m is not None:
+            flash(f'You have successfully clocked out! {hours:.2f} hours recorded. Distance from job site: {round(distance_m)} meters.', 'success')
+        else:
+            flash(f'You have successfully clocked out! {hours:.2f} hours recorded.', 'success')
+        
         return redirect(url_for('worker_clock'))
     
     # If form validation fails
     for field, errors in form.errors.items():
         for error in errors:
             flash(f"Error in {getattr(form, field).label.text}: {error}", "danger")
+    
+    # Return JSON error if it's an AJAX request
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({
+            'ok': False,
+            'message': 'Form validation failed'
+        }), 400
     
     return redirect(url_for('worker_clock'))
 
