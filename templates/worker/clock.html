@@ -53,7 +53,10 @@
                                         <i class="fas fa-map-marker-alt text-secondary me-2"></i>
                                         <span class="text-dark">{{ active_session.job.location }}</span>
                                     </div>
-                                    <div class="map-container mb-2" id="activeSessionMap" data-location="{{ active_session.job.location }}"></div>
+                                    <div class="map-container mb-2" id="activeSessionMap" 
+                                         data-location="{{ active_session.job.location }}"
+                                         data-latitude="{{ active_session.job.latitude }}"
+                                         data-longitude="{{ active_session.job.longitude }}"></div>
                                     {% endif %}
                                     <div class="d-flex align-items-center mb-2">
                                         <i class="fas fa-hard-hat text-secondary me-2"></i>
@@ -76,13 +79,21 @@
                                     {% endif %}
                                 </div>
                                 <div class="col-md-4 text-center">
-                                    <form action="{{ url_for('clock_out') }}" method="post" class="mt-3">
+                                    <form action="{{ url_for('clock_out') }}" method="post" class="mt-3" id="clockOutForm">
                                         {{ clock_out_form.hidden_tag() }}
                                         <div class="mb-3">
                                             <label for="notes" class="form-label">Add notes (optional)</label>
                                             {{ clock_out_form.notes(class="form-control", placeholder="Any details about the work completed") }}
                                         </div>
-                                        <button type="submit" class="btn btn-danger btn-lg">
+                                        <!-- Hidden location fields -->
+                                        <input type="hidden" name="latitude" id="clockOutLatitude">
+                                        <input type="hidden" name="longitude" id="clockOutLongitude">
+                                        <input type="hidden" name="accuracy" id="clockOutAccuracy">
+                                        <div id="clockOutLocationStatus" class="alert alert-info d-none mb-3">
+                                            <i class="fas fa-location-arrow me-2"></i>
+                                            <span id="clockOutLocationMessage">Getting your location...</span>
+                                        </div>
+                                        <button type="submit" class="btn btn-danger btn-lg" id="clockOutButton">
                                             <i class="fas fa-sign-out-alt me-2"></i>Clock Out
                                         </button>
                                     </form>
@@ -415,7 +426,12 @@
                     // Show map container and initialize map
                     mapContainer.classList.remove('d-none');
                     setTimeout(() => {
-                        initMap('jobSelectMap', data.location);
+                        // Initialize map with coordinates if available
+                        if (data.latitude && data.longitude) {
+                            initMapWithCoordinates('jobSelectMap', data.latitude, data.longitude, data.location);
+                        } else {
+                            initMap('jobSelectMap', data.location);
+                        }
                     }, 100);
                 } else {
                     location.textContent = 'No location specified';
@@ -641,6 +657,220 @@
         }
     }
 
+    // Geolocation functions
+    // Get user location and handle for clock in/out
+    function getUserLocation(locationCallback) {
+        if (!navigator.geolocation) {
+            console.error("Geolocation is not supported by this browser.");
+            locationCallback(null);
+            return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const locationData = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    accuracy: position.coords.accuracy
+                };
+                locationCallback(locationData);
+            },
+            (error) => {
+                console.error("Geolocation error:", error);
+                locationCallback(null);
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    }
+    
+    // Handle the clock in form submission with location
+    function handleClockInForm() {
+        const form = document.getElementById('clockInForm');
+        if (!form) return;
+        
+        const locationStatus = document.getElementById('locationStatus');
+        const locationMessage = document.getElementById('locationMessage');
+        
+        form.addEventListener('submit', function(e) {
+            // Prevent the default form submission
+            e.preventDefault();
+            
+            // Show location status
+            locationStatus.classList.remove('d-none');
+            
+            // Get the job ID to check if it has coordinates
+            const jobId = document.getElementById('job_id').value;
+            
+            // Ensure a job is selected
+            if (!jobId || jobId === "") {
+                alert("Please select a job before clocking in.");
+                locationStatus.classList.add('d-none');
+                return;
+            }
+            
+            // Show loading message
+            locationMessage.textContent = "Getting your location...";
+            
+            // Get user location
+            getUserLocation((locationData) => {
+                if (locationData) {
+                    // Set hidden field values
+                    document.getElementById('clockInLatitude').value = locationData.latitude;
+                    document.getElementById('clockInLongitude').value = locationData.longitude;
+                    document.getElementById('clockInAccuracy').value = locationData.accuracy;
+                    
+                    locationMessage.textContent = "Location found!";
+                    
+                    // Submit the form after a brief delay to show success message
+                    setTimeout(() => {
+                        form.submit();
+                    }, 500);
+                } else {
+                    // Handle location error
+                    locationMessage.textContent = "Could not get your location. Submitting without location data.";
+                    
+                    // Submit form anyway after a delay
+                    setTimeout(() => {
+                        form.submit();
+                    }, 1000);
+                }
+            });
+        });
+    }
+    
+    // Handle the clock out form submission with location
+    function handleClockOutForm() {
+        const form = document.getElementById('clockOutForm');
+        if (!form) return;
+        
+        const locationStatus = document.getElementById('clockOutLocationStatus');
+        const locationMessage = document.getElementById('clockOutLocationMessage');
+        
+        form.addEventListener('submit', function(e) {
+            // Prevent the default form submission
+            e.preventDefault();
+            
+            // Show location status
+            locationStatus.classList.remove('d-none');
+            locationMessage.textContent = "Getting your location...";
+            
+            // Get user location
+            getUserLocation((locationData) => {
+                if (locationData) {
+                    // Set hidden field values
+                    document.getElementById('clockOutLatitude').value = locationData.latitude;
+                    document.getElementById('clockOutLongitude').value = locationData.longitude;
+                    document.getElementById('clockOutAccuracy').value = locationData.accuracy;
+                    
+                    locationMessage.textContent = "Location found!";
+                    
+                    // Submit the form after a brief delay
+                    setTimeout(() => {
+                        form.submit();
+                    }, 500);
+                } else {
+                    // Handle location error
+                    locationMessage.textContent = "Could not get your location. Submitting without location data.";
+                    
+                    // Submit form anyway after a delay
+                    setTimeout(() => {
+                        form.submit();
+                    }, 1000);
+                }
+            });
+        });
+    }
+
+    // Update job details function to include latitude and longitude
+    function updateJobDetails(jobId) {
+        if (!jobId) return;
+        
+        const panel = document.getElementById('jobDetailsPanel');
+        const description = document.getElementById('jobDescription');
+        const location = document.getElementById('jobLocation');
+        const foreman = document.getElementById('jobForeman');
+        const locationContainer = document.getElementById('jobLocationContainer');
+        const foremanContainer = document.getElementById('jobForemanContainer');
+        const mapContainer = document.getElementById('jobMapContainer');
+        
+        fetch(`/api/job/${jobId}`)
+            .then(response => response.json())
+            .then(data => {
+                description.textContent = data.description;
+                
+                if (foremanContainer && data.foreman_name) {
+                    foreman.textContent = data.foreman_name;
+                    foremanContainer.classList.remove('d-none');
+                }
+                
+                // Handle location and map
+                if (data.location) {
+                    location.textContent = data.location;
+                    locationContainer.classList.remove('d-none');
+                    
+                    // Show map container and initialize map
+                    mapContainer.classList.remove('d-none');
+                    setTimeout(() => {
+                        // Initialize map with coordinates if available
+                        if (data.latitude && data.longitude) {
+                            initMapWithCoordinates('jobSelectMap', data.latitude, data.longitude, data.location);
+                        } else {
+                            initMap('jobSelectMap', data.location);
+                        }
+                    }, 100);
+                } else {
+                    location.textContent = 'No location specified';
+                    // Always show location container with the "No location specified" text
+                    locationContainer.classList.remove('d-none');
+                    // Only hide the map container
+                    mapContainer.classList.add('d-none');
+                }
+                
+                panel.classList.remove('d-none');
+            })
+            .catch(error => {
+                console.error('Error fetching job details:', error);
+                panel.classList.add('d-none');
+            });
+    }
+    
+    // Initialize map with coordinates directly
+    function initMapWithCoordinates(containerId, lat, lng, locationName) {
+        // Clear existing map if any
+        if (containerId === 'activeSessionMap' && activeSessionMap) {
+            activeSessionMap.remove();
+            activeSessionMap = null;
+        } else if (containerId === 'jobSelectMap' && jobSelectMap) {
+            jobSelectMap.remove();
+            jobSelectMap = null;
+        }
+        
+        const container = document.getElementById(containerId);
+        if (!container) return null;
+        
+        // Initialize map
+        const map = L.map(container).setView([lat, lng], 15);
+        
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Add marker
+        L.marker([lat, lng]).addTo(map)
+            .bindPopup(locationName || 'Job Location')
+            .openPopup();
+        
+        // Store map reference
+        if (containerId === 'activeSessionMap') {
+            activeSessionMap = map;
+        } else if (containerId === 'jobSelectMap') {
+            jobSelectMap = map;
+        }
+        
+        return map;
+    }
+
     // Add event listeners
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize job select and labor activities
@@ -654,11 +884,25 @@
         // Initialize active session map if available
         const activeMapContainer = document.getElementById('activeSessionMap');
         if (activeMapContainer) {
+            // Check for location data
             const location = activeMapContainer.getAttribute('data-location');
-            if (location) {
+            
+            // Check if we have latitude and longitude data-attributes
+            const latitude = activeMapContainer.getAttribute('data-latitude');
+            const longitude = activeMapContainer.getAttribute('data-longitude');
+            
+            if (latitude && longitude) {
+                // Use direct coordinates if available
+                initMapWithCoordinates('activeSessionMap', parseFloat(latitude), parseFloat(longitude), location);
+            } else if (location) {
+                // Fall back to geocoding the location string
                 initMap('activeSessionMap', location);
             }
         }
+
+        // Initialize forms with location handling
+        handleClockInForm();
+        handleClockOutForm();
 
         // Display local time
         displayLocalTime();
