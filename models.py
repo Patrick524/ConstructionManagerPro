@@ -132,6 +132,17 @@ class ClockSession(db.Model):
     is_active = db.Column(db.Boolean, default=True)  # Used to track if session is currently active
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
+    # Location tracking fields
+    clock_in_latitude = db.Column(db.Float, nullable=True)
+    clock_in_longitude = db.Column(db.Float, nullable=True)
+    clock_in_accuracy = db.Column(db.Float, nullable=True)  # Accuracy in meters
+    clock_in_distance_m = db.Column(db.Float, nullable=True)  # Distance from job site in meters
+    
+    clock_out_latitude = db.Column(db.Float, nullable=True)
+    clock_out_longitude = db.Column(db.Float, nullable=True)
+    clock_out_accuracy = db.Column(db.Float, nullable=True)  # Accuracy in meters
+    clock_out_distance_m = db.Column(db.Float, nullable=True)  # Distance from job site in meters
+    
     # Relationships
     job = db.relationship('Job', backref='clock_sessions', lazy='joined')
     labor_activity = db.relationship('LaborActivity', backref='clock_sessions', lazy='joined')
