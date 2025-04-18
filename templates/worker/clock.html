@@ -100,7 +100,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-7">
-                                    <form action="{{ url_for('clock_in') }}" method="post" class="mt-3">
+                                    <form action="{{ url_for('clock_in') }}" method="post" class="mt-3" id="clockInForm">
                                         {{ clock_in_form.hidden_tag() }}
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
@@ -123,7 +123,9 @@
                                                         <div id="jobMapContainer" class="mb-3 d-none">
                                                             <div id="jobSelectMap" class="map-container"></div>
                                                         </div>
-                                                        <div class="d-none">
+                                                        <div id="locationStatus" class="alert alert-info d-none">
+                                                            <i class="fas fa-location-arrow me-2"></i>
+                                                            <span id="locationMessage">Getting your location...</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -137,7 +139,11 @@
                                             <label for="notes" class="form-label">Notes (optional)</label>
                                             {{ clock_in_form.notes(class="form-control", placeholder="Any details about the work to be done") }}
                                         </div>
-                                        <button type="submit" class="btn btn-success btn-lg">
+                                        <!-- Hidden location fields -->
+                                        <input type="hidden" name="latitude" id="clockInLatitude">
+                                        <input type="hidden" name="longitude" id="clockInLongitude">
+                                        <input type="hidden" name="accuracy" id="clockInAccuracy">
+                                        <button type="submit" class="btn btn-success btn-lg" id="clockInButton">
                                             <i class="fas fa-sign-in-alt me-2"></i>Clock In
                                         </button>
                                     </form>
