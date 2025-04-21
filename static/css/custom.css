@@ -259,6 +259,22 @@ select.form-select {
     z-index: 1500;
 }
 
+/* Wider select elements on the clock in page */
+#clockInForm .form-select-lg {
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 5px;
+}
+
+/* Larger labels for form elements */
+#clockInForm .form-label {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
 /* Adjust positioning of dropdown elements */
 .bootstrap-select .dropdown-menu {
     transform: translate3d(0px, 38px, 0px) !important;
