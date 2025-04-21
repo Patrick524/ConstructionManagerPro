@@ -137,6 +137,10 @@
                                                         <div id="locationStatus" class="alert alert-info d-none">
                                                             <i class="fas fa-location-arrow me-2"></i>
                                                             <span id="locationMessage">Getting your location...</span>
+                                                            <div id="distanceInfo" class="mt-2 d-none">
+                                                                <i class="fas fa-map-marked-alt me-2"></i>
+                                                                <span id="distanceMessage"></span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -721,10 +725,49 @@
                     
                     locationMessage.textContent = "Location found!";
                     
-                    // Submit the form after a brief delay to show success message
-                    setTimeout(() => {
-                        form.submit();
-                    }, 500);
+                    // Fetch job details to calculate distance
+                    fetch(`/api/job/${jobId}`)
+                        .then(response => response.json())
+                        .then(jobData => {
+                            if (jobData.latitude && jobData.longitude) {
+                                // Calculate distance
+                                const distance = calculateDistance(
+                                    locationData.latitude, 
+                                    locationData.longitude,
+                                    jobData.latitude,
+                                    jobData.longitude
+                                );
+                                
+                                // Show distance info
+                                const distanceInfo = document.getElementById('distanceInfo');
+                                const distanceMessage = document.getElementById('distanceMessage');
+                                if (distanceInfo && distanceMessage) {
+                                    distanceInfo.classList.remove('d-none');
+                                    
+                                    // Format distance message
+                                    let formattedDistance;
+                                    if (distance < 1000) {
+                                        formattedDistance = `${Math.round(distance)} meters`;
+                                    } else {
+                                        formattedDistance = `${(distance / 1000).toFixed(1)} kilometers`;
+                                    }
+                                    
+                                    distanceMessage.textContent = `You are ${formattedDistance} from the job site.`;
+                                }
+                            }
+                            
+                            // Submit the form after a brief delay to show success message
+                            setTimeout(() => {
+                                form.submit();
+                            }, 1500);
+                        })
+                        .catch(error => {
+                            console.error('Error fetching job details:', error);
+                            // Submit anyway if job details fetch fails
+                            setTimeout(() => {
+                                form.submit();
+                            }, 500);
+                        });
                 } else {
                     // Handle location error
                     locationMessage.textContent = "Could not get your location. Submitting without location data.";
@@ -869,6 +912,23 @@
         }
         
         return map;
+    }
+
+    // Calculate distance between two points using the Haversine formula
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371000; // Earth's radius in meters
+        const φ1 = lat1 * Math.PI/180; // φ, λ in radians
+        const φ2 = lat2 * Math.PI/180;
+        const Δφ = (lat2-lat1) * Math.PI/180;
+        const Δλ = (lon2-lon1) * Math.PI/180;
+
+        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const d = R * c; // distance in meters
+        
+        return d;
     }
 
     // Add event listeners
