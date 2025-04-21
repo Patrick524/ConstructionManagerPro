@@ -103,11 +103,9 @@
                                 <div class="col-md-5">
                                     <h5 class="alert-heading">You are not clocked in</h5>
                                     <p>Use the form to clock in to a job.</p>
-                                    <div class="mt-2">
-                                        <div class="d-flex align-items-center">
-                                            <small class="text-muted me-2">Current time:</small>
-                                            <span id="currentTime" class="text-success fw-bold">Loading...</span>
-                                        </div>
+                                    <div class="d-flex align-items-center mt-2">
+                                        <small class="text-muted me-2">Current time:</small>
+                                        <span id="currentTime" class="text-success fw-bold">Loading...</span>
                                     </div>
                                 </div>
                                 <div class="col-md-9">
@@ -126,7 +124,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        
+
                                         <!-- Job Details Panel - Moved to its own row for clean layout -->
                                         <div class="row mb-3">
                                             <div class="col-12">
@@ -164,7 +162,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        
+
                                         <div class="row">
                                         </div>
                                         <div class="mb-3">
@@ -402,7 +400,7 @@
                 console.error('Error geocoding address:', error);
             });
     }
-    
+
     // Function to initialize map directly with coordinates
     function initMapWithCoordinates(containerId, lat, lon, label) {
         // Clear existing map if any
@@ -429,7 +427,7 @@
         L.marker([lat, lon]).addTo(map)
             .bindPopup(label || 'Job Location')
             .openPopup();
-            
+
         // Force map to recalculate its container size
         setTimeout(() => {
             map.invalidateSize(true);
@@ -459,7 +457,7 @@
 
         // First hide the panel until we have data
         panel.classList.add('d-none');
-        
+
         if (!jobId) {
             return;
         }
@@ -492,10 +490,10 @@
                     if (data.latitude && data.longitude) {
                         // Show the map container
                         mapContainer.classList.remove('d-none');
-                        
+
                         // Show the main panel first to ensure dimensions are correct
                         panel.classList.remove('d-none');
-                        
+
                         // Wait for DOM to update before initializing map
                         setTimeout(() => {
                             // Initialize map with coordinates
@@ -736,7 +734,7 @@
             locationCallback(null);
             return;
         }
-        
+
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const locationData = {
@@ -753,35 +751,35 @@
             { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
     }
-    
+
     // Handle the clock in form submission with location
     function handleClockInForm() {
         const form = document.getElementById('clockInForm');
         if (!form) return;
-        
+
         const locationStatus = document.getElementById('locationStatus');
         const locationMessage = document.getElementById('locationMessage');
-        
+
         form.addEventListener('submit', function(e) {
             // Prevent the default form submission
             e.preventDefault();
-            
+
             // Show location status
             locationStatus.classList.remove('d-none');
-            
+
             // Get the job ID to check if it has coordinates
             const jobId = document.getElementById('job_id').value;
-            
+
             // Ensure a job is selected
             if (!jobId || jobId === "") {
                 alert("Please select a job before clocking in.");
                 locationStatus.classList.add('d-none');
                 return;
             }
-            
+
             // Show loading message
             locationMessage.textContent = "Getting your location...";
-            
+
             // Get user location
             getUserLocation((locationData) => {
                 if (locationData) {
@@ -789,14 +787,14 @@
                     document.getElementById('clockInLatitude').value = locationData.latitude;
                     document.getElementById('clockInLongitude').value = locationData.longitude;
                     document.getElementById('clockInAccuracy').value = locationData.accuracy;
-                    
+
                     locationMessage.textContent = "Location found!";
-                    
+
                     // Get job coordinates from data attributes (instead of API call)
                     const jobDetailsPanel = document.getElementById('jobDetailsPanel');
                     const jobLat = jobDetailsPanel ? jobDetailsPanel.getAttribute('data-latitude') : null;
                     const jobLng = jobDetailsPanel ? jobDetailsPanel.getAttribute('data-longitude') : null;
-                    
+
                     if (jobLat && jobLng) {
                         // Calculate distance
                         const distance = calculateDistance(
@@ -805,13 +803,13 @@
                             parseFloat(jobLat),
                             parseFloat(jobLng)
                         );
-                        
+
                         // Show distance info
                         const distanceInfo = document.getElementById('distanceInfo');
                         const distanceMessage = document.getElementById('distanceMessage');
                         if (distanceInfo && distanceMessage) {
                             distanceInfo.classList.remove('d-none');
-                            
+
                             // Format distance message
                             let formattedDistance;
                             if (distance < 1000) {
@@ -819,11 +817,11 @@
                             } else {
                                 formattedDistance = `${(distance / 1000).toFixed(1)} kilometers`;
                             }
-                            
+
                             distanceMessage.textContent = `You are ${formattedDistance} from the job site.`;
                         }
                     }
-                    
+
                     // Submit the form after a brief delay to show success message
                     setTimeout(() => {
                         form.submit();
@@ -831,7 +829,7 @@
                 } else {
                     // Handle location error
                     locationMessage.textContent = "Could not get your location. Submitting without location data.";
-                    
+
                     // Submit form anyway after a delay
                     setTimeout(() => {
                         form.submit();
@@ -840,23 +838,23 @@
             });
         });
     }
-    
+
     // Handle the clock out form submission with location
     function handleClockOutForm() {
         const form = document.getElementById('clockOutForm');
         if (!form) return;
-        
+
         const locationStatus = document.getElementById('clockOutLocationStatus');
         const locationMessage = document.getElementById('clockOutLocationMessage');
-        
+
         form.addEventListener('submit', function(e) {
             // Prevent the default form submission
             e.preventDefault();
-            
+
             // Show location status
             locationStatus.classList.remove('d-none');
             locationMessage.textContent = "Getting your location...";
-            
+
             // Get user location
             getUserLocation((locationData) => {
                 if (locationData) {
@@ -864,9 +862,9 @@
                     document.getElementById('clockOutLatitude').value = locationData.latitude;
                     document.getElementById('clockOutLongitude').value = locationData.longitude;
                     document.getElementById('clockOutAccuracy').value = locationData.accuracy;
-                    
+
                     locationMessage.textContent = "Location found!";
-                    
+
                     // Submit the form after a brief delay
                     setTimeout(() => {
                         form.submit();
@@ -874,7 +872,7 @@
                 } else {
                     // Handle location error
                     locationMessage.textContent = "Could not get your location. Submitting without location data.";
-                    
+
                     // Submit form anyway after a delay
                     setTimeout(() => {
                         form.submit();
@@ -887,7 +885,7 @@
     // Update job details function to include latitude and longitude
     function updateJobDetails(jobId) {
         if (!jobId) return;
-        
+
         const panel = document.getElementById('jobDetailsPanel');
         const description = document.getElementById('jobDescription');
         const location = document.getElementById('jobLocation');
@@ -895,22 +893,22 @@
         const locationContainer = document.getElementById('jobLocationContainer');
         const foremanContainer = document.getElementById('jobForemanContainer');
         const mapContainer = document.getElementById('jobMapContainer');
-        
+
         fetch(`/api/job/${jobId}`)
             .then(response => response.json())
             .then(data => {
                 description.textContent = data.description;
-                
+
                 if (foremanContainer && data.foreman_name) {
                     foreman.textContent = data.foreman_name;
                     foremanContainer.classList.remove('d-none');
                 }
-                
+
                 // Handle location and map
                 if (data.location) {
                     location.textContent = data.location;
                     locationContainer.classList.remove('d-none');
-                    
+
                     // Show map container and initialize map
                     mapContainer.classList.remove('d-none');
                     setTimeout(() => {
@@ -928,13 +926,13 @@
                     // Only hide the map container
                     mapContainer.classList.add('d-none');
                 }
-                
+
                 // Store coordinates as data attributes for distance calculation
                 if (data.latitude && data.longitude) {
                     panel.setAttribute('data-latitude', data.latitude);
                     panel.setAttribute('data-longitude', data.longitude);
                 }
-                
+
                 panel.classList.remove('d-none');
             })
             .catch(error => {
@@ -942,7 +940,7 @@
                 panel.classList.add('d-none');
             });
     }
-    
+
     // Initialize map with coordinates directly
     function initMapWithCoordinates(containerId, lat, lng, locationName) {
         // Clear existing map if any
@@ -953,30 +951,30 @@
             jobSelectMap.remove();
             jobSelectMap = null;
         }
-        
+
         const container = document.getElementById(containerId);
         if (!container) return null;
-        
+
         // Initialize map
         const map = L.map(container).setView([lat, lng], 15);
-        
+
         // Add OpenStreetMap tile layer
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
-        
+
         // Add marker
         L.marker([lat, lng]).addTo(map)
             .bindPopup(locationName || 'Job Location')
             .openPopup();
-        
+
         // Store map reference
         if (containerId === 'activeSessionMap') {
             activeSessionMap = map;
         } else if (containerId === 'jobSelectMap') {
             jobSelectMap = map;
         }
-        
+
         return map;
     }
 
@@ -993,7 +991,7 @@
                 Math.sin(Δλ/2) * Math.sin(Δλ/2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         const d = R * c; // distance in meters
-        
+
         return d;
     }
 
@@ -1012,11 +1010,11 @@
         if (activeMapContainer) {
             // Check for location data
             const location = activeMapContainer.getAttribute('data-location');
-            
+
             // Check if we have latitude and longitude data-attributes
             const latitude = activeMapContainer.getAttribute('data-latitude');
             const longitude = activeMapContainer.getAttribute('data-longitude');
-            
+
             if (latitude && longitude) {
                 // Use direct coordinates if available
                 initMapWithCoordinates('activeSessionMap', parseFloat(latitude), parseFloat(longitude), location);
