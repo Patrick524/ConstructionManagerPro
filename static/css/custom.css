@@ -275,6 +275,27 @@ select.form-select {
     margin-bottom: 0.5rem;
 }
 
+/* Flex container for side-by-side dropdowns */
+#clockInForm .d-flex.flex-column.flex-md-row {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 15px;
+}
+
+/* Ensure the dropdowns are wider */
+#clockInForm .d-flex.flex-column.flex-md-row > div {
+    min-width: 200px;
+}
+
+/* Responsive adjustments for small screens */
+@media (max-width: 767.98px) {
+    #clockInForm .d-flex.flex-column.flex-md-row > div {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-right: 0 !important;
+    }
+}
+
 /* Adjust positioning of dropdown elements */
 .bootstrap-select .dropdown-menu {
     transform: translate3d(0px, 38px, 0px) !important;
