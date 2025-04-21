@@ -67,10 +67,7 @@
                                     </p>
                                     <p class="mb-1">
                                         <strong>Started:</strong> <span id="localTimeDisplay" data-utc-time="{{ active_session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}Z">Loading local time...</span>
-                                        ({{ ((now - active_session.clock_in).total_seconds() / 3600)|round(1) }} hours)
-                                    </p>
-                                    <p class="mb-1">
-                                        <strong>Current time:</strong> <span id="currentTime" class="text-success fw-bold">Loading...</span>
+                                        ({{ ((now - active_session.clock_in).total_seconds() / 3600)|round(1) }} hours) • <strong>Current time:</strong> <span id="currentTime" class="text-success fw-bold">Loading...</span>
                                     </p>
                                     {% if active_session.notes %}
                                         <p class="mb-1">
