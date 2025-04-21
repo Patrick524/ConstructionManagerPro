@@ -208,3 +208,47 @@ body {
     flex-direction: column;
     overflow-y: auto;
 }
+
+/* Dropdown fix for clock in/out page */
+.form-select {
+    position: relative;
+    z-index: 100;
+}
+
+/* Ensure the dropdown menu displays on top of other elements */
+.form-select:focus {
+    z-index: 1050;
+}
+
+/* Job details panel fix to prevent overlap */
+#jobDetailsPanel {
+    position: relative;
+    z-index: 50;
+    margin-top: 15px !important;
+    clear: both;
+}
+
+/* Clock In/Out specific dropdown styling */
+#job_id, #labor_activity_id {
+    position: relative;
+    z-index: 1050;
+}
+
+/* Bootstrap override for select elements on the clock page */
+.col-md-6 > .form-select {
+    overflow: visible;
+    position: relative;
+}
+
+/* Container for select elements to ensure proper dropdown behavior */
+.select-container {
+    position: relative;
+    z-index: 1050;
+}
+
+/* Ensure dropdown lists display properly */
+.dropdown-menu {
+    z-index: 1060 !important;
+    max-height: 300px;
+    overflow-y: auto;
+}
