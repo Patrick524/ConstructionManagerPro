@@ -725,49 +725,42 @@
                     
                     locationMessage.textContent = "Location found!";
                     
-                    // Fetch job details to calculate distance
-                    fetch(`/api/job/${jobId}`)
-                        .then(response => response.json())
-                        .then(jobData => {
-                            if (jobData.latitude && jobData.longitude) {
-                                // Calculate distance
-                                const distance = calculateDistance(
-                                    locationData.latitude, 
-                                    locationData.longitude,
-                                    jobData.latitude,
-                                    jobData.longitude
-                                );
-                                
-                                // Show distance info
-                                const distanceInfo = document.getElementById('distanceInfo');
-                                const distanceMessage = document.getElementById('distanceMessage');
-                                if (distanceInfo && distanceMessage) {
-                                    distanceInfo.classList.remove('d-none');
-                                    
-                                    // Format distance message
-                                    let formattedDistance;
-                                    if (distance < 1000) {
-                                        formattedDistance = `${Math.round(distance)} meters`;
-                                    } else {
-                                        formattedDistance = `${(distance / 1000).toFixed(1)} kilometers`;
-                                    }
-                                    
-                                    distanceMessage.textContent = `You are ${formattedDistance} from the job site.`;
-                                }
+                    // Get job coordinates from data attributes (instead of API call)
+                    const jobDetailsPanel = document.getElementById('jobDetailsPanel');
+                    const jobLat = jobDetailsPanel ? jobDetailsPanel.getAttribute('data-latitude') : null;
+                    const jobLng = jobDetailsPanel ? jobDetailsPanel.getAttribute('data-longitude') : null;
+                    
+                    if (jobLat && jobLng) {
+                        // Calculate distance
+                        const distance = calculateDistance(
+                            locationData.latitude, 
+                            locationData.longitude,
+                            parseFloat(jobLat),
+                            parseFloat(jobLng)
+                        );
+                        
+                        // Show distance info
+                        const distanceInfo = document.getElementById('distanceInfo');
+                        const distanceMessage = document.getElementById('distanceMessage');
+                        if (distanceInfo && distanceMessage) {
+                            distanceInfo.classList.remove('d-none');
+                            
+                            // Format distance message
+                            let formattedDistance;
+                            if (distance < 1000) {
+                                formattedDistance = `${Math.round(distance)} meters`;
+                            } else {
+                                formattedDistance = `${(distance / 1000).toFixed(1)} kilometers`;
                             }
                             
-                            // Submit the form after a brief delay to show success message
-                            setTimeout(() => {
-                                form.submit();
-                            }, 1500);
-                        })
-                        .catch(error => {
-                            console.error('Error fetching job details:', error);
-                            // Submit anyway if job details fetch fails
-                            setTimeout(() => {
-                                form.submit();
-                            }, 500);
-                        });
+                            distanceMessage.textContent = `You are ${formattedDistance} from the job site.`;
+                        }
+                    }
+                    
+                    // Submit the form after a brief delay to show success message
+                    setTimeout(() => {
+                        form.submit();
+                    }, 1000);
                 } else {
                     // Handle location error
                     locationMessage.textContent = "Could not get your location. Submitting without location data.";
@@ -867,6 +860,12 @@
                     locationContainer.classList.remove('d-none');
                     // Only hide the map container
                     mapContainer.classList.add('d-none');
+                }
+                
+                // Store coordinates as data attributes for distance calculation
+                if (data.latitude && data.longitude) {
+                    panel.setAttribute('data-latitude', data.latitude);
+                    panel.setAttribute('data-longitude', data.longitude);
                 }
                 
                 panel.classList.remove('d-none');
