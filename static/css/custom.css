@@ -264,7 +264,6 @@ select.form-select {
     font-size: 1rem;
     padding: 0.75rem 1rem;
     width: 100%;
-    max-width: 100%;
     margin-bottom: 5px;
 }
 
@@ -275,24 +274,26 @@ select.form-select {
     margin-bottom: 0.5rem;
 }
 
-/* Flex container for side-by-side dropdowns */
-#clockInForm .d-flex.flex-column.flex-md-row {
+/* Enhanced flex container for job/activity dropdowns */
+#clockInForm .d-flex.flex-wrap {
     width: 100%;
-    justify-content: flex-start;
-    gap: 15px;
 }
 
-/* Ensure the dropdowns are wider */
-#clockInForm .d-flex.flex-column.flex-md-row > div {
+/* Set minimum width for flex items in the dropdown container */
+#clockInForm .d-flex.flex-wrap > .flex-grow-1 {
     min-width: 200px;
+}
+
+/* Gap spacing for the flex items */
+#clockInForm .gap-3 {
+    gap: 1rem !important;
 }
 
 /* Responsive adjustments for small screens */
 @media (max-width: 767.98px) {
-    #clockInForm .d-flex.flex-column.flex-md-row > div {
+    #clockInForm .d-flex.flex-wrap > .flex-grow-1 {
         width: 100% !important;
-        max-width: 100% !important;
-        margin-right: 0 !important;
+        min-width: 100% !important;
     }
 }
 
