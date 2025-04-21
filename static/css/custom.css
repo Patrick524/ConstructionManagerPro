@@ -209,46 +209,67 @@ body {
     overflow-y: auto;
 }
 
-/* Dropdown fix for clock in/out page */
-.form-select {
-    position: relative;
-    z-index: 100;
-}
+/* Significant fixes for Bootstrap select dropdowns */
 
-/* Ensure the dropdown menu displays on top of other elements */
-.form-select:focus {
-    z-index: 1050;
-}
-
-/* Job details panel fix to prevent overlap */
-#jobDetailsPanel {
-    position: relative;
-    z-index: 50;
-    margin-top: 15px !important;
-    clear: both;
-}
-
-/* Clock In/Out specific dropdown styling */
-#job_id, #labor_activity_id {
-    position: relative;
-    z-index: 1050;
-}
-
-/* Bootstrap override for select elements on the clock page */
-.col-md-6 > .form-select {
-    overflow: visible;
-    position: relative;
-}
-
-/* Container for select elements to ensure proper dropdown behavior */
-.select-container {
-    position: relative;
-    z-index: 1050;
-}
-
-/* Ensure dropdown lists display properly */
+/* Make all dropdowns have higher z-index */
 .dropdown-menu {
-    z-index: 1060 !important;
+    z-index: 9999 !important;
     max-height: 300px;
     overflow-y: auto;
+}
+
+/* Fix for select elements to ensure proper dropdown display */
+select.form-select {
+    position: relative;
+    z-index: 1000;
+}
+
+/* Job details panel styling */
+#jobDetailsPanel {
+    position: relative;
+    z-index: 10;
+    margin-top: 10px !important;
+    clear: both;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+#jobDetailsPanel .card-header {
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#jobDetailsPanel .card-body {
+    background-color: rgba(33, 37, 41, 0.9);
+}
+
+/* Override Bootstrap's hidden overflow setting that may be clipping dropdowns */
+.card, .card-body, .container, .row, .col, .col-md-6 {
+    overflow: visible !important;
+}
+
+/* Ensure the dropdowns in the clock form appear above other elements */
+#clockInForm .form-select {
+    z-index: 2000 !important;
+}
+
+/* Container for select elements with proper stacking context */
+.select-container {
+    position: relative;
+    z-index: 1500;
+}
+
+/* Adjust positioning of dropdown elements */
+.bootstrap-select .dropdown-menu {
+    transform: translate3d(0px, 38px, 0px) !important;
+}
+
+/* Ensure dropdown toggle buttons work properly */
+.dropdown-toggle {
+    z-index: 1500;
+}
+
+/* Force proper rendering of select dropdowns */
+.form-select:focus {
+    z-index: 2000 !important;
 }

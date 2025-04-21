@@ -114,14 +114,31 @@
                                     <form action="{{ url_for('clock_in') }}" method="post" class="mt-3" id="clockInForm">
                                         {{ clock_in_form.hidden_tag() }}
                                         <div class="row">
-                                            <div class="col-md-6 mb-4">
+                                            <div class="col-md-6 mb-3">
                                                 <label for="job_id" class="form-label">Job</label>
                                                 <div class="select-container">
                                                     {{ clock_in_form.job_id(class="form-select") }}
                                                 </div>
-                                                <div id="jobDetailsPanel" class="card mt-3 d-none">
-                                                    <div class="card-body p-2">
-                                                        <div class="d-flex align-items-center mb-1">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="labor_activity_id" class="form-label">Activity</label>
+                                                <div class="select-container">
+                                                    {{ clock_in_form.labor_activity_id(class="form-select") }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Job Details Panel - Moved to its own row for clean layout -->
+                                        <div class="row mb-3">
+                                            <div class="col-12">
+                                                <div id="jobDetailsPanel" class="card bg-dark-subtle mt-1 mb-3 d-none">
+                                                    <div class="card-header bg-dark">
+                                                        <h6 class="card-title mb-0">
+                                                            <i class="fas fa-info-circle me-2"></i>Job Details
+                                                        </h6>
+                                                    </div>
+                                                    <div class="card-body p-3">
+                                                        <div class="d-flex align-items-center mb-2">
                                                             <i class="fas fa-building text-secondary me-2"></i>
                                                             <span id="jobDescription" class="text-white"></span>
                                                         </div>
@@ -129,14 +146,14 @@
                                                             <i class="fas fa-map-marker-alt text-secondary me-2"></i>
                                                             <span id="jobLocation" class="text-white"></span>
                                                         </div>
-                                                        <div id="jobForemanContainer" class="d-flex align-items-center mb-3">
+                                                        <div id="jobForemanContainer" class="d-flex align-items-center mb-2">
                                                             <i class="fas fa-hard-hat text-secondary me-2"></i>
                                                             <span id="jobForeman" class="text-white"></span>
                                                         </div>
                                                         <div id="jobMapContainer" class="mb-3 d-none">
                                                             <div id="jobSelectMap" class="map-container"></div>
                                                         </div>
-                                                        <div id="locationStatus" class="alert alert-info d-none">
+                                                        <div id="locationStatus" class="alert alert-info d-none mt-2">
                                                             <i class="fas fa-location-arrow me-2"></i>
                                                             <span id="locationMessage">Getting your location...</span>
                                                             <div id="distanceInfo" class="mt-2 d-none">
@@ -147,12 +164,9 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="col-md-6 mb-4">
-                                                <label for="labor_activity_id" class="form-label">Activity</label>
-                                                <div class="select-container">
-                                                    {{ clock_in_form.labor_activity_id(class="form-select") }}
-                                                </div>
-                                            </div>
+                                        </div>
+                                        
+                                        <div class="row">
                                         </div>
                                         <div class="mb-3">
                                             <label for="notes" class="form-label">Notes (optional)</label>
@@ -389,6 +403,48 @@
                 console.error('Error geocoding address:', error);
             });
     }
+    
+    // Function to initialize map directly with coordinates
+    function initMapWithCoordinates(containerId, lat, lon, label) {
+        // Clear existing map if any
+        if (containerId === 'activeSessionMap' && activeSessionMap) {
+            activeSessionMap.remove();
+            activeSessionMap = null;
+        } else if (containerId === 'jobSelectMap' && jobSelectMap) {
+            jobSelectMap.remove();
+            jobSelectMap = null;
+        }
+
+        const container = document.getElementById(containerId);
+        if (!container) return null;
+
+        // Initialize map with the provided coordinates
+        const map = L.map(container).setView([lat, lon], 14);
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Add marker at the specified coordinates
+        L.marker([lat, lon]).addTo(map)
+            .bindPopup(label || 'Job Location')
+            .openPopup();
+            
+        // Force map to recalculate its container size
+        setTimeout(() => {
+            map.invalidateSize(true);
+        }, 100);
+
+        // Store map reference
+        if (containerId === 'activeSessionMap') {
+            activeSessionMap = map;
+        } else if (containerId === 'jobSelectMap') {
+            jobSelectMap = map;
+        }
+
+        return map;
+    }
 
     // This code is now in the main DOMContentLoaded event listener below
 
@@ -402,8 +458,10 @@
         const foreman = document.getElementById('jobForeman');
         const foremanContainer = document.getElementById('jobForemanContainer');
 
+        // First hide the panel until we have data
+        panel.classList.add('d-none');
+        
         if (!jobId) {
-            panel.classList.add('d-none');
             return;
         }
 
@@ -431,25 +489,31 @@
                     location.textContent = data.location;
                     locationContainer.classList.remove('d-none');
 
-                    // Show map container and initialize map
-                    mapContainer.classList.remove('d-none');
-                    setTimeout(() => {
-                        // Initialize map with coordinates if available
-                        if (data.latitude && data.longitude) {
+                    // Check if we have coordinates for the map
+                    if (data.latitude && data.longitude) {
+                        // Show the map container
+                        mapContainer.classList.remove('d-none');
+                        
+                        // Show the main panel first to ensure dimensions are correct
+                        panel.classList.remove('d-none');
+                        
+                        // Wait for DOM to update before initializing map
+                        setTimeout(() => {
+                            // Initialize map with coordinates
                             initMapWithCoordinates('jobSelectMap', data.latitude, data.longitude, data.location);
-                        } else {
-                            initMap('jobSelectMap', data.location);
-                        }
-                    }, 100);
+                        }, 300); // Longer timeout for more reliable rendering
+                    } else {
+                        // No coordinates, hide map but show panel
+                        mapContainer.classList.add('d-none');
+                        panel.classList.remove('d-none');
+                    }
                 } else {
+                    // No location data
                     location.textContent = 'No location specified';
-                    // Always show location container with the "No location specified" text
                     locationContainer.classList.remove('d-none');
-                    // Only hide the map container
                     mapContainer.classList.add('d-none');
+                    panel.classList.remove('d-none');
                 }
-
-                panel.classList.remove('d-none');
             })
             .catch(error => {
                 console.error('Error fetching job details:', error);
