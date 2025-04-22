@@ -742,13 +742,19 @@
                     longitude: position.coords.longitude,
                     accuracy: position.coords.accuracy
                 };
+                console.log("Geolocation success:", position.coords);
                 locationCallback(locationData);
             },
             (error) => {
-                console.error("Geolocation error:", error);
+                console.error("Geolocation error:", error.code, error.message);
+                // Error codes: 1 = permission denied, 2 = position unavailable, 3 = timeout
                 locationCallback(null);
             },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            { 
+                enableHighAccuracy: false, // Use false for faster response on mobile devices
+                timeout: 5000,            // Shorter timeout for faster fallback
+                maximumAge: 60000         // Allow cached positions up to 1 minute old
+            }
         );
     }
 
@@ -779,9 +785,29 @@
 
             // Show loading message
             locationMessage.textContent = "Getting your location...";
+            
+            // Set a fallback timer to ensure form submission even if geolocation fails silently
+            const fallbackTimer = setTimeout(() => {
+                console.log("Geolocation fallback timer triggered after 5 seconds");
+                locationMessage.textContent = "Location request timed out. Submitting form without location data.";
+                
+                // Submit the form anyway after a short delay to show the message
+                setTimeout(() => {
+                    form.submit();
+                }, 500);
+            }, 5000);
+            
+            // Variable to track if location callback was received
+            let locationCallbackReceived = false;
 
             // Get user location
             getUserLocation((locationData) => {
+                // Mark that we received the callback
+                locationCallbackReceived = true;
+                
+                // Clear the fallback timer since we got a response
+                clearTimeout(fallbackTimer);
+                
                 if (locationData) {
                     // Set hidden field values
                     document.getElementById('clockInLatitude').value = locationData.latitude;
@@ -854,9 +880,29 @@
             // Show location status
             locationStatus.classList.remove('d-none');
             locationMessage.textContent = "Getting your location...";
+            
+            // Set a fallback timer to ensure form submission even if geolocation fails silently
+            const fallbackTimer = setTimeout(() => {
+                console.log("Clock-out: Geolocation fallback timer triggered after 5 seconds");
+                locationMessage.textContent = "Location request timed out. Submitting form without location data.";
+                
+                // Submit the form anyway after a short delay to show the message
+                setTimeout(() => {
+                    form.submit();
+                }, 500);
+            }, 5000);
+            
+            // Variable to track if location callback was received
+            let locationCallbackReceived = false;
 
             // Get user location
             getUserLocation((locationData) => {
+                // Mark that we received the callback
+                locationCallbackReceived = true;
+                
+                // Clear the fallback timer since we got a response
+                clearTimeout(fallbackTimer);
+                
                 if (locationData) {
                     // Set hidden field values
                     document.getElementById('clockOutLatitude').value = locationData.latitude;
