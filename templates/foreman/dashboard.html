@@ -3,15 +3,15 @@
 {% block title %}Foreman Dashboard - Construction Timesheet{% endblock %}
 
 {% block content %}
-<div class="container-fluid"><!-- Added container-fluid wrapper for better layout control -->
-<div class="row mb-4">
+<div class="container-fluid pt-0 mt-0"><!-- Removed vertical spacing -->
+<div class="row mb-2"><!-- Reduced margin -->
     <div class="col-md-8">
-        <h1 class="page-title">
+        <h1 class="page-title mb-2 pb-2"><!-- Reduced margins and padding -->
             <i class="fas fa-tachometer-alt text-primary me-2"></i>Foreman Dashboard
         </h1>
     </div>
     <div class="col-md-4">
-        <div class="d-flex justify-content-md-end align-items-center h-100">
+        <div class="d-flex justify-content-md-end align-items-center"><!-- Removed h-100 -->
             <div class="btn-group" role="group">
                 <button id="prev-week" class="btn btn-outline-secondary">
                     <i class="fas fa-chevron-left"></i> Previous Week
@@ -27,9 +27,9 @@
     </div>
 </div>
 
-<div class="row mb-4">
+<div class="row mb-3"><!-- Reduced margin -->
     <div class="col-12">
-        <div class="alert alert-info" role="alert" data-current-week-start="{{ start_date.strftime('%Y-%m-%d') }}">
+        <div class="alert alert-info py-2" role="alert" data-current-week-start="{{ start_date.strftime('%Y-%m-%d') }}"><!-- Reduced padding -->
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <i class="far fa-calendar-alt me-2"></i>
@@ -47,20 +47,33 @@
     <div class="col-12">
         {% if job_data %}
             {% for job_item in job_data %}
-                <div class="card mb-4 approval-card trade-{{ job_item.job.trade_type }} {% if not job_item.workers %}empty-job{% endif %}">
+                {% if not job_item.workers %}
+                <!-- Compact card for empty jobs -->
+                <div class="card mb-2 approval-card empty-job trade-{{ job_item.job.trade_type }}">
+                    <div class="card-header py-2 approval-card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge trade-{{ job_item.job.trade_type }}">{{ job_item.job.trade_type|capitalize }}</span>
+                            {{ job_item.job.job_code }} - {{ job_item.job.description }}
+                            <small class="text-muted ms-3"><i class="fas fa-users-slash me-1"></i>No worker entries this week</small>
+                        </div>
+                        <span class="badge bg-secondary">0 Workers</span>
+                    </div>
+                </div>
+                {% else %}
+                <!-- Standard card for jobs with worker data -->
+                <div class="card mb-4 approval-card trade-{{ job_item.job.trade_type }}">
                     <div class="card-header approval-card-header d-flex justify-content-between align-items-center">
                         <div>
                             <span class="badge trade-{{ job_item.job.trade_type }}">{{ job_item.job.trade_type|capitalize }}</span>
                             {{ job_item.job.job_code }} - {{ job_item.job.description }}
                         </div>
-                        <span class="badge {% if job_item.workers %}bg-primary{% else %}bg-secondary{% endif %}">{{ job_item.workers|length }} Workers</span>
+                        <span class="badge bg-primary">{{ job_item.workers|length }} Workers</span>
                     </div>
 
                     <div class="card-body approval-card-body p-0">
-                        {% if job_item.workers %}
-                            <div class="approval-table-container">
-                                <div class="table-responsive">
-                                    <table class="table table-hover mb-0 approval-table">
+                        <div class="approval-table-container">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0 approval-table">
                                     <thead>
                                         <tr>
                                             <th>Worker</th>
@@ -128,13 +141,9 @@
                                 </table>
                                 </div>
                             </div>
-                        {% else %}
-                            <div class="text-center py-2">
-                                <small class="text-muted"><i class="fas fa-users-slash me-2"></i>No workers have submitted time for this job this week</small>
-                            </div>
-                        {% endif %}
                     </div>
                 </div>
+                {% endif %}
             {% endfor %}
         {% else %}
             <div class="alert alert-info" role="alert">

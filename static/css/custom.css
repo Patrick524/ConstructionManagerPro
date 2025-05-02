@@ -115,7 +115,18 @@
 
 /* Empty job state optimization */
 .approval-card.empty-job {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
+    max-height: none;
+    height: auto;
+    border-left-width: 4px;
+    background-color: rgba(13, 17, 21, 0.5);
+    border-radius: 0.375rem;
+    padding: 0;
+}
+
+.approval-card.empty-job .card-header {
+    padding: 0.5rem 1rem;
+    border-bottom: none;
 }
 
 .approval-card.empty-job .card-body {
