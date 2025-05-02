@@ -337,3 +337,9 @@ select.form-select {
 .form-select:focus {
     z-index: 2000 !important;
 }
+
+/* Empty job card spacing fix */
+.approval-card.empty-job {
+    height: auto;          /* stop the stretch */
+    margin-bottom: .5rem;  /* tighten the gap */
+}
