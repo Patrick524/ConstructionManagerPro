@@ -3,6 +3,7 @@
 {% block title %}Foreman Dashboard - Construction Timesheet{% endblock %}
 
 {% block content %}
+<div class="container-fluid"><!-- Added container-fluid wrapper for better layout control -->
 <div class="row mb-4">
     <div class="col-md-8">
         <h1 class="page-title">
@@ -46,19 +47,20 @@
     <div class="col-12">
         {% if job_data %}
             {% for job_item in job_data %}
-                <div class="card mb-4 approval-card trade-{{ job_item.job.trade_type }}">
+                <div class="card mb-4 approval-card trade-{{ job_item.job.trade_type }} {% if not job_item.workers %}empty-job{% endif %}">
                     <div class="card-header approval-card-header d-flex justify-content-between align-items-center">
                         <div>
                             <span class="badge trade-{{ job_item.job.trade_type }}">{{ job_item.job.trade_type|capitalize }}</span>
                             {{ job_item.job.job_code }} - {{ job_item.job.description }}
                         </div>
-                        <span class="badge bg-primary">{{ job_item.workers|length }} Workers</span>
+                        <span class="badge {% if job_item.workers %}bg-primary{% else %}bg-secondary{% endif %}">{{ job_item.workers|length }} Workers</span>
                     </div>
 
                     <div class="card-body approval-card-body p-0">
                         {% if job_item.workers %}
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0 approval-table">
+                            <div class="approval-table-container">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0 approval-table">
                                     <thead>
                                         <tr>
                                             <th>Worker</th>
@@ -124,11 +126,11 @@
                                         {% endfor %}
                                     </tbody>
                                 </table>
+                                </div>
                             </div>
                         {% else %}
-                            <div class="text-center p-4">
-                                <i class="fas fa-users-slash fa-3x text-muted mb-3"></i>
-                                <h5>No workers have submitted time for this job this week</h5>
+                            <div class="text-center py-2">
+                                <small class="text-muted"><i class="fas fa-users-slash me-2"></i>No workers have submitted time for this job this week</small>
                             </div>
                         {% endif %}
                     </div>
@@ -195,6 +197,7 @@
         </div>
     </div>
 </div>
+</div><!-- Closing container-fluid div -->
 {% endblock %}
 
 {% block extra_js %}

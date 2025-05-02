@@ -113,6 +113,21 @@
     padding: 1rem;
 }
 
+/* Empty job state optimization */
+.approval-card.empty-job {
+    margin-bottom: 0.75rem;
+}
+
+.approval-card.empty-job .card-body {
+    padding: 0;
+}
+
+/* Maximum card height and scrollable tables for better space utilization */
+.approval-table-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
 .approval-table {
     margin-bottom: 0;
 }
