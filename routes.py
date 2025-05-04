@@ -874,14 +874,40 @@ def clock_in():
 @app.route('/api/job/<int:job_id>')
 @login_required
 def get_job_details(job_id):
-    job = Job.query.get_or_404(job_id)
-    return jsonify({
-        'description': job.description,
-        'location': job.location,
-        'foreman_name': job.foreman.name if job.foreman else None,
-        'latitude': job.latitude,
-        'longitude': job.longitude
-    })
+    try:
+        # Use only essential columns to be resilient to schema changes
+        from sqlalchemy.orm import load_only
+        
+        job = Job.query.options(
+            load_only(
+                Job.id, 
+                Job.description, 
+                Job.location, 
+                Job.latitude, 
+                Job.longitude,
+                Job.foreman_id
+            )
+        ).get(job_id)
+        
+        if not job:
+            return jsonify({
+                'error': f'Job with ID {job_id} not found'
+            }), 404
+            
+        # Handle possible None values gracefully
+        return jsonify({
+            'description': job.description or '',
+            'location': job.location or '',
+            'foreman_name': job.foreman.name if job.foreman else '',
+            'latitude': job.latitude,
+            'longitude': job.longitude
+        })
+    except Exception as e:
+        app.logger.error(f"Error in get_job_details for job_id {job_id}: {str(e)}")
+        return jsonify({
+            'error': 'An error occurred while fetching job details',
+            'message': str(e)
+        }), 500
 
 @app.route('/worker/clock-out', methods=['POST'])
 @login_required
@@ -893,11 +919,26 @@ def clock_out():
         flash('You are not configured to use the clock in/out system.', 'warning')
         return redirect(url_for('worker_timesheet'))
     
-    # Get active session
-    active_session = ClockSession.query.filter_by(
-        user_id=current_user.id,
-        is_active=True
-    ).first()
+    # Get active session - use only critical columns for resilience to schema changes
+    try:
+        from sqlalchemy.orm import load_only
+        active_session = ClockSession.query.options(
+            load_only(
+                ClockSession.id, 
+                ClockSession.user_id, 
+                ClockSession.job_id,
+                ClockSession.labor_activity_id,
+                ClockSession.clock_in,
+                ClockSession.notes,
+                ClockSession.is_active
+            )
+        ).filter_by(
+            user_id=current_user.id,
+            is_active=True
+        ).first()
+    except Exception as e:
+        app.logger.error(f"Error querying active sessions in clock_out for user {current_user.id}: {str(e)}")
+        active_session = None
     
     if not active_session:
         flash('You are not currently clocked in to any job!', 'warning')

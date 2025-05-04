@@ -136,13 +136,11 @@ class ClockSession(db.Model):
     clock_in_latitude = db.Column(db.Float, nullable=True)
     clock_in_longitude = db.Column(db.Float, nullable=True)
     clock_in_accuracy = db.Column(db.Float, nullable=True)  # Accuracy in meters
-    clock_in_distance_m = db.Column(db.Float, nullable=True)  # Distance from job site in meters
     clock_in_distance_mi = db.Column(db.Float, nullable=True)  # Distance from job site in miles
     
     clock_out_latitude = db.Column(db.Float, nullable=True)
     clock_out_longitude = db.Column(db.Float, nullable=True)
     clock_out_accuracy = db.Column(db.Float, nullable=True)  # Accuracy in meters
-    clock_out_distance_m = db.Column(db.Float, nullable=True)  # Distance from job site in meters
     clock_out_distance_mi = db.Column(db.Float, nullable=True)  # Distance from job site in miles
     
     # Relationships
