@@ -764,9 +764,12 @@ def clock_in():
                 
                 # Calculate the distance
                 distance_m = utils.calculate_distance(lat1, lon1, lat2, lon2)
+                # Convert to miles (1 meter = 1/1609.34 miles)
+                distance_miles = round(distance_m / 1609.34, 2) if distance_m is not None else None
             except (ValueError, TypeError) as e:
                 print(f"Error calculating distance: {str(e)}")
                 # Continue without distance if calculation fails
+                distance_miles = None
         
         # Create new clock session
         session = ClockSession(
@@ -780,7 +783,8 @@ def clock_in():
             clock_in_latitude=float(latitude) if latitude else None,
             clock_in_longitude=float(longitude) if longitude else None,
             clock_in_accuracy=float(accuracy) if accuracy else None,
-            clock_in_distance_m=round(distance_m) if distance_m is not None else None
+            clock_in_distance_m=round(distance_m) if distance_m is not None else None,
+            clock_in_distance_mi=distance_miles
         )
         
         db.session.add(session)
@@ -791,12 +795,13 @@ def clock_in():
             return jsonify({
                 'ok': True,
                 'distance_m': round(distance_m) if distance_m is not None else None,
+                'distance_mi': distance_miles,
                 'message': 'Clocked in successfully'
             })
         
         # Otherwise, use the regular flash message and redirect
         if distance_m is not None:
-            flash(f'You have successfully clocked in! Distance from job site: {round(distance_m)} meters.', 'success')
+            flash(f'You have successfully clocked in! Distance from job site: {distance_miles} miles.', 'success')
         else:
             flash('You have successfully clocked in!', 'success')
         
@@ -875,9 +880,12 @@ def clock_out():
                 
                 # Calculate the distance
                 distance_m = utils.calculate_distance(lat1, lon1, lat2, lon2)
+                # Convert to miles (1 meter = 1/1609.34 miles)
+                distance_miles = round(distance_m / 1609.34, 2) if distance_m is not None else None
             except (ValueError, TypeError) as e:
                 print(f"Error calculating distance: {str(e)}")
                 # Continue without distance if calculation fails
+                distance_miles = None
         
         # Store location data
         if latitude:
@@ -888,6 +896,7 @@ def clock_out():
             active_session.clock_out_accuracy = float(accuracy)
         if distance_m is not None:
             active_session.clock_out_distance_m = round(distance_m)
+            active_session.clock_out_distance_mi = distance_miles
         
         # Clock out
         active_session.clock_out_session()
@@ -906,13 +915,14 @@ def clock_out():
             return jsonify({
                 'ok': True,
                 'distance_m': round(distance_m) if distance_m is not None else None,
+                'distance_mi': distance_miles,
                 'hours': round(hours, 2),
                 'message': 'Clocked out successfully'
             })
         
         # Otherwise, use the regular flash message and redirect
         if distance_m is not None:
-            flash(f'You have successfully clocked out! {hours:.2f} hours recorded. Distance from job site: {round(distance_m)} meters.', 'success')
+            flash(f'You have successfully clocked out! {hours:.2f} hours recorded. Distance from job site: {distance_miles} miles.', 'success')
         else:
             flash(f'You have successfully clocked out! {hours:.2f} hours recorded.', 'success')
         
