@@ -7,7 +7,6 @@ import logging
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-from sqlalchemy import text
 
 from app import app, db
 from models import ClockSession
@@ -29,7 +28,7 @@ def auto_clock_out_job():
             # Get sessions that need to be closed
             sessions = ClockSession.query.filter(
                 ClockSession.is_active == True,
-                ClockSession.clock_out.is_(None),
+                ClockSession.clock_out == None,
                 ClockSession.clock_in <= eight_hours_ago
             ).all()
             
