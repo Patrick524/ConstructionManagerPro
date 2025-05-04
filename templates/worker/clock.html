@@ -836,12 +836,15 @@
                         if (distanceInfo && distanceMessage) {
                             distanceInfo.classList.remove('d-none');
 
-                            // Format distance message
+                            // Format distance message using miles
+                            const miles = distance.miles;
                             let formattedDistance;
-                            if (distance < 1000) {
-                                formattedDistance = `${Math.round(distance)} meters`;
+                            
+                            if (miles < 0.1) {
+                                // For very short distances (less than 0.1 miles)
+                                formattedDistance = `${(miles * 5280).toFixed(0)} feet`; // 1 mile = 5280 feet
                             } else {
-                                formattedDistance = `${(distance / 1000).toFixed(1)} kilometers`;
+                                formattedDistance = `${miles.toFixed(2)} miles`;
                             }
 
                             distanceMessage.textContent = `You are ${formattedDistance} from the job site.`;
@@ -1037,8 +1040,14 @@
                 Math.sin(Δλ/2) * Math.sin(Δλ/2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         const d = R * c; // distance in meters
+        
+        // Also return distance in miles (1 meter = 1/1609.34 miles)
+        const d_miles = d / 1609.34;
 
-        return d;
+        return {
+            meters: d,
+            miles: d_miles
+        };
     }
 
     // Add event listeners

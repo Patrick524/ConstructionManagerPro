@@ -29,14 +29,14 @@ def upgrade():
     # Update clock_in_distance_mi based on existing clock_in_distance_m values
     conn.execute(text("""
         UPDATE clock_session 
-        SET clock_in_distance_mi = ROUND(clock_in_distance_m / 1609.34, 2) 
+        SET clock_in_distance_mi = ROUND((clock_in_distance_m / 1609.34)::numeric, 2) 
         WHERE clock_in_distance_m IS NOT NULL
     """))
     
     # Update clock_out_distance_mi based on existing clock_out_distance_m values
     conn.execute(text("""
         UPDATE clock_session 
-        SET clock_out_distance_mi = ROUND(clock_out_distance_m / 1609.34, 2) 
+        SET clock_out_distance_mi = ROUND((clock_out_distance_m / 1609.34)::numeric, 2) 
         WHERE clock_out_distance_m IS NOT NULL
     """))
 
