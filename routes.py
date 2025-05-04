@@ -833,7 +833,6 @@ def clock_in():
             clock_in_latitude=float(latitude) if latitude else None,
             clock_in_longitude=float(longitude) if longitude else None,
             clock_in_accuracy=float(accuracy) if accuracy else None,
-            clock_in_distance_m=round(distance_m) if distance_m is not None else None,
             clock_in_distance_mi=distance_miles
         )
         
@@ -986,7 +985,6 @@ def clock_out():
         if accuracy:
             active_session.clock_out_accuracy = float(accuracy)
         if distance_m is not None:
-            active_session.clock_out_distance_m = round(distance_m)
             active_session.clock_out_distance_mi = distance_miles
         
         # Clock out
