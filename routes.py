@@ -802,6 +802,7 @@ def clock_in():
         # Get job information for distance calculation
         job = Job.query.get(form.job_id.data)
         distance_m = None
+        distance_miles = None
         
         # Calculate distance if we have both user location and job coordinates
         if latitude and longitude and job.latitude and job.longitude:
@@ -958,6 +959,7 @@ def clock_out():
         # Get job information for distance calculation
         job = Job.query.get(active_session.job_id)
         distance_m = None
+        distance_miles = None
         
         # Calculate distance if we have both user location and job coordinates
         if latitude and longitude and job.latitude and job.longitude:
