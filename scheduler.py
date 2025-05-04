@@ -25,12 +25,29 @@ def auto_clock_out_job():
             # Find all active clock sessions older than 8 hours
             eight_hours_ago = datetime.utcnow() - timedelta(hours=8)
             
+            # Use a more explicit query to avoid referencing columns that might be in migration
+            # Use only the core columns needed for this operation
+            from sqlalchemy import select
+            from sqlalchemy.orm import load_only
+            
             # Get sessions that need to be closed
-            sessions = ClockSession.query.filter(
+            query = ClockSession.query.options(
+                load_only(
+                    ClockSession.id, 
+                    ClockSession.user_id, 
+                    ClockSession.job_id, 
+                    ClockSession.labor_activity_id,
+                    ClockSession.clock_in, 
+                    ClockSession.is_active, 
+                    ClockSession.notes
+                )
+            ).filter(
                 ClockSession.is_active == True,
                 ClockSession.clock_out == None,
                 ClockSession.clock_in <= eight_hours_ago
-            ).all()
+            )
+            
+            sessions = query.all()
             
             if not sessions:
                 logger.debug("No stale clock sessions found to auto-close")
@@ -44,10 +61,14 @@ def auto_clock_out_job():
                 session.is_active = False
                 session_count += 1
                 
-                # Create a time entry record from the clock session
-                time_entry = session.create_time_entry()
-                if time_entry:
-                    db.session.add(time_entry)
+                try:
+                    # Create a time entry record from the clock session
+                    time_entry = session.create_time_entry()
+                    if time_entry:
+                        db.session.add(time_entry)
+                except Exception as entry_error:
+                    logger.error(f"Error creating time entry from session {session.id}: {str(entry_error)}")
+                    # Continue processing other sessions even if one fails
             
             # Commit all changes
             db.session.commit()

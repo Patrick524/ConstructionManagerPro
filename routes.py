@@ -680,35 +680,78 @@ def worker_clock():
         flash('You are not configured to use the clock in/out system. Please use the timesheet interface.', 'warning')
         return redirect(url_for('worker_timesheet'))
     
-    # Get active session (if any)
-    active_session = ClockSession.query.filter_by(
-        user_id=current_user.id,
-        is_active=True
-    ).first()
-    
-    # Get today's sessions (active and completed)
-    today_start = datetime.combine(date.today(), datetime.min.time())
-    today_end = datetime.combine(date.today(), datetime.max.time())
-    
-    today_sessions = ClockSession.query.filter(
-        ClockSession.user_id == current_user.id,
-        ClockSession.clock_in >= today_start,
-        ClockSession.clock_in <= today_end
-    ).order_by(ClockSession.clock_in.desc()).all()
-    
-    # Calculate today's hours from completed sessions
-    today_hours = sum(session.get_duration_hours() for session in today_sessions if not session.is_active)
-    
-    # Get recent sessions (completed, not including today)
-    recent_sessions = ClockSession.query.filter(
-        ClockSession.user_id == current_user.id,
-        ClockSession.is_active == False,
-        ClockSession.clock_in < today_start
-    ).order_by(ClockSession.clock_in.desc()).limit(5).all()
-    
-    # Prepare forms
-    clock_in_form = ClockInForm()
-    clock_out_form = ClockOutForm()
+    try:
+        # Get active session (if any) - use only() to select specific columns we need
+        # This is more resilient during schema transitions
+        from sqlalchemy.orm import load_only
+        
+        active_session = ClockSession.query.options(
+            load_only(
+                ClockSession.id,
+                ClockSession.user_id,
+                ClockSession.job_id,
+                ClockSession.labor_activity_id,
+                ClockSession.clock_in,
+                ClockSession.clock_out,
+                ClockSession.notes,
+                ClockSession.is_active
+            )
+        ).filter_by(
+            user_id=current_user.id,
+            is_active=True
+        ).first()
+        
+        # Get today's sessions (active and completed)
+        today_start = datetime.combine(date.today(), datetime.min.time())
+        today_end = datetime.combine(date.today(), datetime.max.time())
+        
+        today_sessions = ClockSession.query.options(
+            load_only(
+                ClockSession.id,
+                ClockSession.user_id,
+                ClockSession.job_id,
+                ClockSession.labor_activity_id,
+                ClockSession.clock_in,
+                ClockSession.clock_out,
+                ClockSession.notes,
+                ClockSession.is_active
+            )
+        ).filter(
+            ClockSession.user_id == current_user.id,
+            ClockSession.clock_in >= today_start,
+            ClockSession.clock_in <= today_end
+        ).order_by(ClockSession.clock_in.desc()).all()
+        
+        # Calculate today's hours from completed sessions
+        today_hours = sum(session.get_duration_hours() for session in today_sessions if not session.is_active)
+        
+        # Get recent sessions (completed, not including today)
+        recent_sessions = ClockSession.query.options(
+            load_only(
+                ClockSession.id,
+                ClockSession.user_id,
+                ClockSession.job_id,
+                ClockSession.labor_activity_id,
+                ClockSession.clock_in,
+                ClockSession.clock_out,
+                ClockSession.notes,
+                ClockSession.is_active
+            )
+        ).filter(
+            ClockSession.user_id == current_user.id,
+            ClockSession.is_active == False,
+            ClockSession.clock_in < today_start
+        ).order_by(ClockSession.clock_in.desc()).limit(5).all()
+        
+        # Prepare forms
+        clock_in_form = ClockInForm()
+        clock_out_form = ClockOutForm()
+    except Exception as e:
+        # Log the error
+        app.logger.error(f"Error in worker_clock for user {current_user.id}: {str(e)}")
+        # Handle gracefully with a fallback
+        flash('There was an issue loading your clock sessions. Please try again later.', 'warning')
+        return redirect(url_for('worker_timesheet'))
     
     return render_template(
         'worker/clock.html',
@@ -731,11 +774,18 @@ def clock_in():
         flash('You are not configured to use the clock in/out system.', 'warning')
         return redirect(url_for('worker_timesheet'))
     
-    # Check if already clocked in
-    active_session = ClockSession.query.filter_by(
-        user_id=current_user.id,
-        is_active=True
-    ).first()
+    # Check if already clocked in - use only critical columns for resilience to schema changes
+    try:
+        from sqlalchemy.orm import load_only
+        active_session = ClockSession.query.options(
+            load_only(ClockSession.id, ClockSession.user_id, ClockSession.is_active)
+        ).filter_by(
+            user_id=current_user.id,
+            is_active=True
+        ).first()
+    except Exception as e:
+        app.logger.error(f"Error querying active sessions in clock_in for user {current_user.id}: {str(e)}")
+        active_session = None
     
     if active_session:
         flash('You are already clocked in! Please clock out of your current session first.', 'warning')
