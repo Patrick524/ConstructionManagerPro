@@ -2,47 +2,15 @@
 
 {% block title %}Foreman Dashboard - Construction Timesheet{% endblock %}
 
-{% block extra_css %}
-<style>
-/* Emergency fix for foreman dashboard navigation */
-@media (max-width: 991.98px) {
-    .navbar-toggler {
-        position: fixed !important;
-        top: 10px !important;
-        right: 20px !important;
-        z-index: 9999 !important;
-        background-color: white !important;
-        border: 3px solid #fff !important;
-    }
-    
-    .navbar-toggler-icon {
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%280, 0, 0, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='3' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
-    }
-}
-</style>
-{% endblock %}
-
 {% block content %}
-<!-- Direct Navigation Menu for Foreman Dashboard -->
-<nav class="navbar navbar-dark bg-dark py-0 mb-3" style="z-index: 9000;">
-    <div class="container">
-        <span class="navbar-text">
-            <strong>Foreman Navigation</strong>
-        </span>
-        <div>
-            <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-danger">
-                <i class="fas fa-sign-out-alt me-1"></i>Logout
-            </a>
-        </div>
-    </div>
-</nav>
-<!-- Week navigation bar - Fixed position at the top (but below direct navigation menu) -->
+<!-- Week navigation bar - Fixed position at top-14px (just below header) -->
 <nav id="week-nav" 
-     class="fixed left-0 w-full z-30 flex justify-center gap-6 text-sm"
-     style="position: fixed; left: 0; width: 100%; z-index: 30; 
-            background-color: #115; 
-            border-top: 2px solid #557; border-bottom: 2px solid #557; 
-            padding: 10px 0; margin-top: 10px;">
+     class="fixed top-0 left-0 w-full z-30
+           flex justify-center gap-6 text-sm
+           bg-slate-900/95 backdrop-blur-sm border-b border-slate-700 py-2"
+     style="position: fixed; top: 70px; left: 0; width: 100%; z-index: 30; 
+            background-color: rgba(15, 23, 42, 0.95); backdrop-filter: blur(4px); 
+            border-bottom: 1px solid #374151; padding: 8px 0;">
     <div class="btn-group" role="group">
         <button id="prev-week" class="btn btn-outline-secondary">
             <i class="fas fa-chevron-left"></i> Previous Week
@@ -56,20 +24,12 @@
     </div>
 </nav>
 
-<div class="container-fluid pt-0" style="margin-top: 120px;"><!-- Added larger margin-top for fixed nav -->
+<div class="container-fluid pt-0" style="margin-top: 100px;"><!-- Added larger margin-top for fixed nav -->
 <div class="row mb-2"><!-- Reduced margin -->
     <div class="col-md-8">
         <h1 class="page-title mb-2 pb-2"><!-- Reduced margins and padding -->
             <i class="fas fa-tachometer-alt text-primary me-2"></i>Foreman Dashboard
         </h1>
-    </div>
-    <div class="col-md-4 text-end">
-        <!-- Foreman Navigation Links -->
-        <div class="btn-group" role="group">
-            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">
-                <i class="fas fa-sign-out-alt me-1"></i>Logout
-            </a>
-        </div>
     </div>
 </div>
 
