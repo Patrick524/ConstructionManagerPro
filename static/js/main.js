@@ -269,35 +269,68 @@ function setupHamburgerMenu() {
             togglerIcon.style.height = '1.5em';
         }
         
-        // Ensure the collapse menu is properly displayed when toggled
+        // Completely reset and recreate the navbar toggle functionality
         const navbarCollapse = document.querySelector('#navbarNav');
         if (navbarCollapse) {
-            // Fix for collapsed menu to appear on top of other content
-            navbarCollapse.style.zIndex = '9000';
+            // Remove Bootstrap's data attributes to take full control
+            navbarToggler.removeAttribute('data-bs-toggle');
+            navbarToggler.removeAttribute('data-bs-target');
             
-            // Make sure collapsed items are visible on dark backgrounds
-            const navLinks = navbarCollapse.querySelectorAll('.nav-link');
-            navLinks.forEach(link => {
-                link.style.color = 'white';
-                link.style.fontWeight = 'bold';
+            // Remove any existing event listeners by cloning and replacing
+            const newToggler = navbarToggler.cloneNode(true);
+            navbarToggler.parentNode.replaceChild(newToggler, navbarToggler);
+            
+            // Set the initial state
+            let isOpen = false;
+            navbarCollapse.style.display = 'none';
+            
+            // Style the dropdown for mobile view
+            Object.assign(navbarCollapse.style, {
+                position: 'absolute',
+                top: '60px',
+                right: '0',
+                width: '250px', // Limited width instead of full width
+                backgroundColor: '#343a40',
+                padding: '0.5rem',
+                borderRadius: '0 0 0.25rem 0.25rem',
+                boxShadow: '0 2px 5px rgba(0, 0, 0, 0.5)',
+                zIndex: '9000',
+                display: 'none'
             });
             
-            // Add event listener to ensure the collapse functions properly
-            navbarToggler.addEventListener('click', function() {
-                console.log('Toggle clicked, current state:', navbarCollapse.classList.contains('show') ? 'open' : 'closed');
+            // Style the nav links to be more visible
+            const navLinks = navbarCollapse.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                Object.assign(link.style, {
+                    color: 'white',
+                    fontWeight: 'bold',
+                    padding: '10px 15px',
+                    display: 'block'
+                });
+            });
+            
+            // Add our own click handler
+            newToggler.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 
-                // If bootstrap isn't toggling properly, do it manually
-                if (!navbarCollapse.classList.contains('show')) {
-                    // Adding a slight delay to allow Bootstrap to process first
-                    setTimeout(() => {
-                        if (!navbarCollapse.classList.contains('show')) {
-                            navbarCollapse.classList.add('show');
-                            navbarCollapse.style.display = 'block';
-                            navbarCollapse.style.backgroundColor = '#343a40';
-                            navbarCollapse.style.padding = '1rem';
-                            navbarCollapse.style.borderRadius = '0 0 0.25rem 0.25rem';
-                        }
-                    }, 50);
+                isOpen = !isOpen;
+                
+                if (isOpen) {
+                    navbarCollapse.style.display = 'block';
+                    console.log('Menu opened');
+                } else {
+                    navbarCollapse.style.display = 'none';
+                    console.log('Menu closed');
+                }
+            });
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', function(e) {
+                if (isOpen && !navbarCollapse.contains(e.target) && e.target !== newToggler) {
+                    isOpen = false;
+                    navbarCollapse.style.display = 'none';
+                    console.log('Menu closed (outside click)');
                 }
             });
         }
