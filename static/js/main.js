@@ -17,6 +17,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup week navigation for screens with date ranges
     setupWeekNavigation();
+    
+    // Setup hamburger menu to ensure it's visible and functional
+    setupHamburgerMenu();
 });
 
 /**
@@ -239,5 +242,36 @@ function handleApiError(error, containerId) {
                 <p class="mb-0">Details: ${error.message || 'Unknown error'}</p>
             </div>
         `;
+    }
+}
+
+/**
+ * Setup hamburger menu to ensure it's visible and functional
+ */
+function setupHamburgerMenu() {
+    // Create a more visible hamburger toggle if it doesn't exist
+    const navbarToggler = document.querySelector('.navbar-toggler');
+    
+    if (navbarToggler) {
+        // Ensure the toggle is visible with inline styles 
+        navbarToggler.style.zIndex = '9999';
+        navbarToggler.style.position = 'relative';
+        navbarToggler.style.marginLeft = 'auto';
+        navbarToggler.style.display = 'block';
+        navbarToggler.style.border = '2px solid white';
+        navbarToggler.style.backgroundColor = '#555';
+        
+        // Make the hamburger icon more visible
+        const togglerIcon = navbarToggler.querySelector('.navbar-toggler-icon');
+        if (togglerIcon) {
+            togglerIcon.style.opacity = '1';
+            togglerIcon.style.width = '1.5em';
+            togglerIcon.style.height = '1.5em';
+        }
+        
+        // Log for debugging
+        console.log('Hamburger menu setup complete');
+    } else {
+        console.warn('Navbar toggler not found');
     }
 }

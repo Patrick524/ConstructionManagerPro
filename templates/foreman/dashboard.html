@@ -2,6 +2,30 @@
 
 {% block title %}Foreman Dashboard - Construction Timesheet{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Ensure navbar-toggler is visible on foreman dashboard */
+    .navbar-toggler {
+        position: relative !important;
+        z-index: 9999 !important;
+        display: block !important;
+        margin-left: auto !important;
+        border: 3px solid white !important;
+        background-color: #444 !important;
+    }
+    
+    .navbar-toggler-icon {
+        opacity: 1 !important;
+    }
+    
+    /* Ensure navbar stays on top */
+    .navbar {
+        position: relative !important;
+        z-index: 2000 !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <!-- Week navigation bar - Fixed position at top-14px (just below header) -->
 <nav id="week-nav" 
@@ -24,7 +48,7 @@
     </div>
 </nav>
 
-<div class="container-fluid pt-0" style="margin-top: 100px;"><!-- Added larger margin-top for fixed nav -->
+<div class="container-fluid pt-0" style="margin-top: 120px;"><!-- Increased margin-top for fixed nav -->
 <div class="row mb-2"><!-- Reduced margin -->
     <div class="col-md-8">
         <h1 class="page-title mb-2 pb-2"><!-- Reduced margins and padding -->

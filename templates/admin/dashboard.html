@@ -2,6 +2,30 @@
 
 {% block title %}Admin Dashboard - Construction Timesheet{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Ensure navbar-toggler is visible on admin dashboard */
+    .navbar-toggler {
+        position: relative !important;
+        z-index: 9999 !important;
+        display: block !important;
+        margin-left: auto !important;
+        border: 3px solid white !important;
+        background-color: #444 !important;
+    }
+    
+    .navbar-toggler-icon {
+        opacity: 1 !important;
+    }
+    
+    /* Ensure navbar stays on top */
+    .navbar {
+        position: relative !important;
+        z-index: 2000 !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">

@@ -346,11 +346,17 @@ select.form-select {
 
 /* Fix for hamburger menu icon visibility */
 .navbar-toggler {
-    border: 2px solid rgba(255, 255, 255, 0.5) !important;
+    border: 2px solid white !important;
     padding: 0.5rem !important;
-    background-color: rgba(255, 255, 255, 0.1) !important;
+    background-color: #444 !important;
+    position: relative !important;
+    z-index: 9999 !important; 
+    display: block !important;
+    margin-right: 15px !important;
 }
 
+/* Make the hamburger icon more visible with !important */
 .navbar-toggler-icon {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.85%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='3' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+    opacity: 1 !important;
 }
