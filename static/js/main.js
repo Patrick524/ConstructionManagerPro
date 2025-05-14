@@ -269,6 +269,39 @@ function setupHamburgerMenu() {
             togglerIcon.style.height = '1.5em';
         }
         
+        // Ensure the collapse menu is properly displayed when toggled
+        const navbarCollapse = document.querySelector('#navbarNav');
+        if (navbarCollapse) {
+            // Fix for collapsed menu to appear on top of other content
+            navbarCollapse.style.zIndex = '9000';
+            
+            // Make sure collapsed items are visible on dark backgrounds
+            const navLinks = navbarCollapse.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.style.color = 'white';
+                link.style.fontWeight = 'bold';
+            });
+            
+            // Add event listener to ensure the collapse functions properly
+            navbarToggler.addEventListener('click', function() {
+                console.log('Toggle clicked, current state:', navbarCollapse.classList.contains('show') ? 'open' : 'closed');
+                
+                // If bootstrap isn't toggling properly, do it manually
+                if (!navbarCollapse.classList.contains('show')) {
+                    // Adding a slight delay to allow Bootstrap to process first
+                    setTimeout(() => {
+                        if (!navbarCollapse.classList.contains('show')) {
+                            navbarCollapse.classList.add('show');
+                            navbarCollapse.style.display = 'block';
+                            navbarCollapse.style.backgroundColor = '#343a40';
+                            navbarCollapse.style.padding = '1rem';
+                            navbarCollapse.style.borderRadius = '0 0 0.25rem 0.25rem';
+                        }
+                    }, 50);
+                }
+            });
+        }
+        
         // Log for debugging
         console.log('Hamburger menu setup complete');
     } else {
