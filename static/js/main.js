@@ -17,9 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup week navigation for screens with date ranges
     setupWeekNavigation();
-    
-    // Setup hamburger menu to ensure it's visible and functional
-    setupHamburgerMenu();
 });
 
 /**
@@ -245,99 +242,4 @@ function handleApiError(error, containerId) {
     }
 }
 
-/**
- * Setup hamburger menu to ensure it's visible and functional
- */
-function setupHamburgerMenu() {
-    // Create a more visible hamburger toggle if it doesn't exist
-    const navbarToggler = document.querySelector('.navbar-toggler');
-    
-    if (navbarToggler) {
-        // Ensure the toggle is visible with inline styles 
-        navbarToggler.style.zIndex = '9999';
-        navbarToggler.style.position = 'relative';
-        navbarToggler.style.marginLeft = 'auto';
-        navbarToggler.style.display = 'block';
-        navbarToggler.style.border = '2px solid white';
-        navbarToggler.style.backgroundColor = '#555';
-        
-        // Make the hamburger icon more visible
-        const togglerIcon = navbarToggler.querySelector('.navbar-toggler-icon');
-        if (togglerIcon) {
-            togglerIcon.style.opacity = '1';
-            togglerIcon.style.width = '1.5em';
-            togglerIcon.style.height = '1.5em';
-        }
-        
-        // Completely reset and recreate the navbar toggle functionality
-        const navbarCollapse = document.querySelector('#navbarNav');
-        if (navbarCollapse) {
-            // Remove Bootstrap's data attributes to take full control
-            navbarToggler.removeAttribute('data-bs-toggle');
-            navbarToggler.removeAttribute('data-bs-target');
-            
-            // Remove any existing event listeners by cloning and replacing
-            const newToggler = navbarToggler.cloneNode(true);
-            navbarToggler.parentNode.replaceChild(newToggler, navbarToggler);
-            
-            // Set the initial state
-            let isOpen = false;
-            navbarCollapse.style.display = 'none';
-            
-            // Style the dropdown for mobile view
-            Object.assign(navbarCollapse.style, {
-                position: 'absolute',
-                top: '60px',
-                right: '0',
-                width: '250px', // Limited width instead of full width
-                backgroundColor: '#343a40',
-                padding: '0.5rem',
-                borderRadius: '0 0 0.25rem 0.25rem',
-                boxShadow: '0 2px 5px rgba(0, 0, 0, 0.5)',
-                zIndex: '9000',
-                display: 'none'
-            });
-            
-            // Style the nav links to be more visible
-            const navLinks = navbarCollapse.querySelectorAll('.nav-link');
-            navLinks.forEach(link => {
-                Object.assign(link.style, {
-                    color: 'white',
-                    fontWeight: 'bold',
-                    padding: '10px 15px',
-                    display: 'block'
-                });
-            });
-            
-            // Add our own click handler
-            newToggler.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                isOpen = !isOpen;
-                
-                if (isOpen) {
-                    navbarCollapse.style.display = 'block';
-                    console.log('Menu opened');
-                } else {
-                    navbarCollapse.style.display = 'none';
-                    console.log('Menu closed');
-                }
-            });
-            
-            // Close menu when clicking outside
-            document.addEventListener('click', function(e) {
-                if (isOpen && !navbarCollapse.contains(e.target) && e.target !== newToggler) {
-                    isOpen = false;
-                    navbarCollapse.style.display = 'none';
-                    console.log('Menu closed (outside click)');
-                }
-            });
-        }
-        
-        // Log for debugging
-        console.log('Hamburger menu setup complete');
-    } else {
-        console.warn('Navbar toggler not found');
-    }
-}
+/* Hamburger menu function removed to use native Bootstrap behavior */
