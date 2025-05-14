@@ -376,3 +376,20 @@ select.form-select {
     border-radius: 0 0 5px 5px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
 }
+
+/* Foreman Dashboard special styling */
+.foreman-dashboard .navbar-toggler {
+    background-color: #ffffff !important;
+    border-color: #ffffff !important;
+    padding: 0.75rem !important;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4) !important;
+}
+
+.foreman-dashboard .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%280, 0, 0, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='3' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+}
+
+/* Special treatment for week navigation on foreman dashboard */
+.foreman-week-nav {
+    margin-top: 70px !important;
+}
