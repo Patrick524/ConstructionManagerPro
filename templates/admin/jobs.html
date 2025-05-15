@@ -145,13 +145,29 @@
             <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
                     <h5 class="mb-0 me-3">Job List</h5>
-                    <div class="dropdown">
+                    <div>
                         <form action="{{ url_for('manage_jobs') }}" method="GET" class="d-inline">
-                            <select name="status_filter" class="form-select form-select-sm" onchange="this.form.submit()" style="width: auto; background-color: rgba(255,255,255,0.2); color: white; border-color: rgba(255,255,255,0.3);">
+                            <select name="status_filter" class="form-select form-select-sm" onchange="this.form.submit()" style="width: auto; background-color: #212529; color: white; border-color: #495057; font-weight: 500;">
                                 <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Jobs</option>
                                 <option value="complete" {% if status_filter == 'complete' %}selected{% endif %}>Completed Jobs</option>
                                 <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Jobs</option>
                             </select>
+                            <style>
+                                /* Improve dropdown when focused and for option hover states */
+                                select[name="status_filter"]:focus {
+                                    box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
+                                    border-color: #fff;
+                                }
+                                select[name="status_filter"] option {
+                                    background-color: #212529;
+                                    color: white;
+                                }
+                                select[name="status_filter"] option:hover,
+                                select[name="status_filter"] option:focus,
+                                select[name="status_filter"] option:active {
+                                    background-color: #0d6efd !important;
+                                }
+                            </style>
                         </form>
                     </div>
                 </div>
