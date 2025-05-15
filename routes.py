@@ -1685,10 +1685,22 @@ def manage_jobs():
         form.trade_type.data = job.trade_type
         form.foreman_id.data = job.foreman_id if job.foreman_id else 0
 
-    # Get all jobs for display
-    jobs = Job.query.order_by(Job.created_at.desc()).all()
+    # Get jobs filtered by status if specified
+    status_filter = request.args.get('status_filter', 'active')
+    
+    # Build the query based on the filter
+    jobs_query = Job.query
+    
+    if status_filter == 'active':
+        jobs_query = jobs_query.filter(Job.status == 'active')
+    elif status_filter == 'complete':
+        jobs_query = jobs_query.filter(Job.status == 'complete')
+    # For 'all', no filter is applied
+    
+    # Get the filtered jobs ordered by creation date
+    jobs = jobs_query.order_by(Job.created_at.desc()).all()
 
-    return render_template('admin/jobs.html', form=form, jobs=jobs, editing=bool(job_id))
+    return render_template('admin/jobs.html', form=form, jobs=jobs, editing=bool(job_id), status_filter=status_filter)
 
 @app.route('/admin/jobs/delete/<int:job_id>', methods=['POST'])
 @login_required
