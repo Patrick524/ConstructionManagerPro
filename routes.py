@@ -175,6 +175,11 @@ def logout():
 @worker_required
 def worker_weekly_timesheet():
     """Weekly timesheet view allowing workers to enter time for an entire week at once"""
+    # Block access for manual time entry workers
+    if not current_user.use_clock_in:
+        # Manual time entry workers should be redirected to daily view
+        flash('Weekly timesheet view is currently unavailable for manual time entry. Please use the daily view.', 'info')
+        return redirect(url_for('worker_timesheet'))
     print("DEBUG: Weekly timesheet form submission - Request method:", request.method)
     print("DEBUG: Form data:", request.form)
     
