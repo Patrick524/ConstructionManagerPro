@@ -8,9 +8,11 @@
         <h1 class="page-title">
             <i class="far fa-clock text-primary me-2"></i>{% if editing %}Edit Time Entry{% else %}Enter Time{% endif %}
         </h1>
+        {% if current_user.use_clock_in %}
         <a href="{{ url_for('worker_weekly_timesheet') }}" class="btn btn-outline-primary">
             <i class="fas fa-calendar-week me-1"></i> Switch to Weekly View
         </a>
+        {% endif %}
     </div>
 </div>
 

@@ -108,9 +108,11 @@
                             <a href="{{ url_for('worker_timesheet') }}" class="btn btn-primary">
                                 <i class="fas fa-plus me-2"></i>Daily Entry
                             </a>
+                            {% if current_user.use_clock_in %}
                             <a href="{{ url_for('worker_weekly_timesheet') }}" class="btn btn-info">
                                 <i class="fas fa-calendar-week me-2"></i>Weekly Entry
                             </a>
+                            {% endif %}
                         </div>
                     </div>
                 {% endif %}
@@ -125,9 +127,11 @@
             <a href="{{ url_for('worker_timesheet') }}" class="btn btn-primary">
                 <i class="fas fa-plus-circle me-1"></i> New Daily Entry
             </a>
+            {% if current_user.use_clock_in %}
             <a href="{{ url_for('worker_weekly_timesheet') }}" class="btn btn-info">
                 <i class="fas fa-calendar-week me-1"></i> New Weekly Entry
             </a>
+            {% endif %}
         </div>
     </div>
 </div>
