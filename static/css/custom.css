@@ -175,6 +175,33 @@
     border-radius: 0.5rem; /* Maintain existing border-radius */
 }
 
+/* Admin job filter dropdown dark theme styling */
+#jobStatusFilter button.dropdown-toggle {
+    background-color: #1e1e2f !important;
+    color: #e0e0e0 !important;
+    border: 1px solid #444a5a !important;
+    font-weight: 500 !important;
+}
+
+#jobStatusFilter .dropdown-menu {
+    background-color: #1e1e2f !important;
+    border: 1px solid #444a5a !important;
+}
+
+#jobStatusFilter .dropdown-item {
+    color: #e0e0e0 !important;
+}
+
+#jobStatusFilter .dropdown-item:hover,
+#jobStatusFilter .dropdown-item:focus {
+    background-color: #2d2d3c !important;
+}
+
+#jobStatusFilter .dropdown-item.active,
+#jobStatusFilter .dropdown-item:active {
+    background-color: #3a3a4a !important;
+}
+
 
 /* Mobile optimizations */
 @media (max-width: 768px) {

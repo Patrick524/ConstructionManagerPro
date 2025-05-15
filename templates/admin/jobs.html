@@ -146,7 +146,7 @@
                 <div class="d-flex align-items-center">
                     <h5 class="mb-0 me-3">Job List</h5>
                     <div class="dropdown" id="jobStatusFilter">
-                        <button class="btn btn-sm dropdown-toggle" type="button" id="statusFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: #1e1e2f; color: #e0e0e0; border: 1px solid #444a5a; font-weight: 500;">
+                        <button class="btn btn-sm dropdown-toggle" type="button" id="statusFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             {% if status_filter == 'active' %}
                                 Active Jobs
                             {% elif status_filter == 'complete' %}
@@ -157,20 +157,11 @@
                                 Active Jobs
                             {% endif %}
                         </button>
-                        <ul class="dropdown-menu" aria-labelledby="statusFilterDropdown" style="background-color: #1e1e2f; border: 1px solid #444a5a;">
-                            <li><a class="dropdown-item {% if status_filter == 'active' %}active{% endif %}" href="{{ url_for('manage_jobs', status_filter='active', edit=request.args.get('edit')) }}" style="color: #e0e0e0;">Active Jobs</a></li>
-                            <li><a class="dropdown-item {% if status_filter == 'complete' %}active{% endif %}" href="{{ url_for('manage_jobs', status_filter='complete', edit=request.args.get('edit')) }}" style="color: #e0e0e0;">Completed Jobs</a></li>
-                            <li><a class="dropdown-item {% if status_filter == 'all' %}active{% endif %}" href="{{ url_for('manage_jobs', status_filter='all', edit=request.args.get('edit')) }}" style="color: #e0e0e0;">All Jobs</a></li>
+                        <ul class="dropdown-menu" aria-labelledby="statusFilterDropdown">
+                            <li><a class="dropdown-item {% if status_filter == 'active' %}active{% endif %}" href="{{ url_for('manage_jobs', status_filter='active', edit=request.args.get('edit')) }}">Active Jobs</a></li>
+                            <li><a class="dropdown-item {% if status_filter == 'complete' %}active{% endif %}" href="{{ url_for('manage_jobs', status_filter='complete', edit=request.args.get('edit')) }}">Completed Jobs</a></li>
+                            <li><a class="dropdown-item {% if status_filter == 'all' %}active{% endif %}" href="{{ url_for('manage_jobs', status_filter='all', edit=request.args.get('edit')) }}">All Jobs</a></li>
                         </ul>
-                        <style>
-                            /* Custom dropdown styling */
-                            #jobStatusFilter .dropdown-item:hover {
-                                background-color: #2d2d3c;
-                            }
-                            #jobStatusFilter .dropdown-item.active {
-                                background-color: #3a3a4a;
-                            }
-                        </style>
                     </div>
                 </div>
                 <div class="input-group input-group-sm" style="width: 250px;">
