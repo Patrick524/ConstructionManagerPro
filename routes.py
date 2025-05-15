@@ -1637,6 +1637,9 @@ def manage_jobs():
         # Check if we're editing an existing job
         job_id = request.args.get('edit')
 
+        # Get status_filter to preserve it across redirects
+        status_filter = request.args.get('status_filter', 'active')
+        
         if job_id:
             job = Job.query.get_or_404(job_id)
             job.job_code = form.job_code.data
@@ -1669,7 +1672,8 @@ def manage_jobs():
             flash('New job created successfully!', 'success')
 
         db.session.commit()
-        return redirect(url_for('manage_jobs'))
+        # Pass the status_filter back to the redirect to maintain the selected filter
+        return redirect(url_for('manage_jobs', status_filter=status_filter))
 
     # Check if we're editing a job
     job_id = request.args.get('edit')
@@ -1708,19 +1712,22 @@ def manage_jobs():
 def delete_job(job_id):
     job = Job.query.get_or_404(job_id)
     
+    # Get status_filter to preserve it across redirects
+    status_filter = request.args.get('status_filter', 'active')
+    
     # Check if there are any time entries associated with this job
     time_entries = TimeEntry.query.filter_by(job_id=job_id).count()
     
     if time_entries > 0:
         flash(f'Cannot delete job "{job.job_code}". It has {time_entries} time entries associated with it. Mark it as "Complete" instead.', 'danger')
-        return redirect(url_for('manage_jobs'))
+        return redirect(url_for('manage_jobs', status_filter=status_filter))
     
     # Check if there are any weekly approval locks for this job
     approvals = WeeklyApprovalLock.query.filter_by(job_id=job_id).count()
     
     if approvals > 0:
         flash(f'Cannot delete job "{job.job_code}". It has {approvals} weekly approvals associated with it. Mark it as "Complete" instead.', 'danger')
-        return redirect(url_for('manage_jobs'))
+        return redirect(url_for('manage_jobs', status_filter=status_filter))
         
     # If no time entries or approvals, safe to delete
     job_code = job.job_code  # Store for the flash message
@@ -1728,7 +1735,7 @@ def delete_job(job_id):
     db.session.commit()
     
     flash(f'Job "{job_code}" has been deleted successfully.', 'success')
-    return redirect(url_for('manage_jobs'))
+    return redirect(url_for('manage_jobs', status_filter=status_filter))
 
 @app.route('/admin/activities', methods=['GET', 'POST'])
 @login_required

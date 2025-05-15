@@ -32,7 +32,7 @@
                     <h5 class="mb-0">{{ 'Edit Job' if editing else 'Add New Job' }}</h5>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ url_for('manage_jobs', edit=request.args.get('edit')) }}">
+                    <form method="POST" action="{{ url_for('manage_jobs', edit=request.args.get('edit'), status_filter=status_filter) }}">
                         {{ form.hidden_tag() }}
                         
                         <div class="row">
@@ -208,13 +208,13 @@
                                         </td>
                                         <td>
                                             <div class="btn-group btn-group-sm" role="group">
-                                                <a href="{{ url_for('manage_jobs', edit=job.id) }}" class="btn btn-outline-primary">
+                                                <a href="{{ url_for('manage_jobs', edit=job.id, status_filter=status_filter) }}" class="btn btn-outline-primary">
                                                     <i class="fas fa-edit"></i> Edit
                                                 </a>
                                                 <a href="{{ url_for('generate_reports') }}?report_type=job_labor&job_id={{ job.id }}" class="btn btn-outline-info">
                                                     <i class="fas fa-chart-bar"></i> Report
                                                 </a>
-                                                <form action="{{ url_for('delete_job', job_id=job.id) }}" method="POST" style="display:inline-block;">
+                                                <form action="{{ url_for('delete_job', job_id=job.id, status_filter=status_filter) }}" method="POST" style="display:inline-block;">
                                                     <button type="submit" class="btn btn-outline-danger" 
                                                             onclick="return confirm('Are you sure you want to delete {{ job.job_code }}? This cannot be undone.');">
                                                         <i class="fas fa-trash"></i>
@@ -228,11 +228,27 @@
                                 <tr>
                                     <td colspan="8" class="text-center py-4">
                                         <i class="fas fa-briefcase fa-3x text-muted mb-3 d-block"></i>
-                                        <h5>No jobs found</h5>
-                                        <p class="mb-3">Start by adding your first job using the button above</p>
-                                        <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#jobFormContainer">
-                                            <i class="fas fa-plus me-2"></i>Add New Job
-                                        </button>
+                                        <h5>
+                                            {% if status_filter == 'active' %}
+                                                No active jobs found
+                                            {% elif status_filter == 'complete' %}
+                                                No completed jobs found
+                                            {% else %}
+                                                No jobs found
+                                            {% endif %}
+                                        </h5>
+                                        {% if status_filter != 'complete' %}
+                                            <p class="mb-3">
+                                                {% if status_filter == 'active' %}
+                                                    Start by adding a new job using the button above
+                                                {% else %}
+                                                    Add a new job using the button above
+                                                {% endif %}
+                                            </p>
+                                            <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#jobFormContainer">
+                                                <i class="fas fa-plus me-2"></i>Add New Job
+                                            </button>
+                                        {% endif %}
                                     </td>
                                 </tr>
                             {% endif %}
