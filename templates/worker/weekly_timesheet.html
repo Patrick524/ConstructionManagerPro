@@ -8,6 +8,51 @@
         <div class="col-12">
             <h1 class="mb-4">Weekly Timesheet</h1>
             
+            <!-- Time Entries Table for the Week - Moved to top -->
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">All Time Entries This Week</h5>
+                </div>
+                <div class="card-body">
+                    {% if all_week_entries %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Job</th>
+                                        <th>Activity</th>
+                                        <th>Hours</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for entry in all_week_entries %}
+                                    <tr>
+                                        <td>{{ entry.date.strftime('%a, %m/%d/%Y') }}</td>
+                                        <td>{{ entry.job.job_code }} - {{ entry.job.description|truncate(30) }}</td>
+                                        <td>{{ entry.labor_activity.name }}</td>
+                                        <td>{{ entry.hours }}</td>
+                                        <td>{{ entry.notes|truncate(50) if entry.notes else '' }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot class="table-dark">
+                                    <tr>
+                                        <td colspan="3" class="text-end fw-bold">Total Hours:</td>
+                                        <td colspan="2" class="fw-bold">{{ all_week_entries|sum(attribute='hours') }}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> No time entries found for the week of {{ week_start.strftime('%m/%d/%Y') }}.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
             <div class="card mb-4 border-dark">
                 <div class="card-header bg-dark text-white">
                     <div class="d-flex justify-content-between align-items-center">
@@ -161,51 +206,6 @@
                             {{ form.submit(class="btn btn-primary") }}
                         </div>
                     </form>
-                </div>
-            </div>
-            
-            <!-- Time Entries Table for the Week -->
-            <div class="card mt-4 mb-4">
-                <div class="card-header bg-dark text-white">
-                    <h5 class="mb-0">All Time Entries This Week</h5>
-                </div>
-                <div class="card-body">
-                    {% if all_week_entries %}
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Job</th>
-                                        <th>Activity</th>
-                                        <th>Hours</th>
-                                        <th>Notes</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for entry in all_week_entries %}
-                                    <tr>
-                                        <td>{{ entry.date.strftime('%a, %m/%d/%Y') }}</td>
-                                        <td>{{ entry.job.job_code }} - {{ entry.job.description|truncate(30) }}</td>
-                                        <td>{{ entry.labor_activity.name }}</td>
-                                        <td>{{ entry.hours }}</td>
-                                        <td>{{ entry.notes|truncate(50) if entry.notes else '' }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                                <tfoot class="table-dark">
-                                    <tr>
-                                        <td colspan="3" class="text-end fw-bold">Total Hours:</td>
-                                        <td colspan="2" class="fw-bold">{{ all_week_entries|sum(attribute='hours') }}</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    {% else %}
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i> No time entries found for the week of {{ week_start.strftime('%m/%d/%Y') }}.
-                        </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
