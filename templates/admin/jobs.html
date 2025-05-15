@@ -145,41 +145,32 @@
             <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
                     <h5 class="mb-0 me-3">Job List</h5>
-                    <div>
-                        <form action="{{ url_for('manage_jobs') }}" method="GET" class="d-inline">
-                            <select name="status_filter" id="statusFilter" class="form-select form-select-sm" onchange="this.form.submit()" style="width: auto; background-color: #1e1e2f; color: #e0e0e0; border: 1px solid #444a5a; font-weight: 500;">
-                                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Jobs</option>
-                                <option value="complete" {% if status_filter == 'complete' %}selected{% endif %}>Completed Jobs</option>
-                                <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Jobs</option>
-                            </select>
-                            <style>
-                                /* Custom dropdown styling as specified */
-                                #statusFilter {
-                                    background-color: #1e1e2f;
-                                    color: #e0e0e0;
-                                    border: 1px solid #444a5a;
-                                }
-                                
-                                #statusFilter:focus {
-                                    box-shadow: 0 0 0 0.25rem rgba(68, 74, 90, 0.25);
-                                    border-color: #444a5a;
-                                }
-                                
-                                #statusFilter option {
-                                    background-color: #1e1e2f;
-                                    color: #e0e0e0;
-                                }
-                                
-                                #statusFilter option:hover,
-                                #statusFilter option:focus {
-                                    background-color: #2d2d3c !important;
-                                }
-                                
-                                #statusFilter option:checked {
-                                    background-color: #3a3a4a !important;
-                                }
-                            </style>
-                        </form>
+                    <div class="dropdown" id="jobStatusFilter">
+                        <button class="btn btn-sm dropdown-toggle" type="button" id="statusFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: #1e1e2f; color: #e0e0e0; border: 1px solid #444a5a; font-weight: 500;">
+                            {% if status_filter == 'active' %}
+                                Active Jobs
+                            {% elif status_filter == 'complete' %}
+                                Completed Jobs
+                            {% elif status_filter == 'all' %}
+                                All Jobs
+                            {% else %}
+                                Active Jobs
+                            {% endif %}
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="statusFilterDropdown" style="background-color: #1e1e2f; border: 1px solid #444a5a;">
+                            <li><a class="dropdown-item {% if status_filter == 'active' %}active{% endif %}" href="{{ url_for('manage_jobs', status_filter='active', edit=request.args.get('edit')) }}" style="color: #e0e0e0;">Active Jobs</a></li>
+                            <li><a class="dropdown-item {% if status_filter == 'complete' %}active{% endif %}" href="{{ url_for('manage_jobs', status_filter='complete', edit=request.args.get('edit')) }}" style="color: #e0e0e0;">Completed Jobs</a></li>
+                            <li><a class="dropdown-item {% if status_filter == 'all' %}active{% endif %}" href="{{ url_for('manage_jobs', status_filter='all', edit=request.args.get('edit')) }}" style="color: #e0e0e0;">All Jobs</a></li>
+                        </ul>
+                        <style>
+                            /* Custom dropdown styling */
+                            #jobStatusFilter .dropdown-item:hover {
+                                background-color: #2d2d3c;
+                            }
+                            #jobStatusFilter .dropdown-item.active {
+                                background-color: #3a3a4a;
+                            }
+                        </style>
                     </div>
                 </div>
                 <div class="input-group input-group-sm" style="width: 250px;">
