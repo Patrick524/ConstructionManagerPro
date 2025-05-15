@@ -483,6 +483,10 @@ def worker_timesheet(entry_id=None):
     editing = False
     entry_to_edit = None
     
+    # Get all active jobs sorted by job_code in ascending order
+    active_jobs = Job.query.filter(Job.status != 'complete').order_by(Job.job_code).all()
+    form.job_id.choices = [(j.id, f"{j.job_code} - {j.description}") for j in active_jobs]
+    
     if entry_id:
         # Load the existing time entry
         entry_to_edit = TimeEntry.query.filter_by(
