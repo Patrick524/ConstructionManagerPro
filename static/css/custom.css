@@ -175,47 +175,9 @@
     border-radius: 0.5rem; /* Maintain existing border-radius */
 }
 
-/* Admin job filter dropdown dark theme styling */
-#jobStatusFilter button.dropdown-toggle {
-    background-color: #1e1e2f !important;
-    color: #e0e0e0 !important;
-    border: 1px solid #444a5a !important;
-    font-weight: 500 !important;
-}
-
-#jobStatusFilter .dropdown-menu,
-.dropdown-menu#statusFilterDropdown-menu {
-    background-color: #1e1e2f !important;
-    border: 1px solid #444a5a !important;
-}
-
-#jobStatusFilter .dropdown-menu a,
-#jobStatusFilter .dropdown-item,
-.dropdown-menu#statusFilterDropdown-menu a,
-.dropdown-menu .dropdown-item {
-    color: #e0e0e0 !important;
-    background-color: #1e1e2f !important;
-    text-decoration: none !important;
-}
-
-#jobStatusFilter .dropdown-menu a:hover,
-#jobStatusFilter .dropdown-item:hover,
-#jobStatusFilter .dropdown-menu a:focus,
-#jobStatusFilter .dropdown-item:focus,
-.dropdown-menu#statusFilterDropdown-menu a:hover,
-.dropdown-menu .dropdown-item:hover {
-    background-color: #2d2d3c !important;
-    color: #ffffff !important;
-}
-
-#jobStatusFilter .dropdown-menu a.active,
-#jobStatusFilter .dropdown-item.active,
-#jobStatusFilter .dropdown-menu a:active,
-#jobStatusFilter .dropdown-item:active,
-.dropdown-menu#statusFilterDropdown-menu a.active,
-.dropdown-menu .dropdown-item.active {
-    background-color: #3a3a4a !important;
-    color: #ffffff !important;
+/* Admin job filter dropdown styling - using Bootstrap's built-in dark theme now */
+#jobStatusFilter {
+    margin-right: 10px;
 }
 
 
