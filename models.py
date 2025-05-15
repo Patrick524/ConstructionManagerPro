@@ -94,6 +94,12 @@ class TimeEntry(db.Model):
     approved_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
+    # Add unique constraint for (user_id, job_id, date) to support upsert
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'job_id', 'date', name='unique_time_entry'),
+        db.CheckConstraint('hours BETWEEN 0 AND 24', name='check_hours_range'),
+    )
+    
     # Relationships
     approver = db.relationship('User', foreign_keys=[approved_by], backref='approved_entries', lazy='joined')
     
