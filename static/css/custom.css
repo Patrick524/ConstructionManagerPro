@@ -374,3 +374,33 @@ select.form-select {
         background-color: rgba(255, 255, 255, 0.1);
     }
 }
+
+/* Fixed Navigation and Week Nav Styles */
+
+/* 1) Fix the top navbar */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1055;
+}
+
+/* 2) Pin the week nav directly under it */
+#week-nav {
+  position: fixed;
+  top: 56px;              /* adjust if your navbar is taller/shorter */
+  left: 0;
+  width: 100%;
+  z-index: 1045;
+  background: rgba(15,23,42,0.95);
+  backdrop-filter: blur(4px);
+  border-bottom: 1px solid #374151;
+  padding: 8px 0;
+  transition: top 0.3s ease-in-out;
+}
+
+/* 3) Push page content down so nothing is hidden */
+#main-content, .container-fluid {
+  margin-top: calc(56px + 48px); /* navbar (56px) + week-nav height (~48px) */
+}
