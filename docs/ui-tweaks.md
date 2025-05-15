@@ -38,9 +38,46 @@ We have two fixed bars at the top of every page:
      margin-top: calc(56px + 48px);  /* navbar + week-nav heights */
      ```
 
-## Principles
+## Worker Page Adjustments
+
+Worker pages receive additional margin to prevent layout overlap with the fixed navigation bars:
+
+- **Worker Page Container**  
+  - Selector: `body.worker-view .container > .row:first-child`  
+  - CSS:
+    ```css
+    margin-top: 80px; /* Extra margin only for worker pages */
+    ```
+
+- **Worker Page Titles**  
+  - Selector: `body.worker-view .page-title`  
+  - CSS:
+    ```css
+    padding-top: 15px; /* Add padding to the top of page titles */
+    ```
+
+- **Worker Clock Page**  
+  - Selector: `body.worker-view .container > div.clock-container`  
+  - CSS:
+    ```css
+    margin-top: 80px; /* Special treatment for clock container */
+    ```
+
+## Implementation Strategy
+
+1. The base template (`base.html`) adds the `worker-view` class to the body when the current user is a worker:
+   ```html
+   <body{% if current_user.is_authenticated and current_user.is_worker() %} class="worker-view"{% endif %}>
+   ```
+
+2. CSS selectors target this class to apply worker-specific spacing.
+
+3. Different page structures require slightly different margin adjustments.
+
+## Design Principles
 
 - **Z‑index hierarchy** ensures dropdowns and menus layer correctly.  
 - **Fixed positioning** keeps both bars visible when scrolling.  
 - **Transparent background + blur** for modern frosted‑glass look.  
 - **Transition** for smooth entrance on page load.
+- **Role-based styling** handles layout differences for worker vs. admin/foreman interfaces.
