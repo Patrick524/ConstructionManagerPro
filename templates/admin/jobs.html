@@ -147,25 +147,36 @@
                     <h5 class="mb-0 me-3">Job List</h5>
                     <div>
                         <form action="{{ url_for('manage_jobs') }}" method="GET" class="d-inline">
-                            <select name="status_filter" class="form-select form-select-sm" onchange="this.form.submit()" style="width: auto; background-color: #212529; color: white; border-color: #495057; font-weight: 500;">
+                            <select name="status_filter" id="statusFilter" class="form-select form-select-sm" onchange="this.form.submit()" style="width: auto; background-color: #1e1e2f; color: #e0e0e0; border: 1px solid #444a5a; font-weight: 500;">
                                 <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Jobs</option>
                                 <option value="complete" {% if status_filter == 'complete' %}selected{% endif %}>Completed Jobs</option>
                                 <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Jobs</option>
                             </select>
                             <style>
-                                /* Improve dropdown when focused and for option hover states */
-                                select[name="status_filter"]:focus {
-                                    box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
-                                    border-color: #fff;
+                                /* Custom dropdown styling as specified */
+                                #statusFilter {
+                                    background-color: #1e1e2f;
+                                    color: #e0e0e0;
+                                    border: 1px solid #444a5a;
                                 }
-                                select[name="status_filter"] option {
-                                    background-color: #212529;
-                                    color: white;
+                                
+                                #statusFilter:focus {
+                                    box-shadow: 0 0 0 0.25rem rgba(68, 74, 90, 0.25);
+                                    border-color: #444a5a;
                                 }
-                                select[name="status_filter"] option:hover,
-                                select[name="status_filter"] option:focus,
-                                select[name="status_filter"] option:active {
-                                    background-color: #0d6efd !important;
+                                
+                                #statusFilter option {
+                                    background-color: #1e1e2f;
+                                    color: #e0e0e0;
+                                }
+                                
+                                #statusFilter option:hover,
+                                #statusFilter option:focus {
+                                    background-color: #2d2d3c !important;
+                                }
+                                
+                                #statusFilter option:checked {
+                                    background-color: #3a3a4a !important;
                                 }
                             </style>
                         </form>
