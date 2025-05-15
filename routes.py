@@ -313,12 +313,21 @@ def worker_weekly_timesheet():
     # Check if this is a GET request or if form failed validation
     if request.method == 'GET' or not form.validate():
         # This is the key part - we're explicitly checking for GET requests to load existing data
-        # Load existing entries for this week with eager loading of labor_activity
+        # Reset all hours fields to 0 by default
+        form.monday_hours.data = 0.0
+        form.tuesday_hours.data = 0.0
+        form.wednesday_hours.data = 0.0
+        form.thursday_hours.data = 0.0
+        form.friday_hours.data = 0.0
+        form.saturday_hours.data = 0.0
+        form.sunday_hours.data = 0.0
+        
+        # Load entries for selected job/activity (for form population)
         if form.job_id.data and form.labor_activity_id.data:
             print(f"DEBUG: Searching for entries with job_id={form.job_id.data}, labor_activity_id={form.labor_activity_id.data}, user_id={current_user.id}")
             print(f"DEBUG: Week range: {week_start} to {week_end}")
 
-            existing_entries = TimeEntry.query.filter(
+            job_activity_entries = TimeEntry.query.filter(
                 TimeEntry.user_id == current_user.id,
                 TimeEntry.job_id == form.job_id.data,
                 TimeEntry.labor_activity_id == form.labor_activity_id.data,
@@ -326,24 +335,15 @@ def worker_weekly_timesheet():
                 TimeEntry.date <= week_end
             ).options(db.joinedload(TimeEntry.labor_activity)).all()
 
-            print(f"DEBUG: Found {len(existing_entries)} existing entries")
-
-            # Set all hours fields to 0 by default
-            form.monday_hours.data = 0.0
-            form.tuesday_hours.data = 0.0
-            form.wednesday_hours.data = 0.0
-            form.thursday_hours.data = 0.0
-            form.friday_hours.data = 0.0
-            form.saturday_hours.data = 0.0
-            form.sunday_hours.data = 0.0
+            print(f"DEBUG: Found {len(job_activity_entries)} existing entries for selected job/activity")
 
             # If there are existing entries, populate the form
-            if existing_entries:
+            if job_activity_entries:
                 print(f"DEBUG: Setting form values from existing entries")
 
                 # Create a dictionary to store hours by day index
                 day_entries = {}
-                for entry in existing_entries:
+                for entry in job_activity_entries:
                     print(f"DEBUG: Entry date {entry.date}, hours {entry.hours}")
                     day_index = (entry.date - week_start).days
                     if 0 <= day_index <= 6:  # Make sure it's within the week
@@ -367,8 +367,8 @@ def worker_weekly_timesheet():
                     form.sunday_hours.data = day_entries[6]
 
                 # Populate notes from any entry (they should be the same)
-                if existing_entries:
-                    form.notes.data = existing_entries[0].notes
+                if job_activity_entries:
+                    form.notes.data = job_activity_entries[0].notes
 
                 print(f"DEBUG: Form values after population: M={form.monday_hours.data}, T={form.tuesday_hours.data}, W={form.wednesday_hours.data}, Total: {sum([form.monday_hours.data or 0, form.tuesday_hours.data or 0, form.wednesday_hours.data or 0, form.thursday_hours.data or 0, form.friday_hours.data or 0, form.saturday_hours.data or 0, form.sunday_hours.data or 0])}")
             else:
@@ -447,8 +447,25 @@ def worker_weekly_timesheet():
                 print("DEBUG: No grouped activities found to populate form")
         else:
             print("DEBUG: No job entries found to populate form")
+    
+    # Get all time entries for the week regardless of job
+    all_week_entries = TimeEntry.query.filter(
+        TimeEntry.user_id == current_user.id,
+        TimeEntry.date >= week_start,
+        TimeEntry.date <= week_end
+    ).options(
+        db.joinedload(TimeEntry.job),
+        db.joinedload(TimeEntry.labor_activity)
+    ).order_by(TimeEntry.date, TimeEntry.job_id, TimeEntry.labor_activity_id).all()
+    
+    print(f"DEBUG: Found {len(all_week_entries)} total entries for the week")
 
-    return render_template('worker/weekly_timesheet.html', form=form)
+    return render_template(
+        'worker/weekly_timesheet.html', 
+        form=form,
+        all_week_entries=all_week_entries,
+        week_start=week_start
+    )
 
 @app.route('/worker/timesheet', methods=['GET', 'POST'])
 @app.route('/worker/timesheet/edit/<int:entry_id>', methods=['GET', 'POST'])
