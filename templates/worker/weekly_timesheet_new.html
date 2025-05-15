@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}Weekly Timesheet{% endblock %}
+
+{% block styles %}
+<style>
+    .hour-input {
+        width: 100%;
+        max-width: 70px;
+    }
+    
+    .approved-row {
+        background-color: rgba(128, 128, 128, 0.1);
+    }
+    
+    .approved-cell {
+        background-color: rgba(128, 128, 128, 0.15);
+    }
+    
+    .day-total {
+        font-weight: bold;
+    }
+    
+    .job-row-header {
+        background-color: #f8f9fa;
+        font-weight: bold;
+    }
+    
+    @media (max-width: 768px) {
+        .hour-input {
+            max-width: 50px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Weekly Timesheet</h1>
+            
+            <!-- Time Entries Table for the Week -->
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">All Time Entries This Week</h5>
+                        <div class="text-end text-light">
+                            Total Week Hours: <span class="badge bg-light text-dark fw-bold" id="totalHours">
+                                {{ all_week_entries|sum(attribute='hours')|round(1) }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if all_week_entries %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Job</th>
+                                        <th>Activity</th>
+                                        <th>Hours</th>
+                                        <th>Notes</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for entry in all_week_entries %}
+                                    <tr>
+                                        <td>{{ entry.date.strftime('%a, %m/%d/%Y') }}</td>
+                                        <td>{{ entry.job.job_code }} - {{ entry.job.description|truncate(30) }}</td>
+                                        <td>{{ entry.labor_activity.name }}</td>
+                                        <td>{{ entry.hours }}</td>
+                                        <td>{{ entry.notes|truncate(50) if entry.notes else '' }}</td>
+                                        <td>
+                                            {% if entry.approved %}
+                                                <span class="badge bg-success">Approved</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> No time entries found for the week of {{ week_start.strftime('%m/%d/%Y') }}.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Editable Weekly Grid -->
+            <div class="card mb-4 border-dark">
+                <div class="card-header bg-dark text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Add/Edit Weekly Hours</h5>
+                        <a href="{{ url_for('worker_timesheet') }}" class="btn btn-outline-light btn-sm">
+                            Switch to Daily View
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="" id="weeklyTimesheetForm">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.job_id.id }}" class="form-label">{{ form.job_id.label }}</label>
+                                    {{ form.job_id(class="form-select", onchange="document.location.href='?start_date=' + '{{ week_start.strftime('%m/%d/%Y') }}' + '&job_id=' + this.value") }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.labor_activity_id.id }}" class="form-label">{{ form.labor_activity_id.label }}</label>
+                                    {{ form.labor_activity_id(class="form-select") }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="weeklyTimesheetTable">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Day</th>
+                                        <th>Mon {{ week_dates[0].strftime('%m/%d') }}</th>
+                                        <th>Tue {{ week_dates[1].strftime('%m/%d') }}</th>
+                                        <th>Wed {{ week_dates[2].strftime('%m/%d') }}</th>
+                                        <th>Thu {{ week_dates[3].strftime('%m/%d') }}</th>
+                                        <th>Fri {{ week_dates[4].strftime('%m/%d') }}</th>
+                                        <th>Sat {{ week_dates[5].strftime('%m/%d') }}</th>
+                                        <th>Sun {{ week_dates[6].strftime('%m/%d') }}</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="job-row">
+                                        <td>Hours</td>
+                                        <td>
+                                            {{ form.monday_hours(class="form-control hour-input monday-hours", type="number", step="0.5", min="0", max="24") }}
+                                        </td>
+                                        <td>
+                                            {{ form.tuesday_hours(class="form-control hour-input tuesday-hours", type="number", step="0.5", min="0", max="24") }}
+                                        </td>
+                                        <td>
+                                            {{ form.wednesday_hours(class="form-control hour-input wednesday-hours", type="number", step="0.5", min="0", max="24") }}
+                                        </td>
+                                        <td>
+                                            {{ form.thursday_hours(class="form-control hour-input thursday-hours", type="number", step="0.5", min="0", max="24") }}
+                                        </td>
+                                        <td>
+                                            {{ form.friday_hours(class="form-control hour-input friday-hours", type="number", step="0.5", min="0", max="24") }}
+                                        </td>
+                                        <td>
+                                            {{ form.saturday_hours(class="form-control hour-input saturday-hours", type="number", step="0.5", min="0", max="24") }}
+                                        </td>
+                                        <td>
+                                            {{ form.sunday_hours(class="form-control hour-input sunday-hours", type="number", step="0.5", min="0", max="24") }}
+                                        </td>
+                                        <td class="row-total">0.0</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot class="table-dark">
+                                    <tr>
+                                        <td>Daily Total</td>
+                                        <td id="mondayTotal">{{ daily_totals[week_dates[0]]|default(0) }}</td>
+                                        <td id="tuesdayTotal">{{ daily_totals[week_dates[1]]|default(0) }}</td>
+                                        <td id="wednesdayTotal">{{ daily_totals[week_dates[2]]|default(0) }}</td>
+                                        <td id="thursdayTotal">{{ daily_totals[week_dates[3]]|default(0) }}</td>
+                                        <td id="fridayTotal">{{ daily_totals[week_dates[4]]|default(0) }}</td>
+                                        <td id="saturdayTotal">{{ daily_totals[week_dates[5]]|default(0) }}</td>
+                                        <td id="sundayTotal">{{ daily_totals[week_dates[6]]|default(0) }}</td>
+                                        <td id="weekTotal">{{ all_week_entries|sum(attribute='hours')|round(1) }}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="{{ form.notes.id }}" class="form-label">{{ form.notes.label }}</label>
+                            {{ form.notes(class="form-control", rows=3) }}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('worker_history') }}" class="btn btn-secondary">Cancel</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Grid View of All Jobs and Activities (optional for future enhancement) -->
+            {% if jobs_data %}
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">All Jobs Summary</h5>
+                </div>
+                <div class="card-body">
+                    {% for (job_id, job_code, job_desc), activities in jobs_data.items() %}
+                    <div class="mb-4">
+                        <h6 class="job-row-header p-2 border-bottom">{{ job_code }} - {{ job_desc }}</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-secondary">
+                                    <tr>
+                                        <th>Activity</th>
+                                        <th>Mon</th>
+                                        <th>Tue</th>
+                                        <th>Wed</th>
+                                        <th>Thu</th>
+                                        <th>Fri</th>
+                                        <th>Sat</th>
+                                        <th>Sun</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for (activity_id, activity_name), data in activities.items() %}
+                                    <tr class="{{ 'approved-row' if data.approved }}">
+                                        <td>{{ activity_name }}</td>
+                                        {% for i in range(7) %}
+                                        <td class="{{ 'approved-cell' if data.approved }}">
+                                            {{ data.days[week_dates[i]]|default(0) }}
+                                        </td>
+                                        {% endfor %}
+                                        <td class="fw-bold">{{ data.total }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Template for adding new job rows (for future enhancement) -->
+<template id="jobRowTemplate">
+    <tr class="job-row">
+        <td>
+            <select name="job_id_template" class="form-select">
+                {% for value, label in form.job_id.choices %}
+                <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </td>
+        <td>
+            <input type="number" name="monday_hours_template" class="form-control hour-input monday-hours" value="0" min="0" max="24" step="0.5">
+        </td>
+        <td>
+            <input type="number" name="tuesday_hours_template" class="form-control hour-input tuesday-hours" value="0" min="0" max="24" step="0.5">
+        </td>
+        <td>
+            <input type="number" name="wednesday_hours_template" class="form-control hour-input wednesday-hours" value="0" min="0" max="24" step="0.5">
+        </td>
+        <td>
+            <input type="number" name="thursday_hours_template" class="form-control hour-input thursday-hours" value="0" min="0" max="24" step="0.5">
+        </td>
+        <td>
+            <input type="number" name="friday_hours_template" class="form-control hour-input friday-hours" value="0" min="0" max="24" step="0.5">
+        </td>
+        <td>
+            <input type="number" name="saturday_hours_template" class="form-control hour-input saturday-hours" value="0" min="0" max="24" step="0.5">
+        </td>
+        <td>
+            <input type="number" name="sunday_hours_template" class="form-control hour-input sunday-hours" value="0" min="0" max="24" step="0.5">
+        </td>
+        <td class="row-total">0.0</td>
+    </tr>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/weekly.js') }}"></script>
+{% endblock %}
