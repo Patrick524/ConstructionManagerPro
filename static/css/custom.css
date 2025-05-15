@@ -409,3 +409,17 @@ select.form-select {
 #main-content, .container-fluid {
   margin-top: calc(56px + 48px); /* navbar (56px) + week-nav height (~48px) */
 }
+
+/* Additional top margin for worker pages */
+body.worker-view .container > .row:first-child {
+  margin-top: 80px; /* Extra margin only for worker pages */
+}
+
+body.worker-view .page-title {
+  padding-top: 15px; /* Add padding to the top of page titles on worker pages */
+}
+
+/* Additional spacing for worker clock page */
+body.worker-view .container > div.clock-container {
+  margin-top: 80px;
+}
