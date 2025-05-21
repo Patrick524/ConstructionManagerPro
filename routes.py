@@ -1699,8 +1699,12 @@ def manage_job_workers():
         job = Job.query.get_or_404(selected_job_id)
         form.job_id.data = selected_job_id
         
-        # Get IDs of currently assigned workers
-        assigned_worker_ids = [worker.id for worker in job.assigned_workers]
+        # Get all workers assigned to this job
+        assigned_worker_ids = []
+        for worker in job.assigned_workers:
+            assigned_worker_ids.append(worker.id)
+            
+        # Set the form data
         form.workers.data = assigned_worker_ids
     
     return render_template(
