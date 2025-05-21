@@ -1780,14 +1780,14 @@ def manage_job_workers():
         else:
             selected_worker_ids = []
 
-        # Get the currently assigned workers to the job
-        currently_assigned = db.session.query(job_workers).filter(
-            job_workers.c.job_id == job_id).all()
+        # Get the currently assigned workers to the job - cleaner approach
+        currently_assigned = db.session.query(job_workers).filter_by(job_id=job_id).all()
 
-        # Remove existing assignments by deleting from the association table
+        # Remove existing assignments by deleting from the association table - cleaner approach
         if currently_assigned:
+            # Using filter_by is more consistent with our other queries
             db.session.execute(
-                job_workers.delete().where(job_workers.c.job_id == job_id))
+                job_workers.delete().filter_by(job_id=job_id))
 
         # Add new worker assignments
         for worker_id in selected_worker_ids:
