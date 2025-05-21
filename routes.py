@@ -1780,21 +1780,9 @@ def manage_job_workers():
         else:
             selected_worker_ids = []
 
-        # Get the currently assigned workers to the job - cleaner approach
-        currently_assigned = db.session.query(job_workers).filter_by(job_id=job_id).all()
-
-        # Remove existing assignments by deleting from the association table - cleaner approach
-        if currently_assigned:
-            # Using filter_by is more consistent with our other queries
-            db.session.execute(
-                job_workers.delete().filter_by(job_id=job_id))
-
-        # Add new worker assignments
-        for worker_id in selected_worker_ids:
-            db.session.execute(job_workers.insert().values(
-                job_id=job_id,
-                user_id=worker_id,
-                assigned_at=datetime.utcnow()))
+        # Use SQLAlchemy relationship to update assigned workers
+        # This is cleaner and ensures the relationship is properly maintained
+        job.assigned_workers = User.query.filter(User.id.in_(selected_worker_ids)).all()
 
         try:
             db.session.commit()
@@ -1813,12 +1801,9 @@ def manage_job_workers():
         job = Job.query.get_or_404(selected_job_id)
         form.job_id.data = selected_job_id
 
-        # Get all workers assigned to this job directly from the association table - cleaner approach
-        assigned_ids = db.session.query(job_workers.c.user_id).filter_by(job_id=selected_job_id).all()
-        assigned_worker_ids = [id for (id,) in assigned_ids]
-
-        # Set the form data with the list of IDs
-        form.workers.data = assigned_worker_ids
+        # Use the SQLAlchemy relationship to get assigned workers
+        # This is more consistent with the SQLAlchemy ORM pattern
+        form.workers.data = [worker.id for worker in job.assigned_workers]
 
     return render_template('admin/job_workers.html',
                            form=form,
