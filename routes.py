@@ -1666,19 +1666,31 @@ def manage_job_workers():
         job = Job.query.get_or_404(job_id)
         selected_worker_ids = form.workers.data
         
+        # Convert worker IDs to integers if they're not already
+        if selected_worker_ids:
+            selected_worker_ids = [int(worker_id) for worker_id in selected_worker_ids]
+        else:
+            selected_worker_ids = []
+            
         # Get all workers
         workers = User.query.filter_by(role='worker').all()
         
-        # Clear existing worker assignments for this job
-        job.assigned_workers = []
+        # Remove all workers from job first
+        for worker in job.assigned_workers.all():
+            job.assigned_workers.remove(worker)
         
         # Add selected workers to the job
         for worker in workers:
             if worker.id in selected_worker_ids:
                 job.assigned_workers.append(worker)
         
-        db.session.commit()
-        flash(f"Worker assignments for job '{job.job_code}' updated successfully!", 'success')
+        try:
+            db.session.commit()
+            flash(f"Worker assignments for job '{job.job_code}' updated successfully!", 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error updating worker assignments: {str(e)}", 'danger')
+            
         return redirect(url_for('manage_job_workers', job_id=job_id))
     
     # If job_id is provided in query params, pre-populate the form
