@@ -1695,6 +1695,12 @@ def manage_jobs():
                 foreman_id=form.foreman_id.data if form.foreman_id.data and form.foreman_id.data > 0 else None
             )
             db.session.add(job)
+            
+            # Assign all workers to this new job
+            workers = User.query.filter_by(role='worker').all()
+            for worker in workers:
+                job.assigned_workers.append(worker)
+                
             flash('New job created successfully!', 'success')
 
         db.session.commit()

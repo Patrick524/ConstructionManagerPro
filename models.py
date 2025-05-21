@@ -3,6 +3,13 @@ from flask_login import UserMixin
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
+# Association table for many-to-many relationship between Job and User (worker)
+job_workers = db.Table('job_workers',
+    db.Column('job_id', db.Integer, db.ForeignKey('job.id'), primary_key=True),
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('assigned_at', db.DateTime, default=datetime.utcnow)
+)
+
 class User(UserMixin, db.Model):
     """User model representing workers, foremen, and administrators"""
     id = db.Column(db.Integer, primary_key=True)
@@ -16,6 +23,11 @@ class User(UserMixin, db.Model):
     # Relationships
     time_entries = db.relationship('TimeEntry', foreign_keys='TimeEntry.user_id', backref='user', lazy='dynamic')
     clock_sessions = db.relationship('ClockSession', backref='user', lazy='dynamic')
+    # Jobs assigned to this worker (many-to-many)
+    assigned_jobs = db.relationship('Job', 
+                                secondary=job_workers,
+                                backref=db.backref('assigned_workers', lazy='dynamic'),
+                                lazy='dynamic')
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
