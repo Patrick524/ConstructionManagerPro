@@ -11,7 +11,7 @@ from app import app, db
 from models import User, Job, LaborActivity, TimeEntry, WeeklyApprovalLock, ClockSession, Trade
 from forms import (LoginForm, RegistrationForm, TimeEntryForm, ApprovalForm, JobForm,
                   LaborActivityForm, UserManagementForm, ReportForm, WeeklyTimesheetForm,
-                  ClockInForm, ClockOutForm, TradeForm)
+                  ClockInForm, ClockOutForm, TradeForm, JobWorkersForm)
 import pandas as pd
 import utils
 

@@ -85,6 +85,7 @@
             <h5 class="dashboard-widget-title">Quick Actions</h5>
             <div class="mt-auto d-flex flex-column">
                 <a href="{{ url_for('manage_jobs') }}?status=new" class="btn btn-sm btn-outline-primary mb-2">Add New Job</a>
+                <a href="{{ url_for('manage_job_workers') }}" class="btn btn-sm btn-outline-primary mb-2">Manage Worker Assignments</a>
                 <a href="{{ url_for('manage_activities') }}?status=new" class="btn btn-sm btn-outline-primary mb-2">Add Labor Activity</a>
                 <a href="{{ url_for('generate_reports') }}" class="btn btn-sm btn-outline-primary">Generate Reports</a>
             </div>
