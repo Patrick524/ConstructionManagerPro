@@ -8,7 +8,7 @@ from functools import wraps
 from flask import render_template, redirect, url_for, flash, request, jsonify, send_file, session
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db
-from models import User, Job, LaborActivity, TimeEntry, WeeklyApprovalLock, ClockSession, Trade
+from models import User, Job, LaborActivity, TimeEntry, WeeklyApprovalLock, ClockSession, Trade, job_workers
 from forms import (LoginForm, RegistrationForm, TimeEntryForm, ApprovalForm, JobForm,
                   LaborActivityForm, UserManagementForm, ReportForm, WeeklyTimesheetForm,
                   ClockInForm, ClockOutForm, TradeForm, JobWorkersForm)
