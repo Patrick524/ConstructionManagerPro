@@ -1671,18 +1671,27 @@ def manage_job_workers():
             selected_worker_ids = [int(worker_id) for worker_id in selected_worker_ids]
         else:
             selected_worker_ids = []
-            
-        # Get all workers
-        workers = User.query.filter_by(role='worker').all()
         
-        # Remove all workers from job first
-        # Use a different approach to clear relationship
-        job.assigned_workers = []
+        # Get the currently assigned workers to the job
+        currently_assigned = db.session.query(job_workers).filter(
+            job_workers.c.job_id == job_id
+        ).all()
         
-        # Add selected workers to the job
-        for worker in workers:
-            if worker.id in selected_worker_ids:
-                job.assigned_workers.append(worker)
+        # Remove existing assignments by deleting from the association table
+        if currently_assigned:
+            db.session.execute(
+                job_workers.delete().where(job_workers.c.job_id == job_id)
+            )
+        
+        # Add new worker assignments
+        for worker_id in selected_worker_ids:
+            db.session.execute(
+                job_workers.insert().values(
+                    job_id=job_id,
+                    user_id=worker_id,
+                    assigned_at=datetime.utcnow()
+                )
+            )
         
         try:
             db.session.commit()
@@ -1699,12 +1708,15 @@ def manage_job_workers():
         job = Job.query.get_or_404(selected_job_id)
         form.job_id.data = selected_job_id
         
-        # Get all workers assigned to this job
-        assigned_worker_ids = []
-        for worker in job.assigned_workers:
-            assigned_worker_ids.append(worker.id)
+        # Get all workers assigned to this job directly from the association table
+        assigned_workers_query = db.session.query(job_workers.c.user_id).filter(
+            job_workers.c.job_id == selected_job_id
+        ).all()
+        
+        # Extract the worker IDs from the query result
+        assigned_worker_ids = [worker_id for (worker_id,) in assigned_workers_query]
             
-        # Set the form data
+        # Set the form data with the list of IDs
         form.workers.data = assigned_worker_ids
     
     return render_template(
