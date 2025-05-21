@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-3">
+        <div class="col">
+            <h2>{{ title }}</h2>
+            <p class="text-muted">Assign workers to jobs by selecting a job and checking the workers who should be assigned to it.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title text-white mb-0">Worker Assignment</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-4">
+                            <div class="form-group">
+                                {{ form.job_id.label(class="form-label") }}
+                                {{ form.job_id(class="form-select mb-3", onchange="this.form.submit()") }}
+                            </div>
+                            
+                            {% if form.job_id.data %}
+                            <div class="form-group">
+                                <label class="form-label">{{ form.workers.label }}</label>
+                                <div class="list-group">
+                                    {% for value, label in form.workers.choices %}
+                                    <div class="list-group-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="workers" value="{{ value }}" id="worker-{{ value }}"
+                                                {% if value in form.workers.data %}checked{% endif %}>
+                                            <label class="form-check-label" for="worker-{{ value }}">
+                                                {{ label }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4">
+                                {{ form.submit(class="btn btn-primary") }}
+                                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary ms-2">Back to Dashboard</a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="card-title text-white mb-0">Quick Help</h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">How to use this page:</h6>
+                    <ol>
+                        <li>Select a job from the dropdown menu</li>
+                        <li>The page will refresh to show all available workers</li>
+                        <li>Check the boxes next to workers you want to assign to this job</li>
+                        <li>Click "Update Worker Assignments" to save your changes</li>
+                    </ol>
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-info-circle"></i> When a new job is created, all workers are automatically assigned to it.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm as BaseFlaskForm
 from wtforms import StringField, PasswordField, SubmitField, SelectField, FloatField as BaseFloatField, EmailField
-from wtforms import TextAreaField, HiddenField, DateField, BooleanField, FieldList, FormField
+from wtforms import TextAreaField, HiddenField, DateField, BooleanField, FieldList, FormField, SelectMultipleField
 from wtforms import widgets, Field
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, NumberRange, Optional, StopValidation
 from models import User, Job, LaborActivity
@@ -311,3 +311,18 @@ class ReportForm(FlaskForm):
         """Validate recipient email when email delivery is selected"""
         if self.delivery_method.data == 'email' and not field.data:
             raise ValidationError('Email address is required when email delivery is selected.')
+
+class JobWorkersForm(FlaskForm):
+    """Form for managing worker assignments to jobs"""
+    job_id = SelectField('Job', coerce=int, validators=[DataRequired()])
+    workers = SelectMultipleField('Assign Workers', coerce=int, validators=[Optional()])
+    submit = SubmitField('Update Worker Assignments')
+    
+    def __init__(self, *args, **kwargs):
+        super(JobWorkersForm, self).__init__(*args, **kwargs)
+        # Populate job choices
+        self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
+                              for job in Job.query.filter(Job.status != 'complete').order_by(Job.job_code).all()]
+        # Populate worker choices
+        self.workers.choices = [(worker.id, worker.name) 
+                               for worker in User.query.filter_by(role='worker').order_by(User.name).all()]

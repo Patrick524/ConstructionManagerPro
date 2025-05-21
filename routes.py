@@ -1653,6 +1653,50 @@ def admin_dashboard():
         end_date=end_date
     )
 
+@app.route('/admin/job-workers', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def manage_job_workers():
+    """Manage worker assignments to jobs"""
+    form = JobWorkersForm()
+    
+    # If form is submitted and valid, update worker assignments
+    if form.validate_on_submit():
+        job_id = form.job_id.data
+        job = Job.query.get_or_404(job_id)
+        selected_worker_ids = form.workers.data
+        
+        # Get all workers
+        workers = User.query.filter_by(role='worker').all()
+        
+        # Clear existing worker assignments for this job
+        job.assigned_workers = []
+        
+        # Add selected workers to the job
+        for worker in workers:
+            if worker.id in selected_worker_ids:
+                job.assigned_workers.append(worker)
+        
+        db.session.commit()
+        flash(f"Worker assignments for job '{job.job_code}' updated successfully!", 'success')
+        return redirect(url_for('manage_job_workers', job_id=job_id))
+    
+    # If job_id is provided in query params, pre-populate the form
+    selected_job_id = request.args.get('job_id', type=int)
+    if selected_job_id:
+        job = Job.query.get_or_404(selected_job_id)
+        form.job_id.data = selected_job_id
+        
+        # Get IDs of currently assigned workers
+        assigned_worker_ids = [worker.id for worker in job.assigned_workers]
+        form.workers.data = assigned_worker_ids
+    
+    return render_template(
+        'admin/job_workers.html',
+        form=form,
+        title="Manage Worker Assignments"
+    )
+
 @app.route('/admin/jobs', methods=['GET', 'POST'])
 @login_required
 @admin_required
