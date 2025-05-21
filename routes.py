@@ -1780,17 +1780,33 @@ def manage_job_workers():
         else:
             selected_worker_ids = []
 
-        # Use SQLAlchemy relationship to update assigned workers
-        # This is cleaner and ensures the relationship is properly maintained
-        job.assigned_workers = User.query.filter(User.id.in_(selected_worker_ids)).all()
+        # Clear existing assignments
+        job.assigned_workers = []
+        db.session.flush()
+        
+        # Get selected workers
+        selected_workers = User.query.filter(User.id.in_(selected_worker_ids)).all()
+        print(f"DEBUG: Selected worker IDs: {selected_worker_ids}")
+        print(f"DEBUG: Found {len(selected_workers)} workers")
+        
+        # Add new assignments
+        for worker in selected_workers:
+            job.assigned_workers.append(worker)
+            print(f"DEBUG: Assigning worker {worker.id} to job {job.id}")
 
         try:
             db.session.commit()
+            
+            # Verify assignments after commit
+            job = Job.query.get(job_id)  # Refresh job from database
+            print(f"DEBUG: After commit - job has {job.assigned_workers.count()} workers")
+            
             flash(
                 f"Worker assignments for job '{job.job_code}' updated successfully!",
                 'success')
         except Exception as e:
             db.session.rollback()
+            print(f"DEBUG: Database error: {str(e)}")
             flash(f"Error updating worker assignments: {str(e)}", 'danger')
 
         return redirect(url_for('manage_job_workers', job_id=job_id))
