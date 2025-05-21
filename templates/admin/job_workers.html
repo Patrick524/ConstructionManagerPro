@@ -18,7 +18,7 @@
                     <h5 class="card-title text-white mb-0">Worker Assignment</h5>
                 </div>
                 <div class="card-body">
-                    <form method="POST">
+                    <form method="POST" action="{{ url_for('manage_job_workers') }}">
                         {{ form.hidden_tag() }}
                         
                         <div class="mb-4">

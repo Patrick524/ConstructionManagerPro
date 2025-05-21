@@ -1676,8 +1676,8 @@ def manage_job_workers():
         workers = User.query.filter_by(role='worker').all()
         
         # Remove all workers from job first
-        for worker in job.assigned_workers.all():
-            job.assigned_workers.remove(worker)
+        # Use a different approach to clear relationship
+        job.assigned_workers = []
         
         # Add selected workers to the job
         for worker in workers:
