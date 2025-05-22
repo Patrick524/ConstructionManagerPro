@@ -183,8 +183,8 @@
             {% endfor %}
         ];
 
-        // Check for each day of the week
-        for (let i = 0; i < 7; i++) {
+        // Check for weekdays only (Monday through Friday)
+        for (let i = 0; i < 5; i++) {
             const currentDate = new Date(startDate);
             currentDate.setDate(startDate.getDate() + i);
             const formattedDate = formatDate(currentDate);
@@ -205,7 +205,7 @@
                     ${emptyDays.map(day => `<li>${formatDisplayDate(day)}</li>`).join('')}
                 </ul>
                 <hr>
-                <p class="mb-0">All 7 days of the week need time entries before your foreman can approve.</p>
+                <p class="mb-0">Monday through Friday time entries are required before your foreman can approve.</p>
             `;
 
             document.querySelector('.row:last-child').insertAdjacentElement('beforebegin', alertDiv);

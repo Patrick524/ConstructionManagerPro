@@ -1584,10 +1584,10 @@ def approve_timesheet(job_id, user_id):
         TimeEntry.date >= week_start, TimeEntry.date
         <= week_end).order_by(TimeEntry.date).all()
 
-    # Check if all 7 days have entries
+    # Check if weekdays (Monday through Friday) have entries
     days_with_entries = set(entry.date for entry in entries)
-    all_days = {week_start + timedelta(days=i) for i in range(7)}
-    missing_days = all_days - days_with_entries
+    weekdays = {week_start + timedelta(days=i) for i in range(5)}  # Only Monday through Friday
+    missing_days = weekdays - days_with_entries
 
     if form.validate_on_submit():
         # Show a notification about missing days, but still allow approval
@@ -1621,7 +1621,7 @@ def approve_timesheet(job_id, user_id):
 
     # Group entries by date for display
     entries_by_date = {}
-    for day in all_days:
+    for day in weekdays:
         entries_by_date[day] = []
 
     for entry in entries:
