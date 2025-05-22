@@ -211,7 +211,7 @@ def worker_weekly_timesheet():
           request.method)
     print("DEBUG: Form data:", request.form)
 
-    form = WeeklyTimesheetForm()
+    form = WeeklyTimesheetForm(current_user=current_user)
 
     # Check if we're loading a specific job's labor activities
     job_id = request.args.get('job_id')
@@ -1253,8 +1253,9 @@ def foreman_enter_time(job_id, user_id):
     worker = User.query.get_or_404(user_id)
     job = Job.query.get_or_404(job_id)
 
-    # Use the same weekly timesheet form as workers
-    form = WeeklyTimesheetForm()
+    # Use the same weekly timesheet form as workers, but pass the worker user
+    # instead of current_user (foreman) since we're entering time on behalf of the worker
+    form = WeeklyTimesheetForm(current_user=worker)
     form.job_id.data = job_id
 
     # Populate labor activity choices based on job trade
