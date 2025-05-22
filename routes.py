@@ -529,17 +529,14 @@ def worker_weekly_timesheet():
 @login_required
 @worker_required
 def worker_timesheet(entry_id=None):
-    form = TimeEntryForm()
+    # Pass current_user to the form to filter jobs by assignment
+    form = TimeEntryForm(current_user=current_user)
 
     # If entry_id is provided, this is an edit request
     editing = False
     entry_to_edit = None
-
-    # Get all active jobs sorted by job_code in ascending order
-    active_jobs = Job.query.filter(Job.status != 'complete').order_by(
-        Job.job_code).all()
-    form.job_id.choices = [(j.id, f"{j.job_code} - {j.description}")
-                           for j in active_jobs]
+    
+    # No need to manually set job choices as the form now handles this based on user role
 
     if entry_id:
         # Load the existing time entry

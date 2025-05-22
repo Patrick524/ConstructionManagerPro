@@ -224,10 +224,20 @@ class WeeklyTimesheetForm(FlaskForm):
     submit = SubmitField('Save Weekly Timesheet')
     
     def __init__(self, *args, **kwargs):
+        # Extract current_user if provided
+        current_user = kwargs.pop('current_user', None)
+        
         super(WeeklyTimesheetForm, self).__init__(*args, **kwargs)
-        # Populate job choices
-        self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
-                              for job in Job.query.filter_by(status='active').all()]
+        
+        # Populate job choices based on user role
+        if current_user and current_user.role == 'worker':
+            # For workers, only show jobs they're assigned to
+            self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
+                                  for job in current_user.assigned_jobs.filter_by(status='active').all()]
+        else:
+            # For foremen and admins, show all active jobs
+            self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
+                                  for job in Job.query.filter_by(status='active').all()]
         
         # Default to current week's Monday if no date is provided
         if not self.week_start.data:
