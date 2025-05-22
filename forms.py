@@ -279,10 +279,20 @@ class ClockInForm(FlaskForm):
     submit = SubmitField('Clock In')
     
     def __init__(self, *args, **kwargs):
+        # Extract current_user if provided
+        current_user = kwargs.pop('current_user', None)
+        
         super(ClockInForm, self).__init__(*args, **kwargs)
-        # Populate job choices - only active jobs
-        self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
-                              for job in Job.query.filter_by(status='active').all()]
+        
+        # Populate job choices based on user role
+        if current_user and current_user.role == 'worker':
+            # For workers, only show jobs they're assigned to
+            self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
+                                  for job in current_user.assigned_jobs.filter_by(status='active').all()]
+        else:
+            # For foremen and admins, show all active jobs
+            self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
+                                  for job in Job.query.filter_by(status='active').all()]
         
         # Default to the first labor activity, but this will be dynamically updated via JavaScript
         # Only show active labor activities

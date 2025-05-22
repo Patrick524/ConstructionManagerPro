@@ -813,7 +813,7 @@ def worker_clock():
                               ClockSession.clock_in.desc()).limit(5).all()
 
         # Prepare forms
-        clock_in_form = ClockInForm()
+        clock_in_form = ClockInForm(current_user=current_user)
         clock_out_form = ClockOutForm()
     except Exception as e:
         # Log the error
@@ -866,7 +866,7 @@ def clock_in():
             'warning')
         return redirect(url_for('worker_clock'))
 
-    form = ClockInForm()
+    form = ClockInForm(current_user=current_user)
 
     if form.validate_on_submit():
         # Get location data from form
