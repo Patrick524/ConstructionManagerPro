@@ -1780,18 +1780,22 @@ def manage_job_workers():
         else:
             selected_worker_ids = []
 
-        # Clear existing assignments
-        job.assigned_workers = []
-        db.session.flush()
+        # A different approach - work with the User objects directly
+        # First, clear existing assignments using the SQLAlchemy relationship
+        # The relationship has a lazy='dynamic' setting, so we need to use all() to get the actual workers
+        current_workers = job.assigned_workers.all()
+        for worker in current_workers:
+            # Remove the job from the worker's assigned_jobs
+            worker.assigned_jobs.remove(job)
         
-        # Get selected workers
+        # Now add the new assignments
         selected_workers = User.query.filter(User.id.in_(selected_worker_ids)).all()
         print(f"DEBUG: Selected worker IDs: {selected_worker_ids}")
         print(f"DEBUG: Found {len(selected_workers)} workers")
         
-        # Add new assignments
         for worker in selected_workers:
-            job.assigned_workers.append(worker)
+            # Add the job to the worker's assigned_jobs
+            worker.assigned_jobs.append(job)
             print(f"DEBUG: Assigning worker {worker.id} to job {job.id}")
 
         try:
