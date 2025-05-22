@@ -24,7 +24,7 @@
                         <div class="mb-4">
                             <div class="form-group">
                                 {{ form.job_id.label(class="form-label") }}
-                                {{ form.job_id(class="form-select mb-3", onchange="this.form.submit()") }}
+                                {{ form.job_id(class="form-select mb-3", id="job-select") }}
                             </div>
                             
                             {% if form.job_id.data %}
@@ -53,6 +53,12 @@
                             
                             <script>
                                 document.addEventListener('DOMContentLoaded', function() {
+                                    // Handle job selection change
+                                    document.getElementById('job-select').addEventListener('change', function() {
+                                        // Submit the form when job selection changes
+                                        this.form.submit();
+                                    });
+                                    
                                     // Select All button
                                     document.getElementById('select-all-workers').addEventListener('click', function() {
                                         document.querySelectorAll('.worker-checkbox').forEach(function(checkbox) {
