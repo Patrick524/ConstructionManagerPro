@@ -95,10 +95,20 @@ class TimeEntryForm(FlaskForm):
     submit = SubmitField('Save Time Entry')
     
     def __init__(self, *args, **kwargs):
+        # Extract current_user if provided
+        current_user = kwargs.pop('current_user', None)
+        
         super(TimeEntryForm, self).__init__(*args, **kwargs)
-        # Populate job choices
-        self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
-                               for job in Job.query.filter_by(status='active').all()]
+        
+        # Populate job choices based on user role
+        if current_user and current_user.role == 'worker':
+            # For workers, only show jobs they're assigned to
+            self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
+                                  for job in current_user.assigned_jobs.filter_by(status='active').all()]
+        else:
+            # For foremen and admins, show all active jobs
+            self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
+                                  for job in Job.query.filter_by(status='active').all()]
         
         # Set the first labor activity field with all activities
         self.labor_activity_1.choices = [(activity.id, activity.name) 
