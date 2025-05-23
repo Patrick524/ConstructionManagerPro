@@ -431,7 +431,7 @@ body.worker-view .container > div.clock-container {
 
 /* Activities page header spacing fix */
 body.activities-page {
-  padding-top: 70px !important;
+  padding-top: 80px !important;
 }
 
 body.activities-page .container {
