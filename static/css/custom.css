@@ -430,7 +430,10 @@ body.worker-view .container > div.clock-container {
 }
 
 /* Activities page header spacing fix */
-.activities-page .row:first-child,
-body .activities-page .row:first-child {
-  margin-top: 70px !important; /* Extra margin for activities page header */
+body.activities-page {
+  padding-top: 70px !important;
+}
+
+body.activities-page .container {
+  padding-top: 0 !important;
 }

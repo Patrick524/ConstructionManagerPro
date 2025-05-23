@@ -23,7 +23,7 @@
     
     {% block extra_css %}{% endblock %}
 </head>
-<body{% if current_user.is_authenticated and current_user.is_worker() %} class="worker-view"{% endif %}>
+<body{% if current_user.is_authenticated and current_user.is_worker() %} class="worker-view"{% elif request.endpoint == 'manage_activities' %} class="activities-page"{% endif %}>
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
         <div class="container">
