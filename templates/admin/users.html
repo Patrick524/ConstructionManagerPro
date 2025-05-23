@@ -133,9 +133,18 @@
                         </div>
                         
                         <div class="d-flex justify-content-between">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>{{ 'Update User' if editing else 'Add User' }}
-                            </button>
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>{{ 'Update User' if editing else 'Add User' }}
+                                </button>
+                                {% if editing %}
+                                    <button type="button" class="btn btn-info ms-2" id="assignedJobsBtn" 
+                                            {% if not editing_user.assigned_jobs %}disabled{% endif %}
+                                            data-bs-toggle="modal" data-bs-target="#assignedJobsModal">
+                                        <i class="fas fa-briefcase me-2"></i>Assigned Jobs
+                                    </button>
+                                {% endif %}
+                            </div>
                             <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#userFormContainer">
                                 Cancel
                             </button>
@@ -216,6 +225,67 @@
         </div>
     </div>
 </div>
+
+<!-- Assigned Jobs Modal -->
+{% if editing %}
+<div class="modal fade" id="assignedJobsModal" tabindex="-1" aria-labelledby="assignedJobsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="assignedJobsModalLabel">
+                    <i class="fas fa-briefcase me-2"></i>Assigned Jobs for {{ editing_user.name }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if editing_user.assigned_jobs %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Job Code</th>
+                                    <th>Job Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for job in editing_user.assigned_jobs %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ job.job_code }}</strong>
+                                            <span class="badge bg-{{ 'success' if job.status == 'active' else 'secondary' }} ms-2">
+                                                {{ job.status.title() }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {{ job.description }}
+                                            {% if job.location %}
+                                                <br><small class="text-muted">
+                                                    <i class="fas fa-map-marker-alt me-1"></i>{{ job.location }}
+                                                </small>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+                        <h5>No Job Assignments</h5>
+                        <p class="text-muted">This user is not currently assigned to any jobs.</p>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}

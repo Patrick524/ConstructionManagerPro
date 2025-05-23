@@ -2205,9 +2205,11 @@ def manage_users():
             f"DEBUG: Editing user {user.name} (ID: {user.id}), current use_clock_in = {user.use_clock_in}"
         )
         editing = True
+        editing_user = user
     else:
         # Not editing (either viewing or adding new)
         editing = False
+        editing_user = None
 
     # Get all users for display
     users = User.query.order_by(User.role, User.name).all()
@@ -2216,6 +2218,7 @@ def manage_users():
                            form=form,
                            users=users,
                            editing=editing,
+                           editing_user=editing_user,
                            new_user=new_user)
 
 
