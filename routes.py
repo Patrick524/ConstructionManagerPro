@@ -1942,10 +1942,16 @@ def manage_jobs():
     # Get the filtered jobs ordered by creation date
     jobs = jobs_query.order_by(Job.created_at.desc()).all()
 
+    # Get the job being edited if applicable
+    edit_job = None
+    if job_id:
+        edit_job = Job.query.get_or_404(job_id)
+
     return render_template('admin/jobs.html',
                            form=form,
                            jobs=jobs,
                            editing=bool(job_id),
+                           edit_job=edit_job,
                            status_filter=status_filter)
 
 
