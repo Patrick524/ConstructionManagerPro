@@ -428,3 +428,8 @@ body.worker-view .container > div.clock-container {
 .admin-dashboard .row:first-child {
   margin-top: 70px; /* Extra margin for admin dashboard navigation buttons */
 }
+
+/* Activities page header spacing fix */
+.activities-page .row:first-child {
+  margin-top: 70px; /* Extra margin for activities page header */
+}
