@@ -1828,6 +1828,38 @@ def manage_job_workers():
                            title="Manage Worker Assignments")
 
 
+@app.route('/api/job/<int:job_id>/assigned-users')
+@login_required
+@admin_required
+def get_job_assigned_users(job_id):
+    """API endpoint to get users assigned to a specific job"""
+    try:
+        job = Job.query.get_or_404(job_id)
+        
+        # Get assigned users
+        assigned_users = []
+        for user in job.assigned_workers.order_by(User.name):
+            assigned_users.append({
+                'id': user.id,
+                'name': user.name,
+                'email': user.email,
+                'role': user.role
+            })
+        
+        return jsonify({
+            'success': True,
+            'job_id': job_id,
+            'job_code': job.job_code,
+            'users': assigned_users
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 @app.route('/admin/jobs', methods=['GET', 'POST'])
 @login_required
 @admin_required
