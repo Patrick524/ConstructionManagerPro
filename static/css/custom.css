@@ -423,3 +423,8 @@ body.worker-view .page-title {
 body.worker-view .container > div.clock-container {
   margin-top: 80px;
 }
+
+/* Admin dashboard navigation spacing fix */
+.admin-dashboard .row:first-child {
+  margin-top: 30px; /* Extra margin for admin dashboard navigation buttons */
+}
