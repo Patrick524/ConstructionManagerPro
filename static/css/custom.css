@@ -426,5 +426,5 @@ body.worker-view .container > div.clock-container {
 
 /* Admin dashboard navigation spacing fix */
 .admin-dashboard .row:first-child {
-  margin-top: 30px; /* Extra margin for admin dashboard navigation buttons */
+  margin-top: 50px; /* Extra margin for admin dashboard navigation buttons */
 }
