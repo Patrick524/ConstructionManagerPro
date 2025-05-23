@@ -147,7 +147,7 @@
     </nav>
     
     <!-- Main Content -->
-    <div class="container">
+    <div class="container"{% if request.endpoint == 'manage_activities' %} style="padding-top: 70px !important;"{% endif %}>
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
