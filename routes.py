@@ -1276,6 +1276,7 @@ def foreman_dashboard():
 @foreman_required
 def foreman_enter_time(job_id, user_id):
     """Allow foremen to enter time on behalf of a worker"""
+    print(f"DEBUG: foreman_enter_time called - method={request.method}, job_id={job_id}, user_id={user_id}")
     # Get the worker and job
     worker = User.query.get_or_404(user_id)
     job = Job.query.get_or_404(job_id)
