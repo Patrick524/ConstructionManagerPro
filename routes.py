@@ -2443,10 +2443,13 @@ def generate_reports():
                 f"DEBUG: Generating PDF report - format explicitly set to: {report_format}"
             )
 
-            # Generate PDF report
-            pdf_buffer = utils.generate_pdf_report(data_dicts,
-                                                   columns,
-                                                   title=report_title)
+            # Generate PDF report - use specialized function for job cost reports
+            if report_type == 'job_cost':
+                pdf_buffer = utils.generate_job_cost_pdf(data_dicts, title=report_title)
+            else:
+                pdf_buffer = utils.generate_pdf_report(data_dicts,
+                                                       columns,
+                                                       title=report_title)
 
             # Generate filename
             filename = f"{report_type}_{start_date.strftime('%m%d%Y')}_{end_date.strftime('%m%d%Y')}.pdf"
