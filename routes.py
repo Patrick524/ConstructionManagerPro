@@ -2470,12 +2470,17 @@ def generate_reports():
                 This is an automated email from the Construction Timesheet Management System.
                 """
 
-                # Send email with PDF attachment
+                # Send email with PDF attachment - handle bytes vs buffer
+                if isinstance(pdf_buffer, bytes):
+                    attachment_data = io.BytesIO(pdf_buffer)
+                else:
+                    attachment_data = pdf_buffer
+                    
                 email_sent = utils.send_email_with_attachment(
                     recipient_email=recipient_email,
                     subject=f"Construction Timesheet: {report_title}",
                     body=email_body,
-                    attachment_data=pdf_buffer,
+                    attachment_data=attachment_data,
                     attachment_filename=filename,
                     attachment_mimetype='application/pdf')
 
@@ -2490,7 +2495,10 @@ def generate_reports():
                 return redirect(url_for('generate_reports'))
             else:
                 # Get PDF data and validate
-                pdf_data = pdf_buffer.getvalue()
+                if isinstance(pdf_buffer, bytes):
+                    pdf_data = pdf_buffer
+                else:
+                    pdf_data = pdf_buffer.getvalue()
                 print(
                     f"DEBUG: PDF size before storing in session: {len(pdf_data)} bytes"
                 )
