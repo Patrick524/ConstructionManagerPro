@@ -557,7 +557,11 @@ def worker_timesheet(entry_id=None):
             form.notes.data = entry_to_edit.notes
     # Default to today's date for new entries
     elif not form.date.data:
-        form.date.data = date.today()
+        # Use Pacific timezone for accurate local date
+        from datetime import timezone, timedelta
+        pacific_tz = timezone(timedelta(hours=-7))  # PDT is UTC-7
+        pacific_now = datetime.now(pacific_tz)
+        form.date.data = pacific_now.date()
 
     if form.validate_on_submit():
         # Check if timesheet for this date is already approved/locked
