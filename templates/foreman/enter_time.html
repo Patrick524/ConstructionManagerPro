@@ -204,13 +204,17 @@
     // Auto-hide validation modal after 3 seconds
     document.addEventListener('DOMContentLoaded', function() {
         const validationModal = document.getElementById('validation-modal');
+        console.log('Looking for validation modal:', validationModal);
         if (validationModal) {
+            console.log('Validation modal found and will auto-hide in 3 seconds');
             setTimeout(function() {
                 validationModal.classList.add('fade-out');
                 setTimeout(function() {
                     validationModal.remove();
                 }, 300); // Remove after animation completes
             }, 3000); // Hide after 3 seconds
+        } else {
+            console.log('No validation modal found on page');
         }
     });
 
