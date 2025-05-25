@@ -1359,7 +1359,7 @@ def foreman_enter_time(job_id, user_id):
             form.sunday_hours.data
         ]
 
-        # Check maximum 12 hours per day limit
+        # First, check maximum 12 hours per day limit BEFORE deletion
         for i, date_val in enumerate(dates):
             # Get hours from current form for this day
             current_hours = hours_values[i] if hours_values[i] not in [
@@ -1368,7 +1368,6 @@ def foreman_enter_time(job_id, user_id):
 
             if current_hours > 0:
                 # Get existing hours for this day from ALL jobs/activities
-                # to properly enforce 12-hour daily maximum
                 existing_hours = db.session.query(db.func.sum(
                     TimeEntry.hours)).filter(
                         TimeEntry.user_id == user_id, 
@@ -1398,7 +1397,7 @@ def foreman_enter_time(job_id, user_id):
                         url_for('foreman_dashboard',
                                 start_date=week_start.strftime('%m/%d/%Y')))
 
-        # First, delete any existing entries for this week with the same activity
+        # After validation passes, delete any existing entries for this week with the same activity
         # This ensures we don't get duplicate entries if the foreman submits multiple times
         TimeEntry.query.filter(
             TimeEntry.user_id == user_id, TimeEntry.job_id == job_id,
