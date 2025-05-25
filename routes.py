@@ -2181,10 +2181,12 @@ def manage_users():
             user.role = form.role.data
             # Set the use_clock_in field from the form
             user.use_clock_in = form.use_clock_in.data
+            # Set the burden_rate field from the form
+            user.burden_rate = form.burden_rate.data
 
             # Log the change for debugging
             print(
-                f"DEBUG: Updated user {user.name} (ID: {user.id}), use_clock_in set to: {user.use_clock_in}"
+                f"DEBUG: Updated user {user.name} (ID: {user.id}), use_clock_in set to: {user.use_clock_in}, burden_rate set to: {user.burden_rate}"
             )
 
             # Update password if provided

@@ -190,6 +190,7 @@
                                 <th data-sort="name">Name <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="email">Email <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="role">Role <i class="fas fa-sort text-muted"></i></th>
+                                <th data-sort="burden_rate">Burden Rate <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="created_at">Created <i class="fas fa-sort text-muted"></i></th>
                                 <th>Actions</th>
                             </tr>
@@ -204,6 +205,15 @@
                                             <span class="badge bg-{{ 'primary' if user.role == 'admin' else 'success' if user.role == 'foreman' else 'secondary' }}">
                                                 {{ user.role|capitalize }}
                                             </span>
+                                        </td>
+                                        <td data-burden_rate="{{ user.burden_rate or 0 }}">
+                                            {% if user.role == 'worker' and user.burden_rate %}
+                                                <span class="text-success fw-bold">${{ "%.2f"|format(user.burden_rate) }}/hr</span>
+                                            {% elif user.role == 'worker' %}
+                                                <span class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>Not Set</span>
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
                                         </td>
                                         <td data-created_at="{{ user.created_at.strftime('%Y%m%d%H%M%S') }}">
                                             {{ user.created_at.strftime('%Y-%m-%d') }}
@@ -308,29 +318,37 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Setup role-dependent fields
-        const roleSelect = document.querySelector('#role');
+        const roleSelect = document.querySelector('#role_select');
         const clockInContainer = document.querySelector('#clock_in_setting_container');
+        const burdenRateContainer = document.querySelector('#burden_rate_container');
         
-        if (roleSelect && clockInContainer) {
-            // Only show clock-in option for workers
-            function toggleClockInOption() {
+        if (roleSelect && clockInContainer && burdenRateContainer) {
+            // Show/hide fields based on role
+            function toggleRoleFields() {
                 if (roleSelect.value === 'worker') {
                     clockInContainer.style.display = 'block';
+                    burdenRateContainer.style.display = 'block';
                 } else {
                     clockInContainer.style.display = 'none';
+                    burdenRateContainer.style.display = 'none';
                     // Reset the checkbox if not a worker
                     const clockInCheckbox = document.querySelector('#use_clock_in');
                     if (clockInCheckbox) {
                         clockInCheckbox.checked = false;
                     }
+                    // Reset burden rate if not a worker
+                    const burdenRateField = document.querySelector('#burden_rate');
+                    if (burdenRateField) {
+                        burdenRateField.value = '';
+                    }
                 }
             }
             
             // Initial check
-            toggleClockInOption();
+            toggleRoleFields();
             
             // Check whenever role changes
-            roleSelect.addEventListener('change', toggleClockInOption);
+            roleSelect.addEventListener('change', toggleRoleFields);
         }
         
         // Setup search functionality
