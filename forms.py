@@ -219,13 +219,14 @@ class WeeklyTimesheetForm(FlaskForm):
     
     # Daily hours fields with improved validation that properly accepts empty values
     # treat_empty_as_zero=True ensures empty inputs become 0, which is a safe default
-    monday_hours = FloatField('Monday', validators=[Optional(), NumberRange(min=0, max=12)], treat_empty_as_zero=True)
-    tuesday_hours = FloatField('Tuesday', validators=[Optional(), NumberRange(min=0, max=12)], treat_empty_as_zero=True)
-    wednesday_hours = FloatField('Wednesday', validators=[Optional(), NumberRange(min=0, max=12)], treat_empty_as_zero=True)
-    thursday_hours = FloatField('Thursday', validators=[Optional(), NumberRange(min=0, max=12)], treat_empty_as_zero=True) 
-    friday_hours = FloatField('Friday', validators=[Optional(), NumberRange(min=0, max=12)], treat_empty_as_zero=True)
-    saturday_hours = FloatField('Saturday', validators=[Optional(), NumberRange(min=0, max=12)], treat_empty_as_zero=True)
-    sunday_hours = FloatField('Sunday', validators=[Optional(), NumberRange(min=0, max=12)], treat_empty_as_zero=True)
+    # Removed max=12 constraint to allow custom validation logic to handle daily limits
+    monday_hours = FloatField('Monday', validators=[Optional(), NumberRange(min=0)], treat_empty_as_zero=True)
+    tuesday_hours = FloatField('Tuesday', validators=[Optional(), NumberRange(min=0)], treat_empty_as_zero=True)
+    wednesday_hours = FloatField('Wednesday', validators=[Optional(), NumberRange(min=0)], treat_empty_as_zero=True)
+    thursday_hours = FloatField('Thursday', validators=[Optional(), NumberRange(min=0)], treat_empty_as_zero=True) 
+    friday_hours = FloatField('Friday', validators=[Optional(), NumberRange(min=0)], treat_empty_as_zero=True)
+    saturday_hours = FloatField('Saturday', validators=[Optional(), NumberRange(min=0)], treat_empty_as_zero=True)
+    sunday_hours = FloatField('Sunday', validators=[Optional(), NumberRange(min=0)], treat_empty_as_zero=True)
     
     notes = TextAreaField('Notes for the Week')
     submit = SubmitField('Save Weekly Timesheet')
