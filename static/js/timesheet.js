@@ -20,6 +20,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup form submission tracking for smart sorting
     setupFormSubmissionTracking();
+    
+    // Setup last used job defaulting
+    setupLastUsedJobDefaulting();
 });
 
 /**
@@ -387,7 +390,48 @@ function setupFormSubmissionTracking() {
                 }
             }
         });
+        
+        // Store the last used job for next time
+        setLastUsedJob(jobId);
     });
+}
+
+/**
+ * Setup last used job defaulting
+ */
+function setupLastUsedJobDefaulting() {
+    const jobSelect = document.getElementById('job_id');
+    if (!jobSelect) return;
+    
+    // Check if we have a last used job stored
+    const lastJobId = getLastUsedJob();
+    if (lastJobId) {
+        // Check if this job still exists in the dropdown
+        const jobOption = jobSelect.querySelector(`option[value="${lastJobId}"]`);
+        if (jobOption) {
+            // Pre-select the last used job
+            jobSelect.value = lastJobId;
+            console.log(`Auto-selected last used job: ${lastJobId}`);
+            
+            // Trigger the job change event to load activities and apply smart sorting
+            jobSelect.dispatchEvent(new Event('change'));
+        }
+    }
+}
+
+/**
+ * Get the last used job ID from localStorage
+ */
+function getLastUsedJob() {
+    return localStorage.getItem('lastJobId');
+}
+
+/**
+ * Set the last used job ID in localStorage
+ */
+function setLastUsedJob(jobId) {
+    localStorage.setItem('lastJobId', jobId);
+    console.log(`Stored last used job: ${jobId}`);
 }
 
 /**
