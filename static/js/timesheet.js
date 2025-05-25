@@ -17,6 +17,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup quick hour selection buttons
     setupHourButtons();
+    
+    // Setup form submission tracking for smart sorting
+    setupFormSubmissionTracking();
 });
 
 /**
@@ -138,10 +141,12 @@ function loadExistingEntries(jobId, date) {
 }
 
 /**
- * Update all labor activity select fields with new options
+ * Update all labor activity select fields with new options using smart sorting
  */
 function updateLaborActivityOptions(activities) {
     const activitySelects = document.querySelectorAll('[id^="labor_activity_"]');
+    const jobSelect = document.getElementById('job_id');
+    const currentJobId = jobSelect ? jobSelect.value : null;
     
     activitySelects.forEach(select => {
         // Store current selection if possible
@@ -156,22 +161,76 @@ function updateLaborActivityOptions(activities) {
         blankOption.textContent = '-- Select Activity --';
         select.appendChild(blankOption);
         
-        // Add new options
-        activities.forEach(activity => {
+        // Smart sort activities by usage frequency for this job
+        const sortedActivities = smartSortActivities(activities, currentJobId);
+        
+        // Add sorted options
+        sortedActivities.forEach(activity => {
             const option = document.createElement('option');
             option.value = activity.id;
             option.textContent = activity.name;
             select.appendChild(option);
         });
         
-        // Restore previous selection if it still exists
-        if (currentValue) {
+        // Auto-select the most frequently used activity (first in sorted list) if no current value
+        if (!currentValue && sortedActivities.length > 0 && currentJobId) {
+            const mostUsedActivity = sortedActivities[0];
+            const usageCount = getActivityUsageCount(currentJobId, mostUsedActivity.name);
+            
+            // Only auto-select if this activity has been used before for this job
+            if (usageCount > 0) {
+                select.value = mostUsedActivity.id;
+            }
+        } else if (currentValue) {
+            // Restore previous selection if it still exists
             const exists = Array.from(select.options).some(option => option.value === currentValue);
             if (exists) {
                 select.value = currentValue;
             }
         }
     });
+}
+
+/**
+ * Smart sort activities by usage frequency for a specific job
+ */
+function smartSortActivities(activities, jobId) {
+    if (!jobId) {
+        // No job selected, return alphabetical sort
+        return activities.sort((a, b) => a.name.localeCompare(b.name));
+    }
+    
+    // Get usage counts for each activity with this job
+    const activitiesWithUsage = activities.map(activity => ({
+        ...activity,
+        usageCount: getActivityUsageCount(jobId, activity.name)
+    }));
+    
+    // Sort by usage count (highest first), then alphabetically
+    return activitiesWithUsage.sort((a, b) => {
+        if (a.usageCount !== b.usageCount) {
+            return b.usageCount - a.usageCount; // Higher usage first
+        }
+        return a.name.localeCompare(b.name); // Alphabetical fallback
+    });
+}
+
+/**
+ * Get usage count for a specific job + activity combination
+ */
+function getActivityUsageCount(jobId, activityName) {
+    const key = `usage_${jobId}_${activityName}`;
+    const count = localStorage.getItem(key);
+    return count ? parseInt(count, 10) : 0;
+}
+
+/**
+ * Increment usage count for a job + activity combination
+ */
+function incrementActivityUsage(jobId, activityName) {
+    const key = `usage_${jobId}_${activityName}`;
+    const currentCount = getActivityUsageCount(jobId, activityName);
+    localStorage.setItem(key, (currentCount + 1).toString());
 }
 
 /**
@@ -292,6 +351,43 @@ function resetActivityFields() {
     
     // Reset activity count
     container.dataset.activityCount = 1;
+}
+
+/**
+ * Setup form submission tracking for smart activity sorting
+ */
+function setupFormSubmissionTracking() {
+    const form = document.querySelector('form');
+    if (!form) return;
+    
+    form.addEventListener('submit', function(e) {
+        // Track usage data before form submission
+        const jobSelect = document.getElementById('job_id');
+        const jobId = jobSelect ? jobSelect.value : null;
+        
+        if (!jobId) return; // No job selected, skip tracking
+        
+        // Find all activity fields and track their usage
+        const activitySelects = document.querySelectorAll('[id^="labor_activity_"]');
+        activitySelects.forEach(select => {
+            const activityId = select.value;
+            const activityName = select.selectedOptions[0]?.textContent;
+            
+            // Only track if an activity is selected and has a name
+            if (activityId && activityName && activityName !== '-- Select Activity --') {
+                // Get corresponding hours field to check if there are actual hours
+                const fieldNumber = select.id.replace('labor_activity_', '');
+                const hoursField = document.getElementById(`hours_${fieldNumber}`);
+                const hours = hoursField ? parseFloat(hoursField.value) || 0 : 0;
+                
+                // Only track usage if hours > 0 (actual work was done)
+                if (hours > 0) {
+                    incrementActivityUsage(jobId, activityName);
+                    console.log(`Tracked usage: Job ${jobId} + Activity "${activityName}" (${hours} hours)`);
+                }
+            }
+        });
+    });
 }
 
 /**
