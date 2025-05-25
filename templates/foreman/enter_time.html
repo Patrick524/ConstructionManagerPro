@@ -115,31 +115,31 @@
                 <div class="row align-items-end">
                     <div class="col">
                         <label class="form-label text-center d-block">Monday</label>
-                        {{ form.monday_hours(class="form-control text-center hours-input", step="0.5", min="0", max="12") }}
+                        {{ form.monday_hours(class="form-control text-center hours-input", step="0.5", min="0", id="monday_hours") }}
                     </div>
                     <div class="col">
                         <label class="form-label text-center d-block">Tuesday</label>
-                        {{ form.tuesday_hours(class="form-control text-center hours-input", step="0.5", min="0", max="12") }}
+                        {{ form.tuesday_hours(class="form-control text-center hours-input", step="0.5", min="0", id="tuesday_hours") }}
                     </div>
                     <div class="col">
                         <label class="form-label text-center d-block">Wednesday</label>
-                        {{ form.wednesday_hours(class="form-control text-center hours-input", step="0.5", min="0", max="12") }}
+                        {{ form.wednesday_hours(class="form-control text-center hours-input", step="0.5", min="0", id="wednesday_hours") }}
                     </div>
                     <div class="col">
                         <label class="form-label text-center d-block">Thursday</label>
-                        {{ form.thursday_hours(class="form-control text-center hours-input", step="0.5", min="0", max="12") }}
+                        {{ form.thursday_hours(class="form-control text-center hours-input", step="0.5", min="0", id="thursday_hours") }}
                     </div>
                     <div class="col">
                         <label class="form-label text-center d-block">Friday</label>
-                        {{ form.friday_hours(class="form-control text-center hours-input", step="0.5", min="0", max="12") }}
+                        {{ form.friday_hours(class="form-control text-center hours-input", step="0.5", min="0", id="friday_hours") }}
                     </div>
                     <div class="col">
                         <label class="form-label text-center d-block">Saturday</label>
-                        {{ form.saturday_hours(class="form-control text-center hours-input", step="0.5", min="0", max="12") }}
+                        {{ form.saturday_hours(class="form-control text-center hours-input", step="0.5", min="0", id="saturday_hours") }}
                     </div>
                     <div class="col">
                         <label class="form-label text-center d-block">Sunday</label>
-                        {{ form.sunday_hours(class="form-control text-center hours-input", step="0.5", min="0", max="12") }}
+                        {{ form.sunday_hours(class="form-control text-center hours-input", step="0.5", min="0", id="sunday_hours") }}
                     </div>
                 </div>
             </div>
@@ -220,20 +220,26 @@
         
         // Add clear-on-focus behavior to time input fields
         const hoursInputs = document.querySelectorAll('.hours-input');
-        hoursInputs.forEach(input => {
+        console.log('Found', hoursInputs.length, 'hour input fields');
+        
+        hoursInputs.forEach((input, index) => {
+            console.log('Setting up input', index, 'with ID:', input.id, 'value:', input.value);
+            
             // Store original value when page loads
-            input.setAttribute('data-original-value', input.value);
+            input.setAttribute('data-original-value', input.value || '0');
             
             // Clear field when focused
             input.addEventListener('focus', function() {
-                this.setAttribute('data-original-value', this.value);
-                this.value = '';
+                console.log('Focus on', this.id, 'current value:', this.value);
+                this.setAttribute('data-original-value', this.value || '0');
+                this.select(); // Select all text instead of clearing
             });
             
             // Restore original value if left empty, otherwise calculate total
             input.addEventListener('blur', function() {
                 if (this.value.trim() === '') {
                     this.value = this.getAttribute('data-original-value');
+                    console.log('Restored original value for', this.id, ':', this.value);
                 }
                 calculateTotal();
             });
