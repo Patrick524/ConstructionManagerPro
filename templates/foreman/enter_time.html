@@ -3,6 +3,12 @@
 {% block title %}Enter Time for {{ worker.name }} - Construction Timesheet{% endblock %}
 
 {% block content %}
+<!-- Override the base template's flash message section to prevent duplicate messages -->
+<style>
+.container > .alert {
+    display: none !important; /* Hide default flash messages since we have our custom popup */
+}
+</style>
 <div class="row mb-4">
     <div class="col-md-8">
         <h1 class="page-title">
@@ -212,9 +218,27 @@
     document.addEventListener('DOMContentLoaded', function() {
         initDatePickers();
         
-        // Calculate total hours whenever a value changes
+        // Add clear-on-focus behavior to time input fields
         const hoursInputs = document.querySelectorAll('.hours-input');
         hoursInputs.forEach(input => {
+            // Store original value when page loads
+            input.setAttribute('data-original-value', input.value);
+            
+            // Clear field when focused
+            input.addEventListener('focus', function() {
+                this.setAttribute('data-original-value', this.value);
+                this.value = '';
+            });
+            
+            // Restore original value if left empty, otherwise calculate total
+            input.addEventListener('blur', function() {
+                if (this.value.trim() === '') {
+                    this.value = this.getAttribute('data-original-value');
+                }
+                calculateTotal();
+            });
+            
+            // Calculate total when value changes
             input.addEventListener('input', calculateTotal);
         });
         
