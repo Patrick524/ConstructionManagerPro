@@ -1248,7 +1248,7 @@ def foreman_dashboard():
                 'total_hours': total_hours,
                 'days_with_entries': days_with_entries,
                 'has_all_days':
-                days_with_entries == 7,  # A full week has 7 days
+                days_with_entries >= 5,  # Standard work week is 5 days
                 'has_notes':
                 has_notes  # Flag to indicate if worker has any notes
             })

@@ -141,7 +141,7 @@
                                                         <span class="badge bg-success">Approved</span>
                                                     {% elif worker_data.has_all_days %}
                                                         <span class="badge bg-primary">Ready for Approval</span>
-                                                    {% elif worker_data.days_with_entries > 0 %}
+                                                    {% elif worker_data.days_with_entries > 0 and worker_data.days_with_entries < 5 %}
                                                         <span class="badge bg-warning text-dark">Incomplete</span>
                                                     {% else %}
                                                         <span class="badge bg-secondary">Pending</span>
@@ -200,7 +200,7 @@
                         <div class="list-group mb-3">
                             <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
                                 <span class="badge bg-warning me-3 px-3 py-2 fs-6 fw-bold">Incomplete</span>
-                                <span class="fw-bold">Worker hasn't submitted time for all 7 days</span>
+                                <span class="fw-bold">Worker hasn't submitted time for at least 5 days</span>
                             </div>
                             <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
                                 <span class="badge bg-primary me-3 px-3 py-2 fs-6 fw-bold">Ready for Approval</span>
