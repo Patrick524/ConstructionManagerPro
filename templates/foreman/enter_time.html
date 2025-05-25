@@ -51,6 +51,24 @@
 </div>
 {% endif %}
 
+<!-- Validation Error Modal -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            {% if category == 'danger' %}
+                <div id="validation-modal" class="alert alert-danger alert-dismissible position-fixed" 
+                     style="top: 120px; left: 50%; transform: translateX(-50%); z-index: 9999; 
+                            min-width: 400px; max-width: 600px; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+                            border: 2px solid #dc3545; animation: slideDown 0.3s ease-out;">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Validation Error:</strong> {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
 <div class="card mb-4">
     <div class="card-header">
         <h5 class="mb-0">
@@ -148,7 +166,48 @@
 {% endblock %}
 
 {% block extra_js %}
+<style>
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+}
+
+.fade-out {
+    animation: slideUp 0.3s ease-in forwards;
+}
+</style>
+
 <script>
+    // Auto-hide validation modal after 3 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+        const validationModal = document.getElementById('validation-modal');
+        if (validationModal) {
+            setTimeout(function() {
+                validationModal.classList.add('fade-out');
+                setTimeout(function() {
+                    validationModal.remove();
+                }, 300); // Remove after animation completes
+            }, 3000); // Hide after 3 seconds
+        }
+    });
+
     // Initialize date pickers
     document.addEventListener('DOMContentLoaded', function() {
         initDatePickers();
