@@ -85,7 +85,7 @@
                             <span class="badge trade-{{ job_item.job.trade_type }}">{{ job_item.job.trade_type|capitalize }}</span>
                             {{ job_item.job.job_code }} - {{ job_item.job.description }}
                         </div>
-                        <span class="badge bg-primary">{{ job_item.workers|length }} Workers</span>
+                        <span class="badge bg-info">{{ job_item.workers|length }} Workers</span>
                     </div>
 
                     <div class="card-body approval-card-body p-0">
@@ -115,14 +115,25 @@
                                                 <td>{{ worker_data.total_hours }}</td>
                                                 <td>
                                                     <div class="progress" style="height: 20px;">
-                                                        <div class="progress-bar bg-{{ 'success' if worker_data.has_all_days else 'warning' }}" 
-                                                            role="progressbar" 
-                                                            style="width: {{ (worker_data.days_with_entries / 7 * 100)|int }}%;" 
-                                                            aria-valuenow="{{ worker_data.days_with_entries }}" 
-                                                            aria-valuemin="0" 
-                                                            aria-valuemax="7">
-                                                            {{ worker_data.days_with_entries }}/7
-                                                        </div>
+                                                        {% if worker_data.days_with_entries == 0 %}
+                                                            <div class="progress-bar bg-danger" 
+                                                                role="progressbar" 
+                                                                style="width: 100%;" 
+                                                                aria-valuenow="{{ worker_data.days_with_entries }}" 
+                                                                aria-valuemin="0" 
+                                                                aria-valuemax="7">
+                                                                {{ worker_data.days_with_entries }}/7
+                                                            </div>
+                                                        {% else %}
+                                                            <div class="progress-bar bg-{{ 'success' if worker_data.days_with_entries == 7 else 'warning' }}" 
+                                                                role="progressbar" 
+                                                                style="width: {{ (worker_data.days_with_entries / 7 * 100)|int }}%;" 
+                                                                aria-valuenow="{{ worker_data.days_with_entries }}" 
+                                                                aria-valuemin="0" 
+                                                                aria-valuemax="7">
+                                                                {{ worker_data.days_with_entries }}/7
+                                                            </div>
+                                                        {% endif %}
                                                     </div>
                                                 </td>
                                                 <td>
@@ -130,8 +141,10 @@
                                                         <span class="badge bg-success">Approved</span>
                                                     {% elif worker_data.has_all_days %}
                                                         <span class="badge bg-primary">Ready for Approval</span>
+                                                    {% elif worker_data.days_with_entries > 0 %}
+                                                        <span class="badge bg-warning text-dark">Incomplete</span>
                                                     {% else %}
-                                                        <span class="badge bg-warning">Incomplete</span>
+                                                        <span class="badge bg-secondary">Pending</span>
                                                     {% endif %}
                                                 </td>
                                                 <td>
