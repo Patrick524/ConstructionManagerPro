@@ -65,11 +65,27 @@
                             <label for="role" class="form-label">Role</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-id-badge"></i></span>
-                                {{ form.role(class="form-select") }}
+                                {{ form.role(class="form-select", id="role_select") }}
                             </div>
                             {% if form.role.errors %}
                                 <div class="text-danger">
                                     {% for error in form.role.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3" id="burden_rate_container" style="display: none;">
+                            <label for="burden_rate" class="form-label">Burden Rate ($/hour) <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                                {{ form.burden_rate(class="form-control", id="burden_rate") }}
+                            </div>
+                            <small class="form-text text-muted">Required for Field Workers - used for job costing calculations</small>
+                            {% if form.burden_rate.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.burden_rate.errors %}
                                         <small>{{ error }}</small>
                                     {% endfor %}
                                 </div>

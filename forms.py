@@ -198,11 +198,18 @@ class UserManagementForm(FlaskForm):
         ('foreman', 'Foreman'),
         ('admin', 'Administrator')
     ], validators=[DataRequired()])
+    burden_rate = FloatField('Burden Rate ($/hour)', validators=[Optional(), NumberRange(min=0, max=999.99)], 
+                            render_kw={'step': '0.01', 'placeholder': 'Enter hourly burden rate'})
     use_clock_in = BooleanField('Use Clock In/Out System', default=False)
     password = PasswordField('New Password (leave blank to keep current)')
     confirm_password = PasswordField('Confirm New Password', 
                                     validators=[EqualTo('password')])
     submit = SubmitField('Update User')
+    
+    def validate_burden_rate(self, field):
+        """Validate burden rate - required for field workers, optional for others"""
+        if self.role.data == 'worker' and (field.data is None or field.data <= 0):
+            raise ValidationError('Burden rate is required for Field Workers and must be greater than $0.')
 
 class WeeklyTimesheetForm(FlaskForm):
     """Form for weekly timesheet entry (more efficient interface)"""
