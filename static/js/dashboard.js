@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize approval tables
     initApprovalTables();
+    
+    // Initialize inactive jobs filter
+    initInactiveJobsFilter();
 });
 
 /**
@@ -298,4 +301,36 @@ function sortTable(table, sortKey, sortDirection) {
     
     // Re-append rows in sorted order
     rows.forEach(row => tbody.appendChild(row));
+}
+
+/**
+ * Initialize the inactive jobs filter toggle
+ */
+function initInactiveJobsFilter() {
+    const hideInactiveToggle = document.getElementById('hideInactiveJobs');
+    
+    if (hideInactiveToggle) {
+        // Apply initial state (toggle is checked by default)
+        toggleInactiveJobs(hideInactiveToggle.checked);
+        
+        // Add event listener for toggle changes
+        hideInactiveToggle.addEventListener('change', function() {
+            toggleInactiveJobs(this.checked);
+        });
+    }
+}
+
+/**
+ * Toggle visibility of inactive job cards
+ */
+function toggleInactiveJobs(hideInactive) {
+    const emptyJobCards = document.querySelectorAll('.card.empty-job');
+    
+    emptyJobCards.forEach(card => {
+        if (hideInactive) {
+            card.style.display = 'none';
+        } else {
+            card.style.display = 'block';
+        }
+    });
 }

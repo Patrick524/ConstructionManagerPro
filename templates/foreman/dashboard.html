@@ -46,7 +46,13 @@
                     <i class="far fa-calendar-alt me-2"></i>
                     <strong>Week of:</strong> {{ start_date.strftime('%b %d, %Y') }} - {{ end_date.strftime('%b %d, %Y') }}
                 </div>
-                <div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="hideInactiveJobs" checked>
+                        <label class="form-check-label" for="hideInactiveJobs">
+                            Hide Inactive Jobs
+                        </label>
+                    </div>
                     <input type="text" id="date-range-picker" class="form-control" placeholder="Select a different week">
                 </div>
             </div>
