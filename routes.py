@@ -555,13 +555,28 @@ def worker_timesheet(entry_id=None):
             form.labor_activity_1.data = entry_to_edit.labor_activity_id
             form.hours_1.data = entry_to_edit.hours
             form.notes.data = entry_to_edit.notes
-    # Default to today's date for new entries
+    # Default date for new entries - check if user is viewing a specific week
     elif not form.date.data:
-        # Use Pacific timezone for accurate local date
-        from datetime import timezone, timedelta
-        pacific_tz = timezone(timedelta(hours=-7))  # PDT is UTC-7
-        pacific_now = datetime.now(pacific_tz)
-        form.date.data = pacific_now.date()
+        # Check if coming from history page with a specific week
+        start_date_param = request.args.get('start_date')
+        if start_date_param:
+            try:
+                # Parse the start_date parameter from history page
+                from datetime import datetime
+                viewed_week_start = datetime.strptime(start_date_param, '%m/%d/%Y').date()
+                form.date.data = viewed_week_start  # Default to Monday of viewed week
+            except (ValueError, TypeError):
+                # Fall back to today's date if parsing fails
+                from datetime import timezone, timedelta
+                pacific_tz = timezone(timedelta(hours=-7))  # PDT is UTC-7
+                pacific_now = datetime.now(pacific_tz)
+                form.date.data = pacific_now.date()
+        else:
+            # Use Pacific timezone for accurate local date
+            from datetime import timezone, timedelta
+            pacific_tz = timezone(timedelta(hours=-7))  # PDT is UTC-7
+            pacific_now = datetime.now(pacific_tz)
+            form.date.data = pacific_now.date()
 
     if form.validate_on_submit():
         # Check if timesheet for this date is already approved/locked

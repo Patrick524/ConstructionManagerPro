@@ -34,7 +34,7 @@
                     <i class="far fa-calendar-alt me-2"></i>
                     <strong>Week of:</strong> {{ start_date.strftime('%b %d, %Y') }} - {{ end_date.strftime('%b %d, %Y') }}
                 </div>
-                <a href="{{ url_for('worker_timesheet') }}" class="btn btn-primary">
+                <a href="{{ url_for('worker_timesheet', start_date=start_date.strftime('%m/%d/%Y')) }}" class="btn btn-primary">
                     <i class="fas fa-plus me-2"></i>Enter New Time
                 </a>
             </div>
