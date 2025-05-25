@@ -1347,6 +1347,14 @@ def foreman_enter_time(job_id, user_id):
             url_for('foreman_dashboard',
                     start_date=week_start.strftime('%m/%d/%Y')))
 
+    # Get existing entries for display purposes
+    existing_entries = TimeEntry.query.filter(
+        TimeEntry.user_id == user_id,
+        TimeEntry.job_id == job_id,
+        TimeEntry.date >= week_start,
+        TimeEntry.date <= week_end
+    ).all()
+
     if form.validate_on_submit():
         # Get the dates for each day of the week
         monday = form.week_start.data
