@@ -232,7 +232,10 @@
             input.addEventListener('focus', function() {
                 console.log('Focus on', this.id, 'current value:', this.value);
                 this.setAttribute('data-original-value', this.value || '0');
-                this.value = ''; // Clear the field completely
+                // Small delay to ensure the field is focused first, then clear
+                setTimeout(() => {
+                    this.value = '';
+                }, 50);
             });
             
             // Restore original value if left empty, otherwise calculate total
