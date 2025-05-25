@@ -1396,10 +1396,14 @@ def foreman_enter_time(job_id, user_id):
                     flash(
                         f'Maximum 12 hours per day exceeded for {worker.name} on {day_name}. They already have {existing_hours:.1f} hours recorded for this day. The total would be {total_hours:.1f} hours.',
                         'danger')
-                    # Pass the week_start to maintain the selected date when redirecting
-                    return redirect(
-                        url_for('foreman_dashboard',
-                                start_date=week_start.strftime('%m/%d/%Y')))
+                    # Show the error on the same page instead of redirecting
+                    return render_template('foreman/enter_time.html',
+                                         form=form,
+                                         worker=worker,
+                                         job=job,
+                                         week_start=week_start,
+                                         week_end=week_end,
+                                         existing_entries=existing_entries)
 
         # After validation passes, delete any existing entries for this week with the same activity
         # This ensures we don't get duplicate entries if the foreman submits multiple times
