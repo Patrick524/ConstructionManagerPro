@@ -521,6 +521,103 @@ def generate_job_cost_pdf(data, title="Job Cost Report"):
     
     return pdf_data
 
+def generate_payroll_csv(data, title="Payroll Report"):
+    """Generate a specialized QuickBooks-compatible payroll CSV report."""
+    output = io.StringIO()
+    
+    # Separate approved and unapproved entries
+    approved_entries = []
+    unapproved_entries = []
+    
+    for row in data:
+        if row.get('approved', False):
+            approved_entries.append(row)
+        else:
+            unapproved_entries.append(row)
+    
+    # Write header
+    output.write(f"{title}\n")
+    output.write(f"Generated: {datetime.now().strftime('%m/%d/%Y %H:%M:%S')}\n\n")
+    
+    # Flag unapproved entries at top for review
+    if unapproved_entries:
+        output.write("*** ATTENTION: UNAPPROVED ENTRIES FOUND ***\n")
+        output.write("The following entries require approval before payroll processing:\n\n")
+        output.write("Employee_ID,Employee_Name,Date,Job_Code,Activity,Hours,Status\n")
+        
+        for entry in unapproved_entries:
+            # Format activity name without spaces for QB compatibility
+            activity_formatted = entry['activity'].replace(' ', '_').replace('-', '_')
+            output.write(f"{entry['employee_id']},{entry['worker_name']},{entry['date']},{entry['job_code']},{activity_formatted},{entry['hours']},UNAPPROVED\n")
+        
+        output.write(f"\nTotal Unapproved Entries: {len(unapproved_entries)}\n")
+        output.write("=" * 60 + "\n\n")
+    
+    # Calculate summary totals per worker
+    worker_totals = {}
+    for entry in approved_entries:
+        employee_id = entry['employee_id']
+        worker_name = entry['worker_name']
+        hours = float(entry['hours'])
+        
+        if employee_id not in worker_totals:
+            worker_totals[employee_id] = {
+                'name': worker_name,
+                'total_hours': 0,
+                'entries': 0
+            }
+        
+        worker_totals[employee_id]['total_hours'] += hours
+        worker_totals[employee_id]['entries'] += 1
+    
+    # Write summary section for validation
+    output.write("PAYROLL SUMMARY - TOTAL HOURS PER WORKER\n")
+    output.write("Employee_ID,Employee_Name,Total_Hours,Entry_Count\n")
+    
+    for employee_id in sorted(worker_totals.keys()):
+        worker = worker_totals[employee_id]
+        output.write(f"{employee_id},{worker['name']},{worker['total_hours']:.2f},{worker['entries']}\n")
+    
+    total_all_hours = sum(worker['total_hours'] for worker in worker_totals.values())
+    total_all_entries = sum(worker['entries'] for worker in worker_totals.values())
+    
+    output.write(f"GRAND_TOTAL,ALL_WORKERS,{total_all_hours:.2f},{total_all_entries}\n\n")
+    output.write("=" * 60 + "\n\n")
+    
+    # Write detailed QB-compatible data
+    output.write("QUICKBOOKS IMPORT DATA - APPROVED ENTRIES ONLY\n")
+    output.write("Employee_ID,Employee_Name,Date,Job_Code,Activity_Code,Hours,Day_of_Week,Week_Ending\n")
+    
+    for entry in approved_entries:
+        # Format activity name without spaces for QB compatibility
+        activity_formatted = entry['activity'].replace(' ', '_').replace('-', '_')
+        
+        # Calculate day of week and week ending date
+        entry_date = datetime.strptime(str(entry['date']), '%Y-%m-%d')
+        day_of_week = entry_date.strftime('%A')
+        
+        # Calculate week ending (Sunday)
+        days_until_sunday = (6 - entry_date.weekday()) % 7
+        week_ending = entry_date + timedelta(days=days_until_sunday)
+        week_ending_str = week_ending.strftime('%m/%d/%Y')
+        
+        output.write(f"{entry['employee_id']},{entry['worker_name']},{entry['date']},{entry['job_code']},{activity_formatted},{entry['hours']},{day_of_week},{week_ending_str}\n")
+    
+    output.write(f"\nTotal Approved Entries: {len(approved_entries)}\n")
+    output.write(f"Total Hours: {total_all_hours:.2f}\n")
+    
+    # Add import instructions
+    output.write("\n" + "=" * 60 + "\n")
+    output.write("QUICKBOOKS IMPORT INSTRUCTIONS:\n")
+    output.write("1. Use 'QUICKBOOKS IMPORT DATA' section above\n")
+    output.write("2. Map Employee_ID to QuickBooks Employee ID\n")
+    output.write("3. Map Activity_Code to QuickBooks Service Items\n")
+    output.write("4. Map Job_Code to QuickBooks Customer:Job\n")
+    output.write("5. Import hours using Week_Ending dates for payroll periods\n")
+    
+    output.seek(0)
+    return output.getvalue()
+
 def send_email_with_attachment(recipient_email, subject, body, attachment_data=None, attachment_filename=None, attachment_mimetype=None):
     """
     Send an email with an optional attachment.

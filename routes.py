@@ -2298,8 +2298,8 @@ def generate_reports():
         else:
             query = db.session.query(
                 TimeEntry.id, TimeEntry.date, TimeEntry.hours, TimeEntry.approved,
-                User.name.label('worker_name'), Job.job_code,
-                Job.description.label('job_description'),
+                User.id.label('employee_id'), User.name.label('worker_name'), 
+                Job.job_code, Job.description.label('job_description'),
                 LaborActivity.name.label('activity'),
                 LaborActivity.trade_category).join(
                     User, TimeEntry.user_id == User.id).join(
@@ -2368,8 +2368,13 @@ def generate_reports():
 
         # Generate report file
         if report_format == 'csv':
-            # Generate CSV report
-            csv_data = utils.generate_csv_report(data_dicts, columns)
+            # Use specialized payroll CSV for payroll reports, standard CSV for others
+            if report_type == 'payroll':
+                csv_data = utils.generate_payroll_csv(data_dicts, report_title)
+            elif report_type == 'job_cost':
+                csv_data = utils.generate_job_cost_csv(data_dicts, report_title)
+            else:
+                csv_data = utils.generate_csv_report(data_dicts, columns)
 
             # Generate filename
             filename = f"{report_type}_{start_date.strftime('%m%d%Y')}_{end_date.strftime('%m%d%Y')}.csv"
