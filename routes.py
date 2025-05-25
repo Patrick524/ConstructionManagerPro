@@ -281,14 +281,21 @@ def worker_weekly_timesheet():
             # Get hours from current form
             current_hours = hours_field.data or 0
 
-            # Get existing hours for this day except for this job/activity
+            # Get existing hours for this day from ALL jobs/activities
+            # to properly enforce 12-hour daily maximum
             existing_hours = db.session.query(db.func.sum(
                 TimeEntry.hours)).filter(
-                    TimeEntry.user_id == current_user.id, TimeEntry.date
-                    == entry_date,
-                    ~((TimeEntry.job_id == form.job_id.data) &
-                      (TimeEntry.labor_activity_id
-                       == form.labor_activity_id.data))).scalar() or 0
+                    TimeEntry.user_id == current_user.id, 
+                    TimeEntry.date == entry_date).scalar() or 0
+            
+            # Subtract hours from current job/activity to avoid double-counting when editing
+            current_job_activity_hours = db.session.query(db.func.sum(
+                TimeEntry.hours)).filter(
+                    TimeEntry.user_id == current_user.id,
+                    TimeEntry.date == entry_date,
+                    TimeEntry.job_id == form.job_id.data,
+                    TimeEntry.labor_activity_id == form.labor_activity_id.data).scalar() or 0
+            existing_hours -= current_job_activity_hours
 
             total_hours = existing_hours + current_hours
 
@@ -608,14 +615,16 @@ def worker_timesheet(entry_id=None):
         if hours_value > 0:
             total_hours_for_day += hours_value
 
-        # Get existing hours for this day from other jobs/activities
-        # that aren't being edited in this form
+        # Get existing hours for this day from ALL jobs/activities
+        # to properly enforce 12-hour daily maximum
         existing_hours = db.session.query(db.func.sum(TimeEntry.hours)).filter(
             TimeEntry.user_id == current_user.id,
-            TimeEntry.date == form.date.data,
-            TimeEntry.job_id
-            != form.job_id.data  # Only count hours from other jobs
+            TimeEntry.date == form.date.data
         ).scalar() or 0
+        
+        # If editing an existing entry, subtract its current hours to avoid double-counting
+        if editing and entry_to_edit:
+            existing_hours -= entry_to_edit.hours
 
         # Calculate grand total including existing entries
         grand_total = total_hours_for_day + existing_hours
@@ -1358,14 +1367,21 @@ def foreman_enter_time(job_id, user_id):
             ] else 0
 
             if current_hours > 0:
-                # Get existing hours for this day except for this job/activity combination
+                # Get existing hours for this day from ALL jobs/activities
+                # to properly enforce 12-hour daily maximum
                 existing_hours = db.session.query(db.func.sum(
                     TimeEntry.hours)).filter(
-                        TimeEntry.user_id == user_id, TimeEntry.date
-                        == date_val,
-                        ~((TimeEntry.job_id == job_id) &
-                          (TimeEntry.labor_activity_id
-                           == form.labor_activity_id.data))).scalar() or 0
+                        TimeEntry.user_id == user_id, 
+                        TimeEntry.date == date_val).scalar() or 0
+                
+                # Subtract hours from current job/activity to avoid double-counting when editing
+                current_job_activity_hours = db.session.query(db.func.sum(
+                    TimeEntry.hours)).filter(
+                        TimeEntry.user_id == user_id,
+                        TimeEntry.date == date_val,
+                        TimeEntry.job_id == job_id,
+                        TimeEntry.labor_activity_id == form.labor_activity_id.data).scalar() or 0
+                existing_hours -= current_job_activity_hours
 
                 total_hours = existing_hours + float(current_hours)
 
