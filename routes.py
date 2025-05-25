@@ -1659,7 +1659,11 @@ def approve_timesheet(job_id, user_id):
         entries_by_date[day] = []
 
     for entry in entries:
-        entries_by_date[entry.date].append(entry)
+        if entry.date in entries_by_date:
+            entries_by_date[entry.date].append(entry)
+        else:
+            # Handle entries that fall outside the expected week range
+            entries_by_date[entry.date] = [entry]
 
     # Calculate daily and weekly totals
     daily_totals = {
