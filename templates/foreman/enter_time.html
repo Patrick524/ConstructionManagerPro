@@ -272,6 +272,30 @@
         
         // Calculate initial total
         calculateTotal();
+        
+        // Check for validation errors by monitoring form submissions
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // Check if any field exceeds 12 hours
+                const inputs = document.querySelectorAll('.hours-input');
+                let hasError = false;
+                
+                inputs.forEach(input => {
+                    const value = parseFloat(input.value) || 0;
+                    if (value > 12) {
+                        hasError = true;
+                        const dayName = input.id.replace('_hours', '').replace(/^\w/, c => c.toUpperCase());
+                        alert(`ERROR: ${dayName} has ${value} hours, which exceeds the 12-hour daily maximum. This entry will not be saved.`);
+                    }
+                });
+                
+                if (hasError) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        }
     });
     
     function calculateTotal() {
