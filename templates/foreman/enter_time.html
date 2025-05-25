@@ -228,14 +228,14 @@
             // Store original value when page loads
             input.setAttribute('data-original-value', input.value || '0');
             
-            // Clear field when focused
-            input.addEventListener('focus', function() {
-                console.log('Focus on', this.id, 'current value:', this.value);
+            // Clear field when clicked
+            input.addEventListener('click', function(e) {
+                console.log('Click on', this.id, 'current value:', this.value);
                 this.setAttribute('data-original-value', this.value || '0');
-                // Small delay to ensure the field is focused first, then clear
-                setTimeout(() => {
-                    this.value = '';
-                }, 50);
+                // Prevent default selection and clear immediately
+                e.preventDefault();
+                this.value = '';
+                this.focus();
             });
             
             // Restore original value if left empty, otherwise calculate total
