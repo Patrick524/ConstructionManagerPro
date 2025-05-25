@@ -2201,13 +2201,13 @@ def manage_users():
                 name=form.name.data,
                 email=form.email.data,
                 role=form.role.data,
-                use_clock_in=form.use_clock_in.
-                data  # Add the use_clock_in field
+                use_clock_in=form.use_clock_in.data,  # Add the use_clock_in field
+                burden_rate=form.burden_rate.data  # Add the burden_rate field
             )
 
             # Log the creation for debugging
             print(
-                f"DEBUG: Creating new user {form.name.data}, use_clock_in set to: {form.use_clock_in.data}"
+                f"DEBUG: Creating new user {form.name.data}, use_clock_in set to: {form.use_clock_in.data}, burden_rate set to: {form.burden_rate.data}"
             )
 
             # Set the password
@@ -2245,8 +2245,9 @@ def manage_users():
         form.email.data = user.email
         form.role.data = user.role
         form.use_clock_in.data = user.use_clock_in  # Load the current use_clock_in setting
+        form.burden_rate.data = user.burden_rate  # Load the current burden_rate setting
         print(
-            f"DEBUG: Editing user {user.name} (ID: {user.id}), current use_clock_in = {user.use_clock_in}"
+            f"DEBUG: Editing user {user.name} (ID: {user.id}), current use_clock_in = {user.use_clock_in}, current burden_rate = {user.burden_rate}"
         )
         editing = True
         editing_user = user
