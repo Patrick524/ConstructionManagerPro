@@ -2336,7 +2336,7 @@ def generate_reports():
             ]
         else:
             columns = [
-                'id', 'date', 'hours', 'approved', 'worker_name', 'job_code',
+                'id', 'date', 'hours', 'approved', 'employee_id', 'worker_name', 'job_code',
                 'job_description', 'activity', 'trade_category'
             ]
         df = pd.DataFrame(results, columns=columns)
