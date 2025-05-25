@@ -2282,18 +2282,31 @@ def generate_reports():
         user_id = form.user_id.data if form.user_id.data != 0 else None
         report_format = form.format.data
 
-        # Build the base query
-        query = db.session.query(
-            TimeEntry.id, TimeEntry.date, TimeEntry.hours, TimeEntry.approved,
-            User.name.label('worker_name'), Job.job_code,
-            Job.description.label('job_description'),
-            LaborActivity.name.label('activity'),
-            LaborActivity.trade_category).join(
-                User, TimeEntry.user_id == User.id).join(
-                    Job, TimeEntry.job_id == Job.id).join(
-                        LaborActivity, TimeEntry.labor_activity_id ==
-                        LaborActivity.id).filter(TimeEntry.date >= start_date,
-                                                 TimeEntry.date <= end_date)
+        # Build the base query - include burden_rate for job cost reports
+        if report_type == 'job_cost':
+            query = db.session.query(
+                TimeEntry.id, TimeEntry.date, TimeEntry.hours, TimeEntry.approved,
+                User.name.label('worker_name'), User.burden_rate, Job.job_code,
+                Job.description.label('job_description'),
+                LaborActivity.name.label('activity'),
+                LaborActivity.trade_category).join(
+                    User, TimeEntry.user_id == User.id).join(
+                        Job, TimeEntry.job_id == Job.id).join(
+                            LaborActivity, TimeEntry.labor_activity_id ==
+                            LaborActivity.id).filter(TimeEntry.date >= start_date,
+                                                     TimeEntry.date <= end_date)
+        else:
+            query = db.session.query(
+                TimeEntry.id, TimeEntry.date, TimeEntry.hours, TimeEntry.approved,
+                User.name.label('worker_name'), Job.job_code,
+                Job.description.label('job_description'),
+                LaborActivity.name.label('activity'),
+                LaborActivity.trade_category).join(
+                    User, TimeEntry.user_id == User.id).join(
+                        Job, TimeEntry.job_id == Job.id).join(
+                            LaborActivity, TimeEntry.labor_activity_id ==
+                            LaborActivity.id).filter(TimeEntry.date >= start_date,
+                                                     TimeEntry.date <= end_date)
 
         # Apply filters
         if job_id:
@@ -2307,6 +2320,8 @@ def generate_reports():
             query = query.order_by(User.name, TimeEntry.date)
         elif report_type == 'job_labor':
             query = query.order_by(Job.job_code, TimeEntry.date)
+        elif report_type == 'job_cost':
+            query = query.order_by(Job.job_code, User.name, TimeEntry.date)
         else:  # employee_hours
             query = query.order_by(TimeEntry.date, User.name)
 
@@ -2314,11 +2329,27 @@ def generate_reports():
         results = query.all()
 
         # Create pandas dataframe from results
-        columns = [
-            'id', 'date', 'hours', 'approved', 'worker_name', 'job_code',
-            'job_description', 'activity', 'trade_category'
-        ]
+        if report_type == 'job_cost':
+            columns = [
+                'id', 'date', 'hours', 'approved', 'worker_name', 'burden_rate', 'job_code',
+                'job_description', 'activity', 'trade_category'
+            ]
+        else:
+            columns = [
+                'id', 'date', 'hours', 'approved', 'worker_name', 'job_code',
+                'job_description', 'activity', 'trade_category'
+            ]
         df = pd.DataFrame(results, columns=columns)
+
+        # For job cost reports, add cost calculations
+        if report_type == 'job_cost':
+            # Calculate total cost for each row (hours * burden_rate)
+            df['total_cost'] = df.apply(lambda row: 
+                float(row['hours']) * float(row['burden_rate']) if row['burden_rate'] else 0.0, axis=1)
+            
+            # Add formatted columns for display
+            df['burden_rate_formatted'] = df['burden_rate'].apply(lambda x: f"${float(x):.2f}" if x else "N/A")
+            df['total_cost_formatted'] = df['total_cost'].apply(lambda x: f"${x:.2f}")
 
         # Convert DataFrame to list of dictionaries for report generation
         data_dicts = df.to_dict('records')
@@ -2327,7 +2358,8 @@ def generate_reports():
         report_titles = {
             'payroll': 'Payroll Report',
             'job_labor': 'Job Labor Report',
-            'employee_hours': 'Employee Hours Report'
+            'employee_hours': 'Employee Hours Report',
+            'job_cost': 'Job Cost Report'
         }
         report_title = f"{report_titles.get(report_type, 'Report')} ({start_date.strftime('%m/%d/%Y')} to {end_date.strftime('%m/%d/%Y')})"
 

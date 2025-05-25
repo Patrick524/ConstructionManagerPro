@@ -319,7 +319,8 @@ class ReportForm(FlaskForm):
     report_type = SelectField('Report Type', choices=[
         ('payroll', 'Payroll Report'),
         ('job_labor', 'Job Labor Report'),
-        ('employee_hours', 'Employee Hours Report')
+        ('employee_hours', 'Employee Hours Report'),
+        ('job_cost', 'Job Cost Report')
     ], validators=[DataRequired()])
     start_date = DateField('Start Date', validators=[DataRequired()])
     end_date = DateField('End Date', validators=[DataRequired()])
