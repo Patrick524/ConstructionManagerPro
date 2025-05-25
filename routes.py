@@ -1366,7 +1366,7 @@ def foreman_enter_time(job_id, user_id):
                 None, ''
             ] else 0
 
-            if current_hours > 0:
+            if current_hours and float(current_hours) > 0:
                 # Get existing hours for this day from ALL jobs/activities
                 existing_hours = db.session.query(db.func.sum(
                     TimeEntry.hours)).filter(
@@ -1384,11 +1384,14 @@ def foreman_enter_time(job_id, user_id):
 
                 total_hours = existing_hours + float(current_hours)
 
+                print(f"DEBUG: Day {i} ({date_val}): current_hours={current_hours}, existing_hours={existing_hours}, total_hours={total_hours}")
+
                 if total_hours > 12:
                     day_name = [
                         'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
                         'Saturday', 'Sunday'
                     ][i]
+                    print(f"DEBUG: Validation failed - total_hours {total_hours} > 12 for {worker.name} on {day_name}")
                     flash(
                         f'Maximum 12 hours per day exceeded for {worker.name} on {day_name}. They already have {existing_hours:.1f} hours recorded for this day. The total would be {total_hours:.1f} hours.',
                         'danger')
