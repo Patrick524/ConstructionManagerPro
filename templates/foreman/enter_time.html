@@ -206,6 +206,11 @@
     document.addEventListener('DOMContentLoaded', function() {
         const validationModal = document.getElementById('validation-modal');
         console.log('Looking for validation modal:', validationModal);
+        
+        // Also check for any flash messages in general
+        const allAlerts = document.querySelectorAll('.alert');
+        console.log('Found', allAlerts.length, 'alert elements on page');
+        
         if (validationModal) {
             console.log('Validation modal found and will auto-hide in 3 seconds');
             setTimeout(function() {
@@ -215,7 +220,8 @@
                 }, 300); // Remove after animation completes
             }, 3000); // Hide after 3 seconds
         } else {
-            console.log('No validation modal found on page');
+            console.log('No validation modal found on page - checking flash messages');
+            console.log('Available flash messages on page:', document.querySelector('.alert') ? 'Found alerts' : 'No alerts found');
         }
     });
 
