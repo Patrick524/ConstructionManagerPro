@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Setup add/remove activity buttons
     setupActivityButtons();
+    
+    // Setup quick hour selection buttons
+    setupHourButtons();
 });
 
 /**
@@ -234,6 +237,15 @@ function addActivityField(activityId = '', hours = '0') {
             </div>
             <div class="col-md-4 mb-3">
                 <label for="hours_${count}" class="form-label">Hours</label>
+                <!-- Quick Hour Selection Buttons -->
+                <div class="mb-2">
+                    <div class="btn-group w-100" role="group" aria-label="Quick hour selection">
+                        <button type="button" class="btn btn-outline-primary btn-sm hour-btn" data-hours="4">4h</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm hour-btn" data-hours="8">8h</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm hour-btn" data-hours="10">10h</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm hour-btn" data-hours="12">12h</button>
+                    </div>
+                </div>
                 <input type="number" class="form-control" id="hours_${count}" name="hours_${count}" 
                        min="0" max="12" step="0.5" value="${hours}">
             </div>
@@ -280,4 +292,69 @@ function resetActivityFields() {
     
     // Reset activity count
     container.dataset.activityCount = 1;
+}
+
+/**
+ * Setup quick hour selection buttons
+ */
+function setupHourButtons() {
+    // Set up event delegation for hour buttons
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('hour-btn')) {
+            e.preventDefault();
+            
+            // Get the hours value from the button
+            const hours = e.target.getAttribute('data-hours');
+            
+            // Find the closest hours input field
+            const hoursInput = e.target.closest('.col-md-4').querySelector('input[type="number"]');
+            
+            if (hoursInput && hours) {
+                // Set the value
+                hoursInput.value = hours;
+                
+                // Remove active state from other buttons in the same group
+                const buttonGroup = e.target.closest('.btn-group');
+                if (buttonGroup) {
+                    buttonGroup.querySelectorAll('.hour-btn').forEach(btn => {
+                        btn.classList.remove('btn-primary');
+                        btn.classList.add('btn-outline-primary');
+                    });
+                }
+                
+                // Add active state to clicked button
+                e.target.classList.remove('btn-outline-primary');
+                e.target.classList.add('btn-primary');
+                
+                // Trigger change event on input for any listeners
+                hoursInput.dispatchEvent(new Event('change', { bubbles: true }));
+                
+                // Trigger input event for immediate feedback
+                hoursInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
+    });
+    
+    // Also handle when hour input is changed manually - update button states
+    document.addEventListener('input', function(e) {
+        if (e.target && e.target.type === 'number' && e.target.name && e.target.name.startsWith('hours_')) {
+            const value = parseFloat(e.target.value);
+            const buttonGroup = e.target.closest('.col-md-4').querySelector('.btn-group');
+            
+            if (buttonGroup) {
+                // Reset all buttons to outline state
+                buttonGroup.querySelectorAll('.hour-btn').forEach(btn => {
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-outline-primary');
+                });
+                
+                // Highlight button if value matches
+                const matchingButton = buttonGroup.querySelector(`[data-hours="${value}"]`);
+                if (matchingButton) {
+                    matchingButton.classList.remove('btn-outline-primary');
+                    matchingButton.classList.add('btn-primary');
+                }
+            }
+        }
+    });
 }

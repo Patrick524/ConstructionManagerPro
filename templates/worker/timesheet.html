@@ -70,6 +70,15 @@
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label for="hours_1" class="form-label">Hours</label>
+                                    <!-- Quick Hour Selection Buttons -->
+                                    <div class="mb-2">
+                                        <div class="btn-group w-100" role="group" aria-label="Quick hour selection">
+                                            <button type="button" class="btn btn-outline-primary btn-sm hour-btn" data-hours="4">4h</button>
+                                            <button type="button" class="btn btn-outline-primary btn-sm hour-btn" data-hours="8">8h</button>
+                                            <button type="button" class="btn btn-outline-primary btn-sm hour-btn" data-hours="10">10h</button>
+                                            <button type="button" class="btn btn-outline-primary btn-sm hour-btn" data-hours="12">12h</button>
+                                        </div>
+                                    </div>
                                     <input type="number" class="form-control" id="hours_1" name="hours_1" min="0" max="12" step="0.5" value="{% if editing %}{{ entry_to_edit.hours }}{% else %}0{% endif %}">
                                 </div>
                             </div>
