@@ -84,7 +84,7 @@
         </h5>
     </div>
     <div class="card-body">
-        <form method="POST" class="weekly-timesheet-form">
+        <form method="POST" class="weekly-timesheet-form" novalidate>
             {{ form.hidden_tag() }}
             <div class="row mb-3">
                 <label class="col-md-3 col-form-label">Job:</label>
@@ -203,26 +203,24 @@
 </style>
 
 <script>
-    // Auto-hide validation modal after 3 seconds
+    // Auto-hide validation modal after 8 seconds
     document.addEventListener('DOMContentLoaded', function() {
-        const validationModal = document.getElementById('validation-modal');
-        console.log('Looking for validation modal:', validationModal);
+        // Look for any danger/error flash messages
+        const errorAlerts = document.querySelectorAll('.alert-danger');
+        console.log('Found', errorAlerts.length, 'error alert elements on page');
         
-        // Also check for any flash messages in general
-        const allAlerts = document.querySelectorAll('.alert');
-        console.log('Found', allAlerts.length, 'alert elements on page');
-        
-        if (validationModal) {
-            console.log('Validation modal found and will auto-hide in 8 seconds');
-            setTimeout(function() {
-                validationModal.classList.add('fade-out');
+        if (errorAlerts.length > 0) {
+            errorAlerts.forEach(function(alert) {
+                console.log('Found error alert and will auto-hide in 8 seconds');
                 setTimeout(function() {
-                    validationModal.remove();
-                }, 300); // Remove after animation completes
-            }, 8000); // Hide after 8 seconds
+                    alert.classList.add('fade-out');
+                    setTimeout(function() {
+                        alert.remove();
+                    }, 300); // Remove after animation completes
+                }, 8000); // Hide after 8 seconds
+            });
         } else {
-            console.log('No validation modal found on page - checking flash messages');
-            console.log('Available flash messages on page:', document.querySelector('.alert') ? 'Found alerts' : 'No alerts found');
+            console.log('No error alerts found on page');
         }
     });
 
