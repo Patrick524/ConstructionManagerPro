@@ -54,46 +54,36 @@
                     </div>
                 </div>
                 
-                <div class="mb-3">
-                    <label class="form-label">Labor Activities & Hours</label>
-                    <div id="labor-activities-container">
-                        <div class="activity-entry" id="activity-entry-1">
-                            <div class="row">
-                                <div class="col-md-8 mb-3">
-                                    <label for="labor_activity_1" class="form-label">Labor Activity</label>
-                                    <select class="form-select" id="labor_activity_1" name="labor_activity_1">
-                                        {% for activity in activities %}
-                                            <option value="{{ activity.id }}" {% if editing and entry_to_edit.labor_activity_id == activity.id %}selected{% endif %}>{{ activity.name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label for="hours_1" class="form-label">Hours</label>
-                                    <!-- Quick Hour Selection Buttons -->
-                                    <div class="mb-2">
-                                        <div class="btn-group w-100" role="group" aria-label="Quick hour selection">
-                                            <button type="button" class="btn btn-outline-primary btn-sm hour-btn" data-hours="4">4h</button>
-                                            <button type="button" class="btn btn-outline-primary btn-sm hour-btn" data-hours="8">8h</button>
-                                            <button type="button" class="btn btn-outline-primary btn-sm hour-btn" data-hours="10">10h</button>
-                                            <button type="button" class="btn btn-outline-primary btn-sm hour-btn" data-hours="12">12h</button>
-                                        </div>
-                                    </div>
-                                    <input type="number" class="form-control" id="hours_1" name="hours_1" min="0" max="12" step="0.5" value="{% if editing %}{{ entry_to_edit.hours }}{% else %}0{% endif %}">
-                                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="labor_activity_1" class="form-label">Labor Activity</label>
+                        <select class="form-select" id="labor_activity_1" name="labor_activity_1">
+                            {% for activity in activities %}
+                                <option value="{{ activity.id }}" {% if editing and entry_to_edit.labor_activity_id == activity.id %}selected{% endif %}>{{ activity.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="hours_1" class="form-label">Hours</label>
+                        <!-- Quick Hour Selection Buttons -->
+                        <div class="mb-2">
+                            <div class="btn-group w-100" role="group" aria-label="Quick hour selection">
+                                <button type="button" class="btn btn-outline-primary btn-sm hour-btn" data-hours="4">4h</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm hour-btn" data-hours="8">8h</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm hour-btn" data-hours="10">10h</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm hour-btn" data-hours="12">12h</button>
                             </div>
                         </div>
+                        <input type="number" class="form-control" id="hours_1" name="hours_1" min="0" max="12" step="0.5" value="{% if editing %}{{ entry_to_edit.hours }}{% else %}0{% endif %}">
                     </div>
-                    
-                    {% if not editing %}
-                    <button type="button" id="add-activity" class="btn btn-sm btn-outline-secondary add-activity-btn">
-                        <i class="fas fa-plus"></i> Add Another Activity
-                    </button>
-                    {% endif %}
                 </div>
                 
-                <div class="mb-4">
-                    <label for="notes" class="form-label">Notes (optional)</label>
-                    <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Add any notes about this time entry...">{% if editing %}{{ entry_to_edit.notes }}{% endif %}</textarea>
+                <!-- Hidden elements to maintain compatibility with backend -->
+                <div style="display: none;">
+                    <div id="labor-activities-container">
+                        <div class="activity-entry" id="activity-entry-1"></div>
+                    </div>
+                    <textarea id="notes" name="notes">{% if editing %}{{ entry_to_edit.notes }}{% endif %}</textarea>
                 </div>
                 
                 <div class="d-grid gap-2">
@@ -108,10 +98,8 @@
         </div>
         
         <div class="alert alert-info" role="alert">
-            <h4 class="alert-heading"><i class="fas fa-info-circle me-2"></i>How time entry works:</h4>
-            <p>Enter your hours for a single job per day. You can add multiple labor activities for the same job.</p>
-            <hr>
-            <p class="mb-0">Time can be edited until it is approved by your foreman at the end of the week.</p>
+            <h4 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Quick Time Entry</h4>
+            <p class="mb-0">Select your job, activity, and hours. Use the quick buttons (4h, 8h, 10h, 12h) for faster entry. Time can be edited until approved by your foreman.</p>
         </div>
     </div>
 </div>
