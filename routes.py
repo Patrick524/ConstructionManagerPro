@@ -549,8 +549,7 @@ def worker_timesheet(entry_id=None):
         # Load the existing time entry
         entry_to_edit = TimeEntry.query.filter_by(
             id=entry_id,
-            user_id=current_user.
-            id  # Ensure users can only edit their own entries
+            user_id=current_user.id  # Ensure users can only edit their own entries
         ).first_or_404()
 
         editing = True
