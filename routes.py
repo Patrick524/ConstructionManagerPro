@@ -595,11 +595,8 @@ def worker_timesheet(entry_id=None):
             flash(
                 'Cannot add or edit time entries for this week. It has already been approved.',
                 'danger')
-            # Preserve the week context when redirecting
-            start_date_param = request.args.get('start_date')
-            if start_date_param:
-                return redirect(url_for('worker_timesheet', start_date=start_date_param))
-            return redirect(url_for('worker_timesheet'))
+            # Re-render the form with preserved values instead of redirecting
+            return render_template('worker/timesheet.html', form=form, editing=editing, entry_to_edit=entry_to_edit)
 
         # Extract all labor activities from the form and calculate total hours
         total_hours_for_day = 0
@@ -637,7 +634,8 @@ def worker_timesheet(entry_id=None):
             flash(
                 f'Maximum 12 hours per day exceeded. You already have {existing_hours:.1f} hours recorded for this day with other jobs. The total would be {grand_total:.1f} hours.',
                 'danger')
-            return redirect(url_for('worker_timesheet'))
+            # Re-render the form with preserved values instead of redirecting
+            return render_template('worker/timesheet.html', form=form, editing=editing, entry_to_edit=entry_to_edit)
 
         # Extract all labor activities from the form
         labor_activities = []
@@ -662,11 +660,8 @@ def worker_timesheet(entry_id=None):
         if not labor_activities:
             flash('You must enter at least one labor activity with hours.',
                   'danger')
-            # Preserve the week context when redirecting
-            start_date_param = request.args.get('start_date')
-            if start_date_param:
-                return redirect(url_for('worker_timesheet', start_date=start_date_param))
-            return redirect(url_for('worker_timesheet'))
+            # Re-render the form with preserved values instead of redirecting
+            return render_template('worker/timesheet.html', form=form, editing=editing, entry_to_edit=entry_to_edit)
 
         # Get all activity IDs that will be submitted
         activity_ids = [act_id for act_id, _ in labor_activities]
