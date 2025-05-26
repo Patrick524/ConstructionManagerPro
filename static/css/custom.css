@@ -9,7 +9,7 @@
 }
 
 .pending-badge {
-    background-color: var(--bs-warning);
+    background-color: #3182ce;
     color: white;
     padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;

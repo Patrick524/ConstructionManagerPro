@@ -445,12 +445,14 @@ function setupHourButtons() {
             const hours = e.target.getAttribute('data-hours');
             
             // Find the closest hours input field - works with both old and new layouts
-            let hoursInput = e.target.closest('.col-md-4');
+            let hoursInput = e.target.closest('.col-md-4, .col-md-6');
             if (hoursInput) {
                 hoursInput = hoursInput.querySelector('input[type="number"]');
-            } else {
-                // For the new streamlined layout, look for the hours input in the same column
-                hoursInput = e.target.closest('.col-md-6').querySelector('input[type="number"]');
+            }
+            
+            // If still not found, try searching the entire form
+            if (!hoursInput) {
+                hoursInput = document.querySelector('#hours_1');
             }
             
             if (hoursInput && hours) {
