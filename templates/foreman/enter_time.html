@@ -117,31 +117,31 @@
                 <div class="row align-items-end">
                     <div class="col">
                         <label class="form-label text-center d-block">Monday</label>
-                        {{ form.monday_hours(class="form-control text-center hours-input", id="monday_hours") }}
+                        <input type="text" name="monday_hours" id="monday_hours" class="form-control text-center hours-input" value="{{ form.monday_hours.data or '0.0' }}">
                     </div>
                     <div class="col">
                         <label class="form-label text-center d-block">Tuesday</label>
-                        {{ form.tuesday_hours(class="form-control text-center hours-input", id="tuesday_hours") }}
+                        <input type="text" name="tuesday_hours" id="tuesday_hours" class="form-control text-center hours-input" value="{{ form.tuesday_hours.data or '0.0' }}">
                     </div>
                     <div class="col">
                         <label class="form-label text-center d-block">Wednesday</label>
-                        {{ form.wednesday_hours(class="form-control text-center hours-input", id="wednesday_hours") }}
+                        <input type="text" name="wednesday_hours" id="wednesday_hours" class="form-control text-center hours-input" value="{{ form.wednesday_hours.data or '0.0' }}">
                     </div>
                     <div class="col">
                         <label class="form-label text-center d-block">Thursday</label>
-                        {{ form.thursday_hours(class="form-control text-center hours-input", id="thursday_hours") }}
+                        <input type="text" name="thursday_hours" id="thursday_hours" class="form-control text-center hours-input" value="{{ form.thursday_hours.data or '0.0' }}">
                     </div>
                     <div class="col">
                         <label class="form-label text-center d-block">Friday</label>
-                        {{ form.friday_hours(class="form-control text-center hours-input", id="friday_hours") }}
+                        <input type="text" name="friday_hours" id="friday_hours" class="form-control text-center hours-input" value="{{ form.friday_hours.data or '0.0' }}">
                     </div>
                     <div class="col">
                         <label class="form-label text-center d-block">Saturday</label>
-                        {{ form.saturday_hours(class="form-control text-center hours-input", id="saturday_hours") }}
+                        <input type="text" name="saturday_hours" id="saturday_hours" class="form-control text-center hours-input" value="{{ form.saturday_hours.data or '0.0' }}">
                     </div>
                     <div class="col">
                         <label class="form-label text-center d-block">Sunday</label>
-                        {{ form.sunday_hours(class="form-control text-center hours-input", id="sunday_hours") }}
+                        <input type="text" name="sunday_hours" id="sunday_hours" class="form-control text-center hours-input" value="{{ form.sunday_hours.data or '0.0' }}">
                     </div>
                 </div>
             </div>
