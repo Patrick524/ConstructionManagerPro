@@ -63,11 +63,12 @@
         {% for category, message in messages %}
             {% if category == 'danger' %}
                 <div id="validation-modal" class="alert alert-danger alert-dismissible position-fixed" 
-                     style="top: 20px; right: 20px; z-index: 99999; 
-                            width: 450px; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-                            border: 2px solid #dc3545; animation: slideDown 0.3s ease-out;
-                            font-size: 14px; font-weight: bold;">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
+                     style="top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 99999; 
+                            width: 500px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+                            border: 3px solid #fff; animation: popIn 0.3s ease-out;
+                            font-size: 16px; font-weight: bold; text-align: center;
+                            padding: 25px;">
+                    <i class="fas fa-exclamation-triangle me-2" style="font-size: 20px;"></i>
                     <strong>Validation Error:</strong> {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
@@ -174,30 +175,30 @@
 
 {% block extra_js %}
 <style>
-@keyframes slideDown {
+@keyframes popIn {
     from {
         opacity: 0;
-        transform: translateX(-50%) translateY(-20px);
+        transform: translate(-50%, -50%) scale(0.8);
     }
     to {
         opacity: 1;
-        transform: translateX(-50%) translateY(0);
+        transform: translate(-50%, -50%) scale(1);
     }
 }
 
-@keyframes slideUp {
+@keyframes popOut {
     from {
         opacity: 1;
-        transform: translateX(-50%) translateY(0);
+        transform: translate(-50%, -50%) scale(1);
     }
     to {
         opacity: 0;
-        transform: translateX(-50%) translateY(-20px);
+        transform: translate(-50%, -50%) scale(0.8);
     }
 }
 
 .fade-out {
-    animation: slideUp 0.3s ease-in forwards;
+    animation: popOut 0.3s ease-in forwards;
 }
 </style>
 
