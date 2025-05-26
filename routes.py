@@ -595,6 +595,10 @@ def worker_timesheet(entry_id=None):
             flash(
                 'Cannot add or edit time entries for this week. It has already been approved.',
                 'danger')
+            # Preserve the week context when redirecting
+            start_date_param = request.args.get('start_date')
+            if start_date_param:
+                return redirect(url_for('worker_timesheet', start_date=start_date_param))
             return redirect(url_for('worker_timesheet'))
 
         # Extract all labor activities from the form and calculate total hours
@@ -658,6 +662,10 @@ def worker_timesheet(entry_id=None):
         if not labor_activities:
             flash('You must enter at least one labor activity with hours.',
                   'danger')
+            # Preserve the week context when redirecting
+            start_date_param = request.args.get('start_date')
+            if start_date_param:
+                return redirect(url_for('worker_timesheet', start_date=start_date_param))
             return redirect(url_for('worker_timesheet'))
 
         # Get all activity IDs that will be submitted
