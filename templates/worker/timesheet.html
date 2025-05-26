@@ -86,13 +86,10 @@
                     <textarea id="notes" name="notes">{% if editing %}{{ entry_to_edit.notes }}{% endif %}</textarea>
                 </div>
                 
-                <div class="d-grid gap-2">
+                <div class="d-grid">
                     <button type="submit" class="btn btn-primary btn-lg">
                         <i class="fas fa-save me-2"></i>{% if editing %}Update Time Entry{% else %}Save Time Entry{% endif %}
                     </button>
-                    <a href="{{ url_for('worker_history') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-history me-2"></i>View History
-                    </a>
                 </div>
             </form>
         </div>
