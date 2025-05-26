@@ -444,8 +444,14 @@ function setupHourButtons() {
             // Get the hours value from the button
             const hours = e.target.getAttribute('data-hours');
             
-            // Find the closest hours input field
-            const hoursInput = e.target.closest('.col-md-4').querySelector('input[type="number"]');
+            // Find the closest hours input field - works with both old and new layouts
+            let hoursInput = e.target.closest('.col-md-4');
+            if (hoursInput) {
+                hoursInput = hoursInput.querySelector('input[type="number"]');
+            } else {
+                // For the new streamlined layout, look for the hours input in the same column
+                hoursInput = e.target.closest('.col-md-6').querySelector('input[type="number"]');
+            }
             
             if (hoursInput && hours) {
                 // Set the value
