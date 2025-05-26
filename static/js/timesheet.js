@@ -158,16 +158,10 @@ function updateLaborActivityOptions(activities) {
         // Clear existing options
         select.innerHTML = '';
         
-        // Add a blank option
-        const blankOption = document.createElement('option');
-        blankOption.value = '';
-        blankOption.textContent = '-- Select Activity --';
-        select.appendChild(blankOption);
-        
         // Smart sort activities by usage frequency for this job
         const sortedActivities = smartSortActivities(activities, currentJobId);
         
-        // Add sorted options
+        // Add sorted options (no blank option)
         sortedActivities.forEach(activity => {
             const option = document.createElement('option');
             option.value = activity.id;
@@ -175,20 +169,18 @@ function updateLaborActivityOptions(activities) {
             select.appendChild(option);
         });
         
-        // Auto-select the most frequently used activity (first in sorted list) if no current value
-        if (!currentValue && sortedActivities.length > 0 && currentJobId) {
-            const mostUsedActivity = sortedActivities[0];
-            const usageCount = getActivityUsageCount(currentJobId, mostUsedActivity.name);
-            
-            // Only auto-select if this activity has been used before for this job
-            if (usageCount > 0) {
-                select.value = mostUsedActivity.id;
-            }
+        // Auto-select the first activity (most frequently used or first alphabetically)
+        if (!currentValue && sortedActivities.length > 0) {
+            // Always auto-select the first activity in the sorted list
+            select.value = sortedActivities[0].id;
         } else if (currentValue) {
             // Restore previous selection if it still exists
             const exists = Array.from(select.options).some(option => option.value === currentValue);
             if (exists) {
                 select.value = currentValue;
+            } else if (sortedActivities.length > 0) {
+                // If previous selection doesn't exist, fall back to first activity
+                select.value = sortedActivities[0].id;
             }
         }
     });
@@ -284,8 +276,11 @@ function addActivityField(activityId = '', hours = '0') {
     let optionsHtml = '';
     if (laborActivityOptions) {
         Array.from(laborActivityOptions.options).forEach(option => {
-            const selected = option.value === activityId ? 'selected' : '';
-            optionsHtml += `<option value="${option.value}" ${selected}>${option.textContent}</option>`;
+            // Skip blank/placeholder options
+            if (option.value && option.value !== '') {
+                const selected = option.value === activityId ? 'selected' : '';
+                optionsHtml += `<option value="${option.value}" ${selected}>${option.textContent}</option>`;
+            }
         });
     }
     
@@ -349,7 +344,10 @@ function resetActivityFields() {
     const laborActivitySelect = document.getElementById('labor_activity_1');
     const hoursInput = document.getElementById('hours_1');
     
-    if (laborActivitySelect) laborActivitySelect.value = '';
+    // Auto-select the first activity option (since we removed blank options)
+    if (laborActivitySelect && laborActivitySelect.options.length > 0) {
+        laborActivitySelect.value = laborActivitySelect.options[0].value;
+    }
     if (hoursInput) hoursInput.value = '0'; // Set default value to 0 instead of empty string
     
     // Reset activity count

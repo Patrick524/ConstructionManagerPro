@@ -62,7 +62,6 @@
                                 <div class="col-md-8 mb-3">
                                     <label for="labor_activity_1" class="form-label">Labor Activity</label>
                                     <select class="form-select" id="labor_activity_1" name="labor_activity_1">
-                                        <option value="">-- Select Activity --</option>
                                         {% for activity in activities %}
                                             <option value="{{ activity.id }}" {% if editing and entry_to_edit.labor_activity_id == activity.id %}selected{% endif %}>{{ activity.name }}</option>
                                         {% endfor %}
