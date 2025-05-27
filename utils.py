@@ -357,7 +357,9 @@ def generate_job_cost_csv(data, title="Job Cost Report"):
             burden_rate = f"${float(entry['burden_rate']):.2f}" if entry['burden_rate'] else "N/A"
             total_cost_entry = f"${float(entry['total_cost']):.2f}" if 'total_cost' in entry else "$0.00"
             
-            output.write(f"{entry['date']},{entry['worker_name']},{entry['activity']},{entry['hours']},{burden_rate},{total_cost_entry}\n")
+            # Format date in US style (MM/DD/YYYY)
+            formatted_date = entry['date'].strftime('%m/%d/%Y') if hasattr(entry['date'], 'strftime') else entry['date']
+            output.write(f"{formatted_date},{entry['worker_name']},{entry['activity']},{entry['hours']},{burden_rate},{total_cost_entry}\n")
         
         output.write(f"Job Subtotal:,,,{job_data['total_hours']:.2f},${job_data['total_cost']:.2f}\n")
     
@@ -469,8 +471,10 @@ def generate_job_cost_pdf(data, title="Job Cost Report"):
             burden_rate = f"${float(entry['burden_rate']):.2f}" if entry['burden_rate'] else "N/A"
             total_cost_entry = f"${float(entry['total_cost']):.2f}" if 'total_cost' in entry else "$0.00"
             
+            # Format date in US style (MM/DD/YYYY)
+            formatted_date = entry['date'].strftime('%m/%d/%Y') if hasattr(entry['date'], 'strftime') else str(entry['date'])
             job_table_data.append([
-                str(entry['date']),
+                formatted_date,
                 entry['worker_name'],
                 entry['activity'],
                 str(entry['hours']),
