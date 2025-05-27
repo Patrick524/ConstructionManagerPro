@@ -267,6 +267,16 @@
             
             // Calculate total when value changes
             input.addEventListener('input', calculateTotal);
+            
+            // Add 12-hour daily limit validation
+            input.addEventListener('input', function() {
+                const value = parseFloat(this.value);
+                if (value > 12) {
+                    this.value = '12';
+                    // Show brief warning
+                    showHourLimitWarning(this);
+                }
+            });
         });
         
         // Calculate initial total
@@ -274,6 +284,36 @@
         
         // Client-side validation is handled by server-side flash messages
     });
+    
+    function showHourLimitWarning(inputElement) {
+        // Create a temporary warning tooltip
+        const warning = document.createElement('div');
+        warning.style.cssText = `
+            position: absolute;
+            background: #dc3545;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1000;
+            white-space: nowrap;
+        `;
+        warning.textContent = 'Maximum 12 hours per day';
+        
+        // Position near the input field
+        const rect = inputElement.getBoundingClientRect();
+        warning.style.left = (rect.left + window.scrollX) + 'px';
+        warning.style.top = (rect.bottom + window.scrollY + 5) + 'px';
+        
+        document.body.appendChild(warning);
+        
+        // Remove after 2 seconds
+        setTimeout(() => {
+            if (warning.parentNode) {
+                warning.parentNode.removeChild(warning);
+            }
+        }, 2000);
+    }
     
     function calculateTotal() {
         const hours = [
