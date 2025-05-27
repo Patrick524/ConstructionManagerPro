@@ -1,0 +1,132 @@
+Payroll Report (02/03/2025 to 06/01/2025)
+Generated: 05/27/2025 00:24:04
+
+*** ATTENTION: UNAPPROVED ENTRIES FOUND ***
+The following entries require approval before payroll processing:
+
+Employee_ID,Employee_Name,Date,Job_Code,Activity,Hours,Status
+3,Brad Bradley,2025-03-22,2333,Sanding,8.0,UNAPPROVED
+3,Brad Bradley,2025-03-23,2333,Sanding,8.0,UNAPPROVED
+3,Brad Bradley,2025-03-24,2333,Sanding,8.0,UNAPPROVED
+3,Brad Bradley,2025-03-25,2333,Sanding,8.0,UNAPPROVED
+3,Brad Bradley,2025-03-26,2333,Sanding,8.0,UNAPPROVED
+3,Brad Bradley,2025-03-27,1047,Hanging_Drywall,7.5,UNAPPROVED
+3,Brad Bradley,2025-03-27,1047,Hanging_Drywall,7.0,UNAPPROVED
+3,Brad Bradley,2025-03-28,PLB-003,Pipe_Installation,3.0,UNAPPROVED
+3,Brad Bradley,2025-03-28,PLB-003,Pipe_Installation,6.0,UNAPPROVED
+3,Brad Bradley,2025-03-31,DRY-001,Sanding,6.5,UNAPPROVED
+3,Brad Bradley,2025-04-01,1047,Sanding,3.0,UNAPPROVED
+3,Brad Bradley,2025-04-02,PLB-003,Fixture_Mounting,3.5,UNAPPROVED
+3,Brad Bradley,2025-04-07,4725-1,Hanging_Drywall,8.0,UNAPPROVED
+3,Brad Bradley,2025-04-08,4725-1,Hanging_Drywall,8.0,UNAPPROVED
+3,Brad Bradley,2025-05-04,1047,Hanging_Drywall,8.0,UNAPPROVED
+3,Brad Bradley,2025-05-19,DRY-001,Hanging_Drywall,8.0,UNAPPROVED
+3,Brad Bradley,2025-05-20,DRY-001,Hanging_Drywall,4.0,UNAPPROVED
+3,Brad Bradley,2025-05-21,DRY-001,Hanging_Drywall,8.0,UNAPPROVED
+3,Brad Bradley,2025-05-22,DRY-001,Hanging_Drywall,8.0,UNAPPROVED
+3,Brad Bradley,2025-05-23,DRY-001,Hanging_Drywall,8.0,UNAPPROVED
+8,John Smith,2025-04-12,4725-1,Fixture_Mounting,4.91,UNAPPROVED
+8,John Smith,2025-04-12,1047,Hanging_Drywall,0.21,UNAPPROVED
+8,John Smith,2025-04-13,DRY-001,Hanging_Drywall,0.01,UNAPPROVED
+8,John Smith,2025-04-13,1047,Hanging_Drywall,0.0,UNAPPROVED
+8,John Smith,2025-04-13,1047,Hanging_Drywall,0.08,UNAPPROVED
+8,John Smith,2025-04-13,ELEC-002,Hanging_Drywall,0.0,UNAPPROVED
+8,John Smith,2025-04-13,ELEC-002,Hanging_Drywall,0.0,UNAPPROVED
+8,John Smith,2025-04-13,ELEC-002,Hanging_Drywall,0.0,UNAPPROVED
+8,John Smith,2025-04-13,ELEC-002,Hanging_Drywall,0.03,UNAPPROVED
+8,John Smith,2025-04-13,ELEC-002,Hanging_Drywall,0.0,UNAPPROVED
+8,John Smith,2025-04-13,DRY-001,Hanging_Drywall,0.66,UNAPPROVED
+8,John Smith,2025-04-14,1047,Hanging_Drywall,10.55,UNAPPROVED
+8,John Smith,2025-04-18,4423,Hanging_Drywall,0.0,UNAPPROVED
+8,John Smith,2025-04-18,4423,Hanging_Drywall,74.12,UNAPPROVED
+8,John Smith,2025-04-21,4725-1,Hanging_Drywall,0.05,UNAPPROVED
+8,John Smith,2025-04-21,4725-1,Hanging_Drywall,0.03,UNAPPROVED
+8,John Smith,2025-04-21,4725-1,Hanging_Drywall,0.0,UNAPPROVED
+8,John Smith,2025-04-22,4423,Hanging_Drywall,0.0,UNAPPROVED
+8,John Smith,2025-04-22,4423,Hanging_Drywall,0.15,UNAPPROVED
+8,John Smith,2025-04-22,4423,Hanging_Drywall,0.02,UNAPPROVED
+8,John Smith,2025-04-22,4423,Hanging_Drywall,0.04,UNAPPROVED
+8,John Smith,2025-04-23,4423,Hanging_Drywall,0.1,UNAPPROVED
+8,John Smith,2025-04-29,4423,Taping_and_Mudding,119.69,UNAPPROVED
+8,John Smith,2025-05-04,4725-1,Hanging_Drywall,8.0,UNAPPROVED
+11,Mom,2025-05-04,4423,Hanging_Drywall,8.0,UNAPPROVED
+7,Robert Johnson,2025-03-22,2333,Hanging_Drywall,8.0,UNAPPROVED
+7,Robert Johnson,2025-03-24,DRY-001,Hanging_Drywall,4.0,UNAPPROVED
+7,Robert Johnson,2025-03-24,DRY-001,Hanging_Drywall,5.0,UNAPPROVED
+7,Robert Johnson,2025-03-25,ELEC-002,Fixture_Installation,7.0,UNAPPROVED
+7,Robert Johnson,2025-03-26,DRY-001,Hanging_Drywall,5.5,UNAPPROVED
+7,Robert Johnson,2025-03-26,DRY-001,Hanging_Drywall,4.5,UNAPPROVED
+7,Robert Johnson,2025-03-27,2333,Hanging_Drywall,7.5,UNAPPROVED
+7,Robert Johnson,2025-03-28,ELEC-002,Fixture_Installation,3.5,UNAPPROVED
+7,Robert Johnson,2025-03-31,2333,Sanding,6.0,UNAPPROVED
+7,Robert Johnson,2025-04-01,PLB-003,Fixture_Mounting,2.0,UNAPPROVED
+7,Robert Johnson,2025-04-08,4725-1,Hanging_Drywall,3.5,UNAPPROVED
+7,Robert Johnson,2025-04-09,1047,Hanging_Drywall,2.5,UNAPPROVED
+7,Robert Johnson,2025-04-13,DRY-001,Hanging_Drywall,8.0,UNAPPROVED
+7,Robert Johnson,2025-04-14,ELEC-002,Wiring_Installation,8.0,UNAPPROVED
+7,Robert Johnson,2025-04-21, TAC-2025-038,Sanding,12.0,UNAPPROVED
+7,Robert Johnson,2025-04-22, TAC-2025-038,Taping_and_Mudding,8.0,UNAPPROVED
+7,Robert Johnson,2025-05-01, TAC-2025-038,Hanging_Drywall,8.0,UNAPPROVED
+7,Robert Johnson,2025-05-02, TAC-2025-038,Hanging_Drywall,8.0,UNAPPROVED
+7,Robert Johnson,2025-05-04,ELEC-002,Hanging_Drywall,8.0,UNAPPROVED
+7,Robert Johnson,2025-05-12,8002,Hanging_Drywall,8.0,UNAPPROVED
+7,Robert Johnson,2025-05-12,8005,Taping_and_Mudding,4.0,UNAPPROVED
+7,Robert Johnson,2025-05-13,8002,Sanding,4.0,UNAPPROVED
+7,Robert Johnson,2025-05-13,8005,Taping_and_Mudding,4.0,UNAPPROVED
+7,Robert Johnson,2025-05-13,8002,Taping_and_Mudding,4.0,UNAPPROVED
+7,Robert Johnson,2025-05-15,8002,Hanging_Drywall,8.0,UNAPPROVED
+7,Robert Johnson,2025-05-19,8005,Taping_and_Mudding,4.0,UNAPPROVED
+7,Robert Johnson,2025-05-19,8002,Hanging_Drywall,4.0,UNAPPROVED
+7,Robert Johnson,2025-05-20,8005,Taping_and_Mudding,4.0,UNAPPROVED
+7,Robert Johnson,2025-05-21,8005,Taping_and_Mudding,8.0,UNAPPROVED
+7,Robert Johnson,2025-05-22,8005,Hanging_Drywall,8.0,UNAPPROVED
+7,Robert Johnson,2025-05-23,8005,Hanging_Drywall,8.0,UNAPPROVED
+7,Robert Johnson,2025-05-24,8002,Hanging_Drywall,12.0,UNAPPROVED
+7,Robert Johnson,2025-05-26, TAC-2025-038,Sanding,8.0,UNAPPROVED
+7,Robert Johnson,2025-05-26, TAC-2025-038,Hanging_Drywall,4.0,UNAPPROVED
+
+Total Unapproved Entries: 79
+============================================================
+
+PAYROLL SUMMARY - TOTAL HOURS PER WORKER
+Employee_ID,Employee_Name,Total_Hours,Entry_Count
+3,Brad Bradley,58.50,8
+7,Robert Johnson,98.50,13
+GRAND_TOTAL,ALL_WORKERS,157.00,21
+
+============================================================
+
+QUICKBOOKS IMPORT DATA - APPROVED ENTRIES ONLY
+Employee_ID,Employee_Name,Date,Job_Code,Activity_Code,Hours,Day_of_Week,Week_Ending
+3,Brad Bradley,2025-03-24,ELEC-002,Fixture_Installation,7.5,Monday,03/30/2025
+3,Brad Bradley,2025-03-26,DRY-001,Taping_and_Mudding,6.5,Wednesday,03/30/2025
+3,Brad Bradley,2025-04-01,1047,Sanding,4.5,Tuesday,04/06/2025
+3,Brad Bradley,2025-05-12,8004,Hanging_Drywall,8.0,Monday,05/18/2025
+3,Brad Bradley,2025-05-13,8004,Hanging_Drywall,8.0,Tuesday,05/18/2025
+3,Brad Bradley,2025-05-14,8004,Hanging_Drywall,8.0,Wednesday,05/18/2025
+3,Brad Bradley,2025-05-15,8004,Hanging_Drywall,8.0,Thursday,05/18/2025
+3,Brad Bradley,2025-05-16,8004,Hanging_Drywall,8.0,Friday,05/18/2025
+7,Robert Johnson,2025-03-28,ELEC-002,Fixture_Installation,8.0,Friday,03/30/2025
+7,Robert Johnson,2025-03-31,2333,Sanding,4.5,Monday,04/06/2025
+7,Robert Johnson,2025-04-02,1047,Sanding,6.0,Wednesday,04/06/2025
+7,Robert Johnson,2025-04-02,1047,Sanding,4.0,Wednesday,04/06/2025
+7,Robert Johnson,2025-04-07,ELEC-002,Hanging_Drywall,8.0,Monday,04/13/2025
+7,Robert Johnson,2025-04-08,ELEC-002,Hanging_Drywall,8.0,Tuesday,04/13/2025
+7,Robert Johnson,2025-04-11,ELEC-002,Wiring_Installation,8.0,Friday,04/13/2025
+7,Robert Johnson,2025-04-13,ELEC-002,Wiring_Installation,8.0,Sunday,04/13/2025
+7,Robert Johnson,2025-05-05, TAC-2025-038,Taping_and_Mudding,12.0,Monday,05/11/2025
+7,Robert Johnson,2025-05-06, TAC-2025-038,Taping_and_Mudding,8.0,Tuesday,05/11/2025
+7,Robert Johnson,2025-05-07, TAC-2025-038,Taping_and_Mudding,8.0,Wednesday,05/11/2025
+7,Robert Johnson,2025-05-08, TAC-2025-038,Taping_and_Mudding,8.0,Thursday,05/11/2025
+7,Robert Johnson,2025-05-09, TAC-2025-038,Taping_and_Mudding,8.0,Friday,05/11/2025
+
+Total Approved Entries: 21
+Total Hours: 157.00
+
+============================================================
+QUICKBOOKS IMPORT INSTRUCTIONS:
+1. Use 'QUICKBOOKS IMPORT DATA' section above
+2. Map Employee_ID to QuickBooks Employee ID
+3. Map Activity_Code to QuickBooks Service Items
+4. Map Job_Code to QuickBooks Customer:Job
+5. Import hours using Week_Ending dates for payroll periods
