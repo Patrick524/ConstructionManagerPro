@@ -2528,7 +2528,11 @@ def generate_reports():
             # If this is a preview request, return the PDF data directly
             if is_preview:
                 from flask import Response
-                pdf_data = pdf_buffer.getvalue()
+                # Handle both BytesIO objects and raw bytes
+                if hasattr(pdf_buffer, 'getvalue'):
+                    pdf_data = pdf_buffer.getvalue()
+                else:
+                    pdf_data = pdf_buffer
                 return Response(pdf_data, mimetype='application/pdf')
 
             # Check if we should email the report
