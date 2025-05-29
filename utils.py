@@ -385,9 +385,9 @@ def generate_job_cost_csv(data, title="Job Cost Report"):
     
     # Write summary metrics
     output.write("SUMMARY METRICS\n")
-    output.write(f"Total Labor Cost,${total_cost:.2f}\n")
+    output.write(f"Total Labor Cost,${total_cost:,.2f}\n")
     output.write(f"Total Hours,{total_hours:.2f}\n")
-    output.write(f"Average Cost per Hour,${(total_cost/total_hours) if total_hours > 0 else 0:.2f}\n")
+    output.write(f"Average Cost per Hour,${(total_cost/total_hours) if total_hours > 0 else 0:,.2f}\n")
     output.write(f"Number of Jobs,{len(jobs)}\n\n")
     
     # Write detailed data grouped by job
@@ -481,9 +481,9 @@ def generate_job_cost_pdf(data, title="Job Cost Report"):
     # Add summary metrics table
     elements.append(Paragraph("Summary Metrics", subtitle_style))
     summary_data = [
-        ['Total Labor Cost', f'${total_cost:.2f}'],
+        ['Total Labor Cost', f'${total_cost:,.2f}'],
         ['Total Hours', f'{total_hours:.2f}'],
-        ['Average Cost per Hour', f'${(total_cost/total_hours) if total_hours > 0 else 0:.2f}'],
+        ['Average Cost per Hour', f'${(total_cost/total_hours) if total_hours > 0 else 0:,.2f}'],
         ['Number of Jobs', str(len(jobs))]
     ]
     
@@ -513,8 +513,8 @@ def generate_job_cost_pdf(data, title="Job Cost Report"):
         job_table_data = [['Date', 'Worker', 'Activity', 'Hours', 'Burden Rate', 'Total Cost']]
         
         for entry in job_data['entries']:
-            burden_rate = f"${float(entry['burden_rate']):.2f}" if entry['burden_rate'] else "N/A"
-            total_cost_entry = f"${float(entry['total_cost']):.2f}" if 'total_cost' in entry else "$0.00"
+            burden_rate = f"${float(entry['burden_rate']):,.2f}" if entry['burden_rate'] else "N/A"
+            total_cost_entry = f"${float(entry['total_cost']):,.2f}" if 'total_cost' in entry else "$0.00"
             
             # Format date in US style (MM/DD/YYYY)
             formatted_date = entry['date'].strftime('%m/%d/%Y') if hasattr(entry['date'], 'strftime') else str(entry['date'])
@@ -529,7 +529,7 @@ def generate_job_cost_pdf(data, title="Job Cost Report"):
         
         # Add subtotal row
         job_table_data.append([
-            'SUBTOTAL', '', '', f'{job_data["total_hours"]:.2f}', '', f'${job_data["total_cost"]:.2f}'
+            'SUBTOTAL', '', '', f'{job_data["total_hours"]:.2f}', '', f'${job_data["total_cost"]:,.2f}'
         ])
         
         job_table = Table(job_table_data, colWidths=[1*inch, 1.5*inch, 1.5*inch, 0.8*inch, 1*inch, 1*inch])
@@ -548,7 +548,7 @@ def generate_job_cost_pdf(data, title="Job Cost Report"):
         elements.append(Spacer(1, 12))
     
     # Add grand total
-    grand_total_data = [['GRAND TOTAL', '', '', f'{total_hours:.2f}', '', f'${total_cost:.2f}']]
+    grand_total_data = [['GRAND TOTAL', '', '', f'{total_hours:.2f}', '', f'${total_cost:,.2f}']]
     grand_total_table = Table(grand_total_data, colWidths=[1*inch, 1.5*inch, 1.5*inch, 0.8*inch, 1*inch, 1*inch])
     grand_total_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), colors.darkgreen),
