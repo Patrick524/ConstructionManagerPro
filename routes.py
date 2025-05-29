@@ -2408,8 +2408,8 @@ def generate_reports():
                 float(row['hours']) * float(row['burden_rate']) if row['burden_rate'] else 0.0, axis=1)
             
             # Add formatted columns for display
-            df['burden_rate_formatted'] = df['burden_rate'].apply(lambda x: f"${float(x):.2f}" if x else "N/A")
-            df['total_cost_formatted'] = df['total_cost'].apply(lambda x: f"${x:.2f}")
+            df['burden_rate_formatted'] = df['burden_rate'].apply(lambda x: f"${float(x):,.2f}" if x else "N/A")
+            df['total_cost_formatted'] = df['total_cost'].apply(lambda x: f"${x:,.2f}")
 
         # Convert DataFrame to list of dictionaries for report generation
         data_dicts = df.to_dict('records')
