@@ -417,24 +417,10 @@
             });
         }
         
-        // Show report preview in modal
+        // Show report preview in new tab
         function showReportPreview() {
             const formData = new FormData(reportForm);
             formData.append('preview', 'true');
-            
-            // Show modal with loading spinner
-            const modal = new bootstrap.Modal(document.getElementById('reportPreviewModal'));
-            modal.show();
-            
-            // Reset modal content to loading state
-            document.getElementById('reportPreviewContent').innerHTML = `
-                <div class="text-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p class="mt-3">Generating report preview...</p>
-                </div>
-            `;
             
             // Submit form data for preview
             fetch(reportForm.action, {
@@ -442,8 +428,6 @@
                 body: formData
             })
             .then(response => {
-                console.log('Response status:', response.status);
-                console.log('Response headers:', response.headers.get('content-type'));
                 if (response.ok) {
                     const contentType = response.headers.get('content-type');
                     if (contentType && contentType.includes('application/pdf')) {
@@ -455,33 +439,19 @@
                 throw new Error('Failed to generate preview');
             })
             .then(data => {
-                console.log('Data received:', data);
                 if (data instanceof Blob) {
-                    console.log('Blob size:', data.size, 'type:', data.type);
-                    // Handle PDF preview
+                    // Handle PDF preview - open in new tab
                     const pdfUrl = URL.createObjectURL(data);
-                    console.log('PDF URL created:', pdfUrl);
-                    document.getElementById('reportPreviewContent').innerHTML = `
-                        <object data="${pdfUrl}" type="application/pdf" width="100%" height="600px">
-                            <p>Unable to display PDF preview. <a href="${pdfUrl}" target="_blank" class="btn btn-primary">Open PDF in New Tab</a></p>
-                        </object>
-                    `;
+                    window.open(pdfUrl, '_blank');
                 } else {
-                    // Handle CSV/HTML preview
-                    document.getElementById('reportPreviewContent').innerHTML = `
-                        <div class="table-responsive">
-                            <pre style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; max-height: 600px; overflow-y: auto;">${data}</pre>
-                        </div>
-                    `;
+                    // Handle CSV/text preview - open in new tab
+                    const blob = new Blob([data], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    window.open(url, '_blank');
                 }
             })
             .catch(error => {
-                document.getElementById('reportPreviewContent').innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        Failed to generate report preview. Please try again.
-                    </div>
-                `;
+                alert('Failed to generate report preview. Please try again.');
             });
         }
     });
