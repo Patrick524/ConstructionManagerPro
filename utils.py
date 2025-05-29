@@ -178,6 +178,14 @@ def generate_pdf_report(data, columns, title="Report"):
             # Format numeric values
             elif col == 'hours' and isinstance(value, (int, float)):
                 value = f"{value:.2f}"  # Format with 2 decimal places
+            # Truncate long text fields to prevent bleeding
+            elif isinstance(value, str):
+                if 'description' in col and len(value) > 25:
+                    value = value[:22] + '...'
+                elif col == 'activity' and len(value) > 18:
+                    value = value[:15] + '...'
+                elif col == 'worker_name' and len(value) > 20:
+                    value = value[:17] + '...'
             formatted_row.append(value)
         table_data.append(formatted_row)
 
