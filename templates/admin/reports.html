@@ -462,8 +462,9 @@
                     const pdfUrl = URL.createObjectURL(data);
                     console.log('PDF URL created:', pdfUrl);
                     document.getElementById('reportPreviewContent').innerHTML = `
-                        <embed src="${pdfUrl}" width="100%" height="600px" type="application/pdf" style="border: none;">
-                        <p>If you cannot see the PDF above, <a href="${pdfUrl}" target="_blank">click here to open it in a new tab</a>.</p>
+                        <object data="${pdfUrl}" type="application/pdf" width="100%" height="600px">
+                            <p>Unable to display PDF preview. <a href="${pdfUrl}" target="_blank" class="btn btn-primary">Open PDF in New Tab</a></p>
+                        </object>
                     `;
                 } else {
                     // Handle CSV/HTML preview
