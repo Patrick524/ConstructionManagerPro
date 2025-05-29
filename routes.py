@@ -2331,6 +2331,9 @@ def generate_reports():
     form = ReportForm()
 
     if form.validate_on_submit():
+        # Check if this is a preview request
+        is_preview = request.form.get('preview') == 'true'
+        
         # Get form data
         report_type = form.report_type.data
         start_date = form.start_date.data
@@ -2435,6 +2438,11 @@ def generate_reports():
 
             # Generate filename
             filename = f"{report_type}_{start_date.strftime('%m%d%Y')}_{end_date.strftime('%m%d%Y')}.csv"
+            
+            # If this is a preview request, return the CSV data directly
+            if is_preview:
+                from flask import Response
+                return Response(csv_data, mimetype='text/plain')
 
             # Check if we should email the report
             if delivery_method == 'email':
@@ -2516,6 +2524,12 @@ def generate_reports():
             # Generate filename
             filename = f"{report_type}_{start_date.strftime('%m%d%Y')}_{end_date.strftime('%m%d%Y')}.pdf"
             print(f"DEBUG: PDF filename generated: {filename}")
+            
+            # If this is a preview request, return the PDF data directly
+            if is_preview:
+                from flask import Response
+                pdf_data = pdf_buffer.getvalue()
+                return Response(pdf_data, mimetype='application/pdf')
 
             # Check if we should email the report
             if delivery_method == 'email':

@@ -115,6 +115,15 @@
                         {% endif %}
                     </div>
                     
+                    <div class="mb-3" style="border: 1px solid #dee2e6; border-radius: 0.375rem; padding: 20px;">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="preview_report" name="preview_report">
+                            <label class="form-check-label" for="preview_report">
+                                <i class="fas fa-eye me-2"></i>Preview Report
+                            </label>
+                        </div>
+                    </div>
+                    
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary" id="generate_button">
                             <i class="fas fa-download me-2"></i>Generate Report
@@ -230,6 +239,33 @@
                     <p>Generated reports will appear here</p>
                 </div>
                 {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Report Modal -->
+<div class="modal fade" id="reportPreviewModal" tabindex="-1" aria-labelledby="reportPreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reportPreviewModalLabel">
+                    <i class="fas fa-eye me-2"></i>Report Preview
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="reportPreviewContent">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Generating report preview...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Close
+                </button>
             </div>
         </div>
     </div>
@@ -367,6 +403,79 @@
                 emailField.style.display = 'none';
                 generateButton.innerHTML = '<i class="fas fa-download me-2"></i>Download Report';
             }
+        }
+        
+        // Handle form submission for preview functionality
+        const reportForm = document.querySelector('form');
+        if (reportForm) {
+            reportForm.addEventListener('submit', function(e) {
+                const previewCheckbox = document.getElementById('preview_report');
+                if (previewCheckbox && previewCheckbox.checked) {
+                    e.preventDefault();
+                    showReportPreview();
+                }
+            });
+        }
+        
+        // Show report preview in modal
+        function showReportPreview() {
+            const formData = new FormData(reportForm);
+            formData.append('preview', 'true');
+            
+            // Show modal with loading spinner
+            const modal = new bootstrap.Modal(document.getElementById('reportPreviewModal'));
+            modal.show();
+            
+            // Reset modal content to loading state
+            document.getElementById('reportPreviewContent').innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Generating report preview...</p>
+                </div>
+            `;
+            
+            // Submit form data for preview
+            fetch(reportForm.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/pdf')) {
+                        return response.blob();
+                    } else {
+                        return response.text();
+                    }
+                }
+                throw new Error('Failed to generate preview');
+            })
+            .then(data => {
+                if (data instanceof Blob) {
+                    // Handle PDF preview
+                    const pdfUrl = URL.createObjectURL(data);
+                    document.getElementById('reportPreviewContent').innerHTML = `
+                        <iframe src="${pdfUrl}" width="100%" height="600px" style="border: none;"></iframe>
+                    `;
+                } else {
+                    // Handle CSV/HTML preview
+                    document.getElementById('reportPreviewContent').innerHTML = `
+                        <div class="table-responsive">
+                            <pre style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; max-height: 600px; overflow-y: auto;">${data}</pre>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                document.getElementById('reportPreviewContent').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Failed to generate report preview. Please try again.
+                    </div>
+                `;
+            });
         }
     });
     
