@@ -296,23 +296,42 @@ def generate_pdf_report(data, columns, title="Report"):
     # We already applied zebra striping earlier, no need to do it again
     # Removed duplicate zebra striping that was causing issues
 
-    # Create a function to add a footer to the bottom-right corner of each page
-    def add_footer(canvas, doc):
+    # Create a function to add header and footer to each page
+    def add_header_footer(canvas, doc):
         canvas.saveState()
+        
+        # Add header
+        header_text = title
+        canvas.setFont('Helvetica-Bold', 12)
+        canvas.setFillColor(colors.Color(0.2, 0.2, 0.6))  # Dark blue
+        # Center the header
+        text_width = canvas.stringWidth(header_text, 'Helvetica-Bold', 12)
+        x_position = (doc.pagesize[0] - text_width) / 2
+        y_position = doc.pagesize[1] - 0.3*inch
+        canvas.drawString(x_position, y_position, header_text)
+        
+        # Add page number in header (top right)
+        page_num = f"Page {canvas.getPageNumber()}"
+        canvas.setFont('Helvetica', 10)
+        canvas.setFillColor(colors.Color(0.4, 0.4, 0.4))  # Gray
+        page_text_width = canvas.stringWidth(page_num, 'Helvetica', 10)
+        page_x_position = doc.pagesize[0] - 0.5*inch - page_text_width
+        canvas.drawString(page_x_position, y_position, page_num)
+        
+        # Add footer
         footer_text = "Construction Timesheet Management System © 2025"
-        # Use a smaller font size (7pt)
         canvas.setFont('Helvetica', 7)
-        # Use a lighter gray color
         canvas.setFillColor(colors.Color(0.75, 0.75, 0.75))
         # Position at bottom-right with 0.5 inch margin
-        text_width = canvas.stringWidth(footer_text, 'Helvetica', 7)
-        x_position = doc.pagesize[0] - 0.5*inch - text_width
-        y_position = 0.3*inch
-        canvas.drawString(x_position, y_position, footer_text)
+        footer_text_width = canvas.stringWidth(footer_text, 'Helvetica', 7)
+        footer_x_position = doc.pagesize[0] - 0.5*inch - footer_text_width
+        footer_y_position = 0.3*inch
+        canvas.drawString(footer_x_position, footer_y_position, footer_text)
+        
         canvas.restoreState()
 
-    # Build the PDF with the footer function
-    doc.build(elements, onFirstPage=add_footer, onLaterPages=add_footer)
+    # Build the PDF with the header and footer function
+    doc.build(elements, onFirstPage=add_header_footer, onLaterPages=add_header_footer)
     buffer.seek(0)
     
     # Get PDF size and log it
