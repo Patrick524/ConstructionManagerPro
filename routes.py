@@ -2357,8 +2357,8 @@ def generate_reports():
                                                      TimeEntry.date <= end_date)
         else:
             query = db.session.query(
-                TimeEntry.id, TimeEntry.date, TimeEntry.hours, TimeEntry.approved,
-                User.id.label('employee_id'), User.name.label('worker_name'), 
+                TimeEntry.date, TimeEntry.hours, TimeEntry.approved,
+                User.name.label('worker_name'), 
                 Job.job_code, Job.description.label('job_description'),
                 LaborActivity.name.label('activity'),
                 LaborActivity.trade_category).join(
@@ -2396,7 +2396,7 @@ def generate_reports():
             ]
         else:
             columns = [
-                'id', 'date', 'hours', 'approved', 'employee_id', 'worker_name', 'job_code',
+                'date', 'hours', 'approved', 'worker_name', 'job_code',
                 'job_description', 'activity', 'trade_category'
             ]
         df = pd.DataFrame(results, columns=columns)
