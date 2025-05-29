@@ -290,7 +290,8 @@ def generate_pdf_report(data, columns, title="Report"):
                           subtitle_style)
     elements.append(timestamp)
 
-    # Add the table
+    # Add the table with repeating headers on each page
+    table.repeatRows = 1  # Repeat the header row on each page
     elements.append(table)
     
     # We already applied zebra striping earlier, no need to do it again
