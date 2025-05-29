@@ -455,11 +455,15 @@
                 throw new Error('Failed to generate preview');
             })
             .then(data => {
+                console.log('Data received:', data);
                 if (data instanceof Blob) {
+                    console.log('Blob size:', data.size, 'type:', data.type);
                     // Handle PDF preview
                     const pdfUrl = URL.createObjectURL(data);
+                    console.log('PDF URL created:', pdfUrl);
                     document.getElementById('reportPreviewContent').innerHTML = `
-                        <iframe src="${pdfUrl}" width="100%" height="600px" style="border: none;"></iframe>
+                        <embed src="${pdfUrl}" width="100%" height="600px" type="application/pdf" style="border: none;">
+                        <p>If you cannot see the PDF above, <a href="${pdfUrl}" target="_blank">click here to open it in a new tab</a>.</p>
                     `;
                 } else {
                     // Handle CSV/HTML preview
