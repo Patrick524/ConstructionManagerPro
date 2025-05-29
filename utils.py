@@ -184,22 +184,37 @@ def generate_pdf_report(data, columns, title="Report"):
     # Create better column widths for a more balanced layout
     col_widths = []
     
-    # Adjust widths based on column type
+    # Calculate available width (landscape letter is 11 inches, minus margins)
+    available_width = 11 - 0.5  # 10.5 inches available
+    
+    # Adjust widths based on column type and number of columns
     for col in columns:
         if col == 'id':
-            col_widths.append(0.7*inch)  # ID columns are narrow
+            col_widths.append(0.5*inch)  # ID columns are narrow
         elif col == 'date':
-            col_widths.append(1.0*inch)  # Date columns have fixed width
+            col_widths.append(0.9*inch)  # Date columns have fixed width
         elif col == 'hours':
-            col_widths.append(0.8*inch)  # Hours columns are narrow
+            col_widths.append(0.7*inch)  # Hours columns are narrow
         elif col == 'approved':
-            col_widths.append(0.9*inch)  # Boolean columns
+            col_widths.append(0.8*inch)  # Boolean columns
         elif 'description' in col or col == 'job_description':
-            col_widths.append(2.5*inch)  # Description columns need more space
+            col_widths.append(2.0*inch)  # Description columns need more space
         elif col == 'worker_name':
-            col_widths.append(1.8*inch)  # Name columns need moderate space
+            col_widths.append(1.4*inch)  # Name columns need moderate space
+        elif col == 'job_code':
+            col_widths.append(1.0*inch)  # Job codes are moderately sized
+        elif col == 'activity':
+            col_widths.append(1.3*inch)  # Activity names need moderate space
+        elif col == 'trade_category':
+            col_widths.append(1.0*inch)  # Trade categories are short
         else:
-            col_widths.append(1.5*inch)  # Default width for other columns
+            col_widths.append(1.2*inch)  # Default width for other columns
+    
+    # If total width exceeds available space, scale down proportionally
+    total_width = sum(col_widths)
+    if total_width > available_width:
+        scale_factor = available_width / total_width
+        col_widths = [width * scale_factor for width in col_widths]
     
     # Create the table with specified widths
     table = Table(table_data, colWidths=col_widths)
