@@ -570,6 +570,148 @@ def generate_job_cost_pdf(data, title="Job Cost Report"):
     
     return pdf_data
 
+def generate_payroll_pdf(data, title="Payroll Report"):
+    """Generate a specialized PDF report for payroll with worker-centric layout."""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.units import inch
+    
+    # Create a buffer for the PDF
+    buffer = io.BytesIO()
+    
+    # Create the PDF document
+    doc = SimpleDocTemplate(
+        buffer, 
+        pagesize=letter,
+        leftMargin=0.5*inch,
+        rightMargin=0.5*inch,
+        topMargin=0.5*inch,
+        bottomMargin=0.5*inch
+    )
+    
+    # Get styles
+    styles = getSampleStyleSheet()
+    title_style = styles['Heading1'].clone('CustomTitle')
+    title_style.alignment = 1  # Center
+    title_style.fontSize = 16
+    title_style.spaceAfter = 12
+    
+    worker_style = styles['Heading2'].clone('WorkerHeader')
+    worker_style.fontSize = 14
+    worker_style.spaceAfter = 6
+    
+    # Group data by worker, then by project
+    workers = {}
+    
+    for row in data:
+        worker_name = row['worker_name']
+        project = row['job_description']
+        
+        if worker_name not in workers:
+            workers[worker_name] = {}
+        
+        if project not in workers[worker_name]:
+            workers[worker_name][project] = []
+        
+        workers[worker_name][project].append(row)
+    
+    # Build PDF elements
+    elements = []
+    
+    # Add title
+    elements.append(Paragraph(title, title_style))
+    elements.append(Paragraph(f"Generated: {datetime.now().strftime('%m/%d/%Y %H:%M:%S')}", styles['Normal']))
+    elements.append(Spacer(1, 12))
+    
+    # Process each worker
+    worker_count = 0
+    for worker_name in sorted(workers.keys()):
+        worker_count += 1
+        
+        # Start new page for each worker (except first)
+        if worker_count > 1:
+            elements.append(PageBreak())
+        
+        # Add worker header
+        elements.append(Paragraph(worker_name, worker_style))
+        elements.append(Spacer(1, 6))
+        
+        worker_total_hours = 0
+        
+        # Process each project for this worker
+        for project in sorted(workers[worker_name].keys()):
+            project_entries = workers[worker_name][project]
+            project_total_hours = 0
+            
+            # Create table data for this project
+            project_table_data = []
+            
+            for entry in project_entries:
+                hours = float(entry['hours'])
+                project_total_hours += hours
+                
+                # Format date
+                formatted_date = entry['date'].strftime('%m/%d/%Y') if hasattr(entry['date'], 'strftime') else str(entry['date'])
+                
+                # Approved status
+                approved_status = "Yes" if entry['approved'] else "No"
+                
+                project_table_data.append([
+                    f"    {formatted_date}",  # Indented
+                    f"    {project}",       # Indented
+                    f"    {entry['activity']}",  # Indented
+                    f"    {hours:.2f}",     # Indented
+                    f"    {approved_status}" # Indented
+                ])
+            
+            # Add project subtotal
+            project_table_data.append([
+                f"    Project Total:",
+                "",
+                "",
+                f"    {project_total_hours:.2f}",
+                ""
+            ])
+            
+            # Create table without grid
+            project_table = Table(project_table_data, colWidths=[1.5*inch, 2.5*inch, 2*inch, 1*inch, 1*inch])
+            project_table.setStyle(TableStyle([
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),  # Project total row
+                ('SPACEAFTER', (0, 0), (-1, -1), 2),
+            ]))
+            
+            elements.append(project_table)
+            elements.append(Spacer(1, 6))
+            
+            worker_total_hours += project_total_hours
+        
+        # Add worker total
+        worker_total_data = [[f"WORKER TOTAL: {worker_total_hours:.2f} hours", "", "", "", ""]]
+        worker_total_table = Table(worker_total_data, colWidths=[1.5*inch, 2.5*inch, 2*inch, 1*inch, 1*inch])
+        worker_total_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('BACKGROUND', (0, 0), (-1, -1), colors.lightgrey),
+        ]))
+        
+        elements.append(worker_total_table)
+        elements.append(Spacer(1, 20))
+    
+    # Build PDF
+    doc.build(elements)
+    buffer.seek(0)
+    
+    pdf_data = buffer.getvalue()
+    buffer.close()
+    
+    return pdf_data
+
 def generate_payroll_csv(data, title="Payroll Report"):
     """Generate a specialized QuickBooks-compatible payroll CSV report."""
     output = io.StringIO()

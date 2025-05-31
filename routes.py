@@ -2513,9 +2513,11 @@ def generate_reports():
                 f"DEBUG: Generating PDF report - format explicitly set to: {report_format}"
             )
 
-            # Generate PDF report - use specialized function for job cost reports
+            # Generate PDF report - use specialized functions for different report types
             if report_type == 'job_cost':
                 pdf_buffer = utils.generate_job_cost_pdf(data_dicts, title=report_title)
+            elif report_type == 'payroll':
+                pdf_buffer = utils.generate_payroll_pdf(data_dicts, title=report_title)
             else:
                 pdf_buffer = utils.generate_pdf_report(data_dicts,
                                                        columns,
