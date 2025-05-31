@@ -672,9 +672,12 @@ def generate_payroll_pdf(data, title="Payroll Report"):
                 # Approved status
                 approved_status = "Yes" if entry['approved'] else "No"
                 
+                # Limit project name to 35 characters
+                display_project = project if len(project) <= 35 else project[:35] + "..."
+                
                 project_table_data.append([
                     f"    {formatted_date}",  # Indented
-                    f"    {project}",       # Indented
+                    f"    {display_project}",       # Indented
                     f"    {entry['activity']}",  # Indented
                     f"    {hours:.2f}",     # Indented
                     f"    {approved_status}" # Indented
@@ -705,7 +708,7 @@ def generate_payroll_pdf(data, title="Payroll Report"):
             worker_total_hours += project_total_hours
         
         # Add worker total
-        worker_total_data = [[f"WORKER TOTAL: {worker_total_hours:.2f} hours", "", "", "", ""]]
+        worker_total_data = [[f"{worker_name.upper()} TOTAL: {worker_total_hours:.2f} hours", "", "", "", ""]]
         worker_total_table = Table(worker_total_data, colWidths=[1.5*inch, 2.5*inch, 2*inch, 1*inch, 1*inch])
         worker_total_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
