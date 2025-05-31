@@ -638,6 +638,20 @@ def generate_payroll_pdf(data, title="Payroll Report"):
         elements.append(Paragraph(worker_name, worker_style))
         elements.append(Spacer(1, 6))
         
+        # Add column headers
+        header_data = [["    Date", "    Project", "    Activity", "    Hours", "    Approved"]]
+        header_table = Table(header_data, colWidths=[1.5*inch, 2.5*inch, 2*inch, 1*inch, 1*inch])
+        header_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('BACKGROUND', (0, 0), (-1, -1), colors.lightgrey),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ]))
+        
+        elements.append(header_table)
+        elements.append(Spacer(1, 3))
+        
         worker_total_hours = 0
         
         # Process each project for this worker
