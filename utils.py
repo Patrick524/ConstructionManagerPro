@@ -577,9 +577,31 @@ def generate_payroll_pdf(data, title="Payroll Report"):
     from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
     from reportlab.lib.styles import getSampleStyleSheet
     from reportlab.lib.units import inch
+    from datetime import datetime
     
     # Create a buffer for the PDF
     buffer = io.BytesIO()
+    
+    def add_header_footer(canvas, doc):
+        """Add header and footer to each page"""
+        canvas.saveState()
+        
+        # Header
+        canvas.setFont('Helvetica-Bold', 14)
+        canvas.drawString(0.5*inch, letter[1] - 0.3*inch, title)
+        canvas.setFont('Helvetica', 10)
+        canvas.drawRightString(letter[0] - 0.5*inch, letter[1] - 0.3*inch, 
+                              f"Generated: {datetime.now().strftime('%m/%d/%Y %H:%M:%S')}")
+        
+        # Draw line under header
+        canvas.setStrokeColor(colors.black)
+        canvas.line(0.5*inch, letter[1] - 0.35*inch, letter[0] - 0.5*inch, letter[1] - 0.35*inch)
+        
+        # Footer with page number
+        canvas.setFont('Helvetica', 9)
+        canvas.drawCentredString(letter[0]/2, 0.3*inch, f"Page {doc.page}")
+        
+        canvas.restoreState()
     
     # Create the PDF document
     doc = SimpleDocTemplate(
@@ -587,8 +609,8 @@ def generate_payroll_pdf(data, title="Payroll Report"):
         pagesize=letter,
         leftMargin=0.5*inch,
         rightMargin=0.5*inch,
-        topMargin=0.5*inch,
-        bottomMargin=0.5*inch
+        topMargin=0.75*inch,  # More space for header
+        bottomMargin=0.75*inch  # More space for footer
     )
     
     # Get styles
@@ -619,11 +641,6 @@ def generate_payroll_pdf(data, title="Payroll Report"):
     
     # Build PDF elements
     elements = []
-    
-    # Add title
-    elements.append(Paragraph(title, title_style))
-    elements.append(Paragraph(f"Generated: {datetime.now().strftime('%m/%d/%Y %H:%M:%S')}", styles['Normal']))
-    elements.append(Spacer(1, 12))
     
     # Process each worker
     worker_count = 0
@@ -720,8 +737,8 @@ def generate_payroll_pdf(data, title="Payroll Report"):
         elements.append(worker_total_table)
         elements.append(Spacer(1, 20))
     
-    # Build PDF
-    doc.build(elements)
+    # Build PDF with header/footer function
+    doc.build(elements, onFirstPage=add_header_footer, onLaterPages=add_header_footer)
     buffer.seek(0)
     
     pdf_data = buffer.getvalue()
