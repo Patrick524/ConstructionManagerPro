@@ -586,20 +586,18 @@ def generate_payroll_pdf(data, title="Payroll Report"):
         """Add header and footer to each page"""
         canvas.saveState()
         
-        # Header
+        # Centered Header
         canvas.setFont('Helvetica-Bold', 14)
-        canvas.drawString(0.5*inch, letter[1] - 0.3*inch, title)
-        canvas.setFont('Helvetica', 10)
-        canvas.drawRightString(letter[0] - 0.5*inch, letter[1] - 0.3*inch, 
-                              f"Generated: {datetime.now().strftime('%m/%d/%Y %H:%M:%S')}")
+        canvas.drawCentredString(letter[0]/2, letter[1] - 0.3*inch, title)
         
-        # Draw line under header
-        canvas.setStrokeColor(colors.black)
-        canvas.line(0.5*inch, letter[1] - 0.35*inch, letter[0] - 0.5*inch, letter[1] - 0.35*inch)
-        
-        # Footer with page number
+        # Footer with page number (center) and date/time (right)
         canvas.setFont('Helvetica', 9)
         canvas.drawCentredString(letter[0]/2, 0.3*inch, f"Page {doc.page}")
+        
+        # Date/time in smaller font at bottom right
+        canvas.setFont('Helvetica', 7)
+        canvas.drawRightString(letter[0] - 0.5*inch, 0.3*inch, 
+                              f"{datetime.now().strftime('%m/%d/%Y %H:%M:%S')}")
         
         canvas.restoreState()
     
