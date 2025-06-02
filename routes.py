@@ -2531,7 +2531,9 @@ def generate_reports():
             if is_preview:
                 from flask import Response
                 # The PDF functions return raw bytes data
-                return Response(pdf_buffer, mimetype='application/pdf')
+                response = Response(pdf_buffer, mimetype='application/pdf')
+                response.headers['Content-Disposition'] = f'inline; filename="{filename}"'
+                return response
 
             # Check if we should email the report
             if delivery_method == 'email':
