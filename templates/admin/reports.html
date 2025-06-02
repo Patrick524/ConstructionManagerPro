@@ -443,8 +443,42 @@
             // Hide loading spinner and show PDF
             document.getElementById('pdfLoadingSpinner').style.display = 'none';
             const pdfViewer = document.getElementById('pdfViewer');
+            
+            // Try iframe first, fallback to object tag if blocked
             pdfViewer.src = pdfUrl;
             pdfViewer.style.display = 'block';
+            
+            // Handle iframe load errors (PDF blocked)
+            pdfViewer.onerror = function() {
+                // If iframe fails, try opening in new tab
+                window.open(pdfUrl, '_blank');
+                
+                // Show alternative options in modal
+                pdfViewer.style.display = 'none';
+                document.getElementById('pdfLoadingSpinner').innerHTML = `
+                    <div class="alert alert-info">
+                        <h5><i class="fas fa-external-link-alt me-2"></i>PDF Opened in New Tab</h5>
+                        <p>The PDF preview opened in a new browser tab. If it didn't open automatically:</p>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <button type="button" class="btn btn-primary" onclick="window.open('${pdfUrl}', '_blank')">
+                                <i class="fas fa-external-link-alt me-2"></i>Open in New Tab
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="downloadCurrentReport()">
+                                <i class="fas fa-download me-2"></i>Download PDF
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('pdfLoadingSpinner').style.display = 'block';
+            };
+            
+            // Also check if iframe loads successfully after a short delay
+            setTimeout(() => {
+                if (pdfViewer.contentDocument === null || pdfViewer.contentDocument === undefined) {
+                    // Iframe didn't load properly, trigger the fallback
+                    pdfViewer.onerror();
+                }
+            }, 2000);
         })
         .catch(error => {
             console.error('Error generating preview:', error);
