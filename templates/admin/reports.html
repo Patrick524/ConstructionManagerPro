@@ -401,8 +401,8 @@
         }
         
         // Global variables for report management
-        let currentReportBlob = null;
-        let currentReportFilename = null;
+        window.currentReportBlob = null;
+        window.currentReportFilename = null;
     });
     
     // Preview report function
@@ -429,7 +429,7 @@
                 if (contentDisposition) {
                     const matches = contentDisposition.match(/filename="(.+)"/);
                     if (matches) {
-                        currentReportFilename = matches[1];
+                        window.currentReportFilename = matches[1];
                     }
                 }
                 return response.blob();
@@ -437,7 +437,7 @@
             throw new Error('Failed to generate preview');
         })
         .then(blob => {
-            currentReportBlob = blob;
+            window.currentReportBlob = blob;
             const pdfUrl = URL.createObjectURL(blob);
             
             // Hide loading spinner and show PDF
@@ -459,17 +459,17 @@
     
     // Download current report from modal
     function downloadCurrentReport() {
-        if (currentReportBlob && currentReportFilename) {
-            const url = URL.createObjectURL(currentReportBlob);
+        if (window.currentReportBlob && window.currentReportFilename) {
+            const url = URL.createObjectURL(window.currentReportBlob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = currentReportFilename;
+            a.download = window.currentReportFilename;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         }
-    });
+    }
     
     function selectReportType(type) {
         const reportTypeSelect = document.getElementById('report_type');
