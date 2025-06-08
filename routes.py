@@ -130,7 +130,8 @@ def login():
 
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
+        email = form.email.data.lower() if form.email.data else ''
+        user = User.query.filter_by(email=email).first()
         if user and user.check_password(form.password.data):
             login_user(user)
             next_page = request.args.get('next')
@@ -175,8 +176,9 @@ def register():
 
     form = RegistrationForm()
     if form.validate_on_submit():
+        email = form.email.data.lower() if form.email.data else ''
         user = User(name=form.name.data,
-                    email=form.email.data,
+                    email=email,
                     role=form.role.data)
         user.set_password(form.password.data)
         db.session.add(user)

@@ -78,7 +78,8 @@ class RegistrationForm(FlaskForm):
     submit = SubmitField('Register')
     
     def validate_email(self, email):
-        user = User.query.filter_by(email=email.data).first()
+        email_val = email.data.lower() if email.data else ''
+        user = User.query.filter_by(email=email_val).first()
         if user:
             raise ValidationError('Email already registered. Please use a different email.')
 
