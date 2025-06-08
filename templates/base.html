@@ -21,11 +21,90 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
     
+    <style>
+        /* Responsive navbar and content spacing */
+        body {
+            padding-top: 76px; /* Default navbar height */
+        }
+        
+        .main-content {
+            padding-top: 20px;
+        }
+        
+        .flash-messages-container {
+            position: relative;
+            z-index: 1000;
+            margin-bottom: 20px;
+        }
+        
+        .flash-messages-container .alert {
+            border-left: 4px solid;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-weight: 500;
+        }
+        
+        .alert-danger {
+            border-left-color: var(--bs-danger) !important;
+        }
+        
+        .alert-warning {
+            border-left-color: var(--bs-warning) !important;
+        }
+        
+        .alert-success {
+            border-left-color: var(--bs-success) !important;
+        }
+        
+        .alert-info {
+            border-left-color: var(--bs-info) !important;
+        }
+        
+        /* Mobile responsive adjustments */
+        @media (max-width: 991.98px) {
+            body {
+                padding-top: 85px; /* Slightly more space for mobile navbar */
+            }
+            
+            .main-content {
+                padding-top: 15px;
+            }
+            
+            .flash-messages-container {
+                margin-bottom: 15px;
+            }
+            
+            .flash-messages-container .alert {
+                padding: 12px 15px;
+                font-size: 14px;
+                margin-bottom: 10px;
+            }
+        }
+        
+        /* Small mobile devices */
+        @media (max-width: 575.98px) {
+            body {
+                padding-top: 90px; /* Extra space for smaller screens */
+            }
+            
+            .flash-messages-container .alert {
+                padding: 10px 12px;
+                font-size: 13px;
+                border-radius: 4px;
+            }
+        }
+        
+        /* Ensure navbar is properly positioned */
+        .navbar {
+            z-index: 1030;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+    
     {% block extra_css %}{% endblock %}
 </head>
 <body{% if current_user.is_authenticated and current_user.is_worker() %} class="worker-view"{% elif request.endpoint == 'manage_activities' %} class="activities-page"{% endif %}>
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('login') }}">
                 <i class="fas fa-hard-hat me-2"></i>Construction Timesheet
@@ -147,16 +226,30 @@
     </nav>
     
     <!-- Main Content -->
-    <div class="container">
+    <div class="container main-content">
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
+                <div class="flash-messages-container" style="position: relative; z-index: 1000; margin-bottom: 20px;">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert" 
+                             style="border-left: 4px solid var(--bs-{{ category }});">
+                            <strong>
+                                {% if category == 'danger' %}
+                                    <i class="fas fa-exclamation-triangle me-2"></i>Error:
+                                {% elif category == 'warning' %}
+                                    <i class="fas fa-exclamation-circle me-2"></i>Warning:
+                                {% elif category == 'success' %}
+                                    <i class="fas fa-check-circle me-2"></i>Success:
+                                {% elif category == 'info' %}
+                                    <i class="fas fa-info-circle me-2"></i>Info:
+                                {% endif %}
+                            </strong>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
             {% endif %}
         {% endwith %}
         
