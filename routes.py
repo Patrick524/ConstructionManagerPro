@@ -158,7 +158,7 @@ def login():
             else:
                 return redirect(url_for('admin_dashboard'))
         else:
-            flash('Login unsuccessful. Please check your email and password.',
+            flash('Incorrect Email or Password. Please try again.',
                   'danger')
 
     # Ensure that errors are displayed if the form is submitted but invalid
