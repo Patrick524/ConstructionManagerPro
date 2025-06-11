@@ -1947,10 +1947,7 @@ def manage_jobs():
             job.status = form.status.data
             job.trade_type = form.trade_type.data
             # Handle foreman assignment
-            if form.foreman_id.data and form.foreman_id.data > 0:
-                job.foreman_id = form.foreman_id.data
-            else:
-                job.foreman_id = None
+            job.foreman_id = form.foreman_id.data if form.foreman_id.data else None
             flash('Job updated successfully!', 'success')
         else:
             # Create new job
@@ -1961,8 +1958,7 @@ def manage_jobs():
                       longitude=form.longitude.data,
                       status=form.status.data,
                       trade_type=form.trade_type.data,
-                      foreman_id=form.foreman_id.data if form.foreman_id.data
-                      and form.foreman_id.data > 0 else None)
+                      foreman_id=form.foreman_id.data if form.foreman_id.data else None)
             db.session.add(job)
 
             # Assign all workers to this new job
