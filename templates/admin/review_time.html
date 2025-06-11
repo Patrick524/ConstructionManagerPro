@@ -165,16 +165,16 @@
                                                            {{ 'disabled' if worker_data.is_approved else '' }}
                                                            title="{{ 'Approved' if worker_data.is_approved else 'Review timesheet' }}">
                                                             {% if worker_data.is_approved %}
-                                                                <i class="fas fa-check"></i>
+                                                                <i class="fas fa-check me-1"></i>Approved
                                                             {% else %}
-                                                                <i class="fas fa-clipboard-check"></i>
+                                                                <i class="fas fa-clipboard-check me-1"></i>Review
                                                             {% endif %}
                                                         </a>
                                                         <a href="{{ url_for('foreman_enter_time', job_id=job_item.job.id, user_id=worker_data.worker.id, week_start=start_date.strftime('%Y-%m-%d')) }}" 
                                                            class="btn btn-sm btn-outline-secondary"
                                                            {{ 'disabled' if worker_data.is_approved else '' }}
                                                            title="Enter time for this worker">
-                                                            <i class="fas fa-clock"></i>
+                                                            <i class="fas fa-clock me-1"></i>Enter Time
                                                         </a>
                                                     </div>
                                                 </td>
