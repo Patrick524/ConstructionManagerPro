@@ -157,16 +157,16 @@ class JobForm(FlaskForm):
         ('masonry', 'Masonry'),
         ('other', 'Other')
     ], validators=[DataRequired()])
-    foreman_id = SelectField('Assign Foreman', coerce=int, validators=[Optional()])
+    foreman_id = SelectField('Assign Foreman', coerce=lambda x: int(x) if x else None, validators=[Optional()])
     submit = SubmitField('Save Job')
     
     def __init__(self, *args, **kwargs):
         super(JobForm, self).__init__(*args, **kwargs)
         from models import User
         
-        # Populate foreman choices
+        # Populate foreman choices - include "Unassigned" option
         foremen = User.query.filter_by(role='foreman').all()
-        self.foreman_id.choices = [(0, '-- Select Foreman --')] + [(f.id, f.name) for f in foremen]
+        self.foreman_id.choices = [('', 'Unassigned')] + [(f.id, f.name) for f in foremen]
 
 class TradeForm(FlaskForm):
     """Form for creating/editing trades"""

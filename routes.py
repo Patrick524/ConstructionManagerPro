@@ -1988,7 +1988,7 @@ def manage_jobs():
         form.longitude.data = job.longitude
         form.status.data = job.status
         form.trade_type.data = job.trade_type
-        form.foreman_id.data = job.foreman_id if job.foreman_id else 0
+        form.foreman_id.data = job.foreman_id if job.foreman_id else ''
 
     # Get jobs filtered by status if specified
     status_filter = request.args.get('status_filter', 'active')

@@ -948,8 +948,8 @@
             .then(data => {
                 description.textContent = data.description;
 
-                if (foremanContainer && data.foreman_name) {
-                    foreman.textContent = data.foreman_name;
+                if (foremanContainer) {
+                    foreman.textContent = data.foreman_name || 'Unassigned';
                     foremanContainer.classList.remove('d-none');
                 }
 
