@@ -1463,9 +1463,15 @@ def foreman_enter_time(job_id, user_id):
             f'Time entries for {worker.name} on {job.job_code} successfully saved!',
             'success')
         # Pass the week_start to maintain the selected date when redirecting
-        return redirect(
-            url_for('foreman_dashboard',
-                    start_date=week_start.strftime('%m/%d/%Y')))
+        # Check if current user is admin and redirect appropriately
+        if current_user.is_admin():
+            return redirect(
+                url_for('admin_review_time',
+                        start_date=week_start.strftime('%Y-%m-%d')))
+        else:
+            return redirect(
+                url_for('foreman_dashboard',
+                        start_date=week_start.strftime('%m/%d/%Y')))
 
     # Initialize for template context
     existing_entries = []
@@ -1578,7 +1584,7 @@ def foreman_enter_time(job_id, user_id):
 @app.route('/foreman/approve/<int:job_id>/<int:user_id>',
            methods=['GET', 'POST'])
 @login_required
-@foreman_required
+@foreman_or_admin_required
 def approve_timesheet(job_id, user_id):
     # Get the worker and job
     worker = User.query.get_or_404(user_id)
@@ -1645,9 +1651,15 @@ def approve_timesheet(job_id, user_id):
             f'This week was already approved by {existing_approval.approver.name} on {existing_approval.approved_at.strftime("%m/%d/%Y %H:%M")}',
             'warning')
         # Pass the week_start to maintain the selected date when redirecting
-        return redirect(
-            url_for('foreman_dashboard',
-                    start_date=week_start.strftime('%m/%d/%Y')))
+        # Check if current user is admin and redirect appropriately
+        if current_user.is_admin():
+            return redirect(
+                url_for('admin_review_time',
+                        start_date=week_start.strftime('%Y-%m-%d')))
+        else:
+            return redirect(
+                url_for('foreman_dashboard',
+                        start_date=week_start.strftime('%m/%d/%Y')))
 
     # Get all time entries for the week
     entries = TimeEntry.query.filter(
@@ -1686,9 +1698,15 @@ def approve_timesheet(job_id, user_id):
             f'Timesheet for {worker.name} on job {job.job_code} successfully approved!',
             'success')
         # Pass the week_start to maintain the selected date when redirecting
-        return redirect(
-            url_for('foreman_dashboard',
-                    start_date=week_start.strftime('%m/%d/%Y')))
+        # Check if current user is admin and redirect appropriately
+        if current_user.is_admin():
+            return redirect(
+                url_for('admin_review_time',
+                        start_date=week_start.strftime('%Y-%m-%d')))
+        else:
+            return redirect(
+                url_for('foreman_dashboard',
+                        start_date=week_start.strftime('%m/%d/%Y')))
 
     # Group entries by date for display
     entries_by_date = {}
