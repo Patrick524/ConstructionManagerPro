@@ -11,9 +11,15 @@
     </div>
     <div class="col-md-4">
         <div class="d-flex justify-content-md-end align-items-center h-100">
-            <a href="{{ url_for('foreman_dashboard', start_date=week_start.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-            </a>
+            {% if current_user.is_admin() %}
+                <a href="{{ url_for('admin_review_time', start_date=week_start.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Review Time
+                </a>
+            {% else %}
+                <a href="{{ url_for('foreman_dashboard', start_date=week_start.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -54,9 +60,15 @@
                             <button type="submit" class="btn btn-primary btn-lg me-2">
                                 <i class="fas fa-clipboard-check me-2"></i>Approve Timesheet
                             </button>
-                            <a href="{{ url_for('foreman_dashboard', start_date=week_start.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-lg">
-                                Cancel
-                            </a>
+                            {% if current_user.is_admin() %}
+                                <a href="{{ url_for('admin_review_time', start_date=week_start.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-lg">
+                                    Cancel
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('foreman_dashboard', start_date=week_start.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-lg">
+                                    Cancel
+                                </a>
+                            {% endif %}
                         </div>
                     </form>
                 </div>
