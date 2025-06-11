@@ -1763,9 +1763,17 @@ def admin_review_time():
     if not show_all_jobs:
         # Default: Show only unassigned jobs (foreman_id is None)
         entries_query = entries_query.filter(Job.foreman_id.is_(None))
+        print(f"DEBUG: Admin review time - filtering for unassigned jobs only")
+    else:
+        print(f"DEBUG: Admin review time - showing all jobs")
 
     # Get all entries and group by job and user
     entries = entries_query.order_by(TimeEntry.date, Job.job_code, User.name).all()
+    print(f"DEBUG: Admin review time - found {len(entries)} time entries for date range {start_date} to {end_date}")
+    
+    # Debug: Show first few entries
+    for i, entry in enumerate(entries[:5]):
+        print(f"DEBUG: Entry {i+1}: Job {entry.job.job_code} (foreman_id={entry.job.foreman_id}), Worker {entry.user.name}, Date {entry.date}, Hours {entry.hours}")
 
     # Group entries by job for display
     job_data = {}
