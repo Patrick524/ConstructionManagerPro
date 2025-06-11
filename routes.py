@@ -1754,7 +1754,8 @@ def admin_review_time():
     print(f"DEBUG: Admin review time - final date range: {start_date} to {end_date}, week_offset: {week_offset}")
 
     # Query for time entries within the date range
-    entries_query = TimeEntry.query.join(Job).join(User).filter(
+    # Use explicit joins to ensure we get the relationships loaded properly
+    entries_query = TimeEntry.query.join(Job, TimeEntry.job_id == Job.id).join(User, TimeEntry.user_id == User.id).filter(
         TimeEntry.date >= start_date,
         TimeEntry.date <= end_date
     )
@@ -1767,6 +1768,9 @@ def admin_review_time():
     else:
         print(f"DEBUG: Admin review time - showing all jobs")
 
+    # Print the SQL query for debugging
+    print(f"DEBUG: SQL Query: {str(entries_query.statement.compile(compile_kwargs={'literal_binds': True}))}")
+
     # Get all entries and group by job and user
     entries = entries_query.order_by(TimeEntry.date, Job.job_code, User.name).all()
     print(f"DEBUG: Admin review time - found {len(entries)} time entries for date range {start_date} to {end_date}")
@@ -1774,6 +1778,15 @@ def admin_review_time():
     # Debug: Show first few entries
     for i, entry in enumerate(entries[:5]):
         print(f"DEBUG: Entry {i+1}: Job {entry.job.job_code} (foreman_id={entry.job.foreman_id}), Worker {entry.user.name}, Date {entry.date}, Hours {entry.hours}")
+        
+    # Also check what jobs exist in the date range
+    all_jobs_in_range = Job.query.join(TimeEntry, Job.id == TimeEntry.job_id).filter(
+        TimeEntry.date >= start_date,
+        TimeEntry.date <= end_date
+    ).distinct().all()
+    print(f"DEBUG: Jobs with time entries in date range:")
+    for job in all_jobs_in_range:
+        print(f"DEBUG: Job {job.job_code} - foreman_id: {job.foreman_id}")
 
     # Group entries by job for display
     job_data = {}
