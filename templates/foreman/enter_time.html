@@ -18,9 +18,15 @@
     </div>
     <div class="col-md-4">
         <div class="d-flex justify-content-md-end align-items-center h-100">
-            <a href="{{ url_for('foreman_dashboard') }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
-            </a>
+            {% if current_user.is_admin() %}
+                <a href="{{ url_for('admin_review_time') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Review Time
+                </a>
+            {% else %}
+                <a href="{{ url_for('foreman_dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                </a>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -163,9 +169,15 @@
             </div>
             
             <div class="d-flex justify-content-between align-items-center mt-4">
-                <a href="{{ url_for('foreman_dashboard') }}" class="btn btn-secondary">
-                    <i class="fas fa-times me-1"></i> Cancel
-                </a>
+                {% if current_user.is_admin() %}
+                    <a href="{{ url_for('admin_review_time') }}" class="btn btn-secondary">
+                        <i class="fas fa-times me-1"></i> Cancel
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('foreman_dashboard') }}" class="btn btn-secondary">
+                        <i class="fas fa-times me-1"></i> Cancel
+                    </a>
+                {% endif %}
                 {{ form.submit(class="btn btn-primary") }}
             </div>
         </form>
