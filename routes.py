@@ -107,6 +107,18 @@ def admin_required(f):
     return decorated_function
 
 
+def foreman_or_admin_required(f):
+    """Decorator that allows both foremen and admins to access the route"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not (current_user.is_foreman() or current_user.is_admin()):
+            flash('You do not have permission to access this page.', 'danger')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
 # Authentication routes
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/login', methods=['GET', 'POST'])
@@ -1283,7 +1295,7 @@ def foreman_dashboard():
 @app.route('/foreman/enter_time/<int:job_id>/<int:user_id>',
            methods=['GET', 'POST'])
 @login_required
-@foreman_required
+@foreman_or_admin_required
 def foreman_enter_time(job_id, user_id):
     """Allow foremen to enter time on behalf of a worker"""
     print(f"DEBUG: foreman_enter_time called - method={request.method}, job_id={job_id}, user_id={user_id}")
