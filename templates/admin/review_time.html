@@ -159,18 +159,19 @@
                                                     {% endif %}
                                                 </td>
                                                 <td>
-                                                    <div class="btn-group btn-group-sm" role="group">
+                                                    <div class="d-flex gap-1">
                                                         <a href="{{ url_for('approve_timesheet', job_id=job_item.job.id, user_id=worker_data.worker.id, start_date=start_date.strftime('%Y-%m-%d')) }}" 
-                                                           class="btn {{ 'btn-primary' if worker_data.has_all_days and not worker_data.is_approved else 'btn-outline-secondary' }}"
-                                                           {{ 'disabled' if worker_data.is_approved else '' }}>
+                                                           class="btn btn-sm {{ 'btn-success' if worker_data.is_approved else 'btn-outline-primary' }}"
+                                                           {{ 'disabled' if worker_data.is_approved else '' }}
+                                                           title="{{ 'Approved' if worker_data.is_approved else 'Review timesheet' }}">
                                                             {% if worker_data.is_approved %}
-                                                                <i class="fas fa-check me-1"></i> Approved
+                                                                <i class="fas fa-check"></i>
                                                             {% else %}
-                                                                <i class="fas fa-clipboard-check me-1"></i> Review
+                                                                <i class="fas fa-clipboard-check"></i>
                                                             {% endif %}
                                                         </a>
                                                         <a href="{{ url_for('foreman_enter_time', job_id=job_item.job.id, user_id=worker_data.worker.id, week_start=start_date.strftime('%Y-%m-%d')) }}" 
-                                                           class="btn btn-outline-info"
+                                                           class="btn btn-sm btn-outline-secondary"
                                                            {{ 'disabled' if worker_data.is_approved else '' }}
                                                            title="Enter time for this worker">
                                                             <i class="fas fa-clock"></i>
