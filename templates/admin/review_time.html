@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}Review Time - Construction Timesheet{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Custom styles for admin review time page */
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Week navigation bar - Fixed position at top-14px (just below header) -->
+<nav id="week-nav" 
+     class="flex justify-center gap-6 text-sm"
+     style="position: fixed; top: 56px; left: 0; width: 100%; z-index: 1045; 
+           background-color: rgba(15,23,42,0.95); backdrop-filter: blur(4px);
+           border-bottom: 1px solid #374151; padding: 8px 0;
+           transition: top 0.3s ease-in-out;">
+    <div class="btn-group" role="group">
+        <button id="prev-week" class="btn btn-outline-secondary">
+            <i class="fas fa-chevron-left"></i> Previous Week
+        </button>
+        <button id="current-week" class="btn btn-outline-primary">
+            Current Week
+        </button>
+        <button id="next-week" class="btn btn-outline-secondary">
+            Next Week <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
+</nav>
+
+<div class="container-fluid pt-0" id="main-content">
+<div class="row mb-2">
+    <div class="col-md-8">
+        <h1 class="page-title mb-2 pb-2">
+            <i class="fas fa-clipboard-check text-primary me-2"></i>Review Time
+        </h1>
+    </div>
+</div>
+
+<div class="row mb-2">
+    <div class="col-12">
+        <div class="alert alert-info py-2" role="alert" data-current-week-start="{{ start_date.strftime('%Y-%m-%d') }}">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="far fa-calendar-alt me-2"></i>
+                    <strong>Week of:</strong> {{ start_date.strftime('%b %d, %Y') }} - {{ end_date.strftime('%b %d, %Y') }}
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="showAllJobs" 
+                               {% if show_all_jobs %}checked{% endif %}
+                               onchange="toggleShowAllJobs()">
+                        <label class="form-check-label" for="showAllJobs">
+                            Show All Jobs
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Time entries by job -->
+{% if job_data %}
+    {% for job_id, job_info in job_data.items() %}
+    <div class="card mb-3 border-0 shadow-sm">
+        <div class="card-header bg-light border-0 py-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <h5 class="mb-0 me-3">
+                        <i class="fas fa-building text-primary me-2"></i>
+                        {{ job_info.job.job_code }} - {{ job_info.job.description }}
+                    </h5>
+                    {% if job_info.is_unassigned %}
+                        <span class="badge bg-warning text-dark">
+                            <i class="fas fa-exclamation-triangle me-1"></i>Unassigned
+                        </span>
+                    {% else %}
+                        <span class="badge bg-success">
+                            <i class="fas fa-user-hard-hat me-1"></i>{{ job_info.job.foreman.name }}
+                        </span>
+                    {% endif %}
+                </div>
+                <div class="text-muted">
+                    <i class="fas fa-clock me-1"></i>
+                    <strong>{{ "%.1f"|format(job_info.total_hours) }} hours</strong>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-body p-0">
+            {% for worker_id, worker_info in job_info.workers.items() %}
+            <div class="border-bottom p-3 {% if loop.last %}border-0{% endif %}">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <h6 class="mb-1">
+                            <i class="fas fa-user text-secondary me-2"></i>
+                            {{ worker_info.user.name }}
+                        </h6>
+                        <small class="text-muted">{{ worker_info.user.email }}</small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-primary">
+                            {{ "%.1f"|format(worker_info.total_hours) }} hours
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Daily breakdown -->
+                <div class="row g-2 mt-2">
+                    {% set entries_by_date = {} %}
+                    {% for entry in worker_info.entries %}
+                        {% set date_key = entry.date.strftime('%Y-%m-%d') %}
+                        {% if date_key not in entries_by_date %}
+                            {% set _ = entries_by_date.update({date_key: []}) %}
+                        {% endif %}
+                        {% set _ = entries_by_date[date_key].append(entry) %}
+                    {% endfor %}
+                    
+                    {% for date_str, entries in entries_by_date.items() %}
+                        {% set entry_date = entries[0].date %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card card-body p-2 bg-light border-0">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong class="text-primary">{{ entry_date.strftime('%a %m/%d') }}</strong>
+                                    <span class="badge bg-secondary">
+                                        {{ "%.1f"|format(entries|sum(attribute='hours')) }}h
+                                    </span>
+                                </div>
+                                {% for entry in entries %}
+                                <div class="small text-muted mb-1">
+                                    <i class="fas fa-tools me-1"></i>
+                                    {{ entry.labor_activity.name }} - {{ "%.1f"|format(entry.hours) }}h
+                                    {% if entry.notes %}
+                                        <div class="text-muted mt-1" style="font-size: 0.8em;">
+                                            <i class="fas fa-sticky-note me-1"></i>{{ entry.notes }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Action buttons for this worker's timesheet -->
+                <div class="mt-3 pt-2 border-top">
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('foreman_enter_time', job_id=job_info.job.id, user_id=worker_info.user.id) }}" 
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit me-1"></i>Edit Time
+                        </a>
+                        <a href="{{ url_for('approve_timesheet', job_id=job_info.job.id, user_id=worker_info.user.id) }}" 
+                           class="btn btn-sm btn-success">
+                            <i class="fas fa-check me-1"></i>Approve
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-clock text-muted" style="font-size: 3rem;"></i>
+            <h4 class="text-muted mt-3">No Time Entries Found</h4>
+            <p class="text-muted">
+                {% if show_all_jobs %}
+                    No time entries found for this week across all jobs.
+                {% else %}
+                    No time entries found for unassigned jobs this week.
+                    <br>Try enabling "Show All Jobs" to see entries for all jobs.
+                {% endif %}
+            </p>
+        </div>
+    </div>
+{% endif %}
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize week navigation
+    const currentWeekStartElement = document.querySelector('[data-current-week-start]');
+    const currentWeekStart = currentWeekStartElement ? currentWeekStartElement.dataset.currentWeekStart : null;
+    
+    if (currentWeekStart) {
+        console.log("Week navigation initialized with start date: " + currentWeekStart);
+        
+        // Week navigation functionality
+        document.getElementById('prev-week').addEventListener('click', function() {
+            const currentDate = new Date(currentWeekStart);
+            const prevWeek = new Date(currentDate.getTime() - (7 * 24 * 60 * 60 * 1000));
+            const prevWeekStr = prevWeek.toISOString().split('T')[0];
+            
+            const url = new URL(window.location);
+            url.searchParams.set('start_date', prevWeekStr);
+            window.location.href = url.toString();
+        });
+        
+        document.getElementById('current-week').addEventListener('click', function() {
+            const url = new URL(window.location);
+            url.searchParams.delete('start_date');
+            url.searchParams.delete('week_offset');
+            window.location.href = url.toString();
+        });
+        
+        document.getElementById('next-week').addEventListener('click', function() {
+            const currentDate = new Date(currentWeekStart);
+            const nextWeek = new Date(currentDate.getTime() + (7 * 24 * 60 * 60 * 1000));
+            const nextWeekStr = nextWeek.toISOString().split('T')[0];
+            
+            const url = new URL(window.location);
+            url.searchParams.set('start_date', nextWeekStr);
+            window.location.href = url.toString();
+        });
+    }
+});
+
+function toggleShowAllJobs() {
+    const checkbox = document.getElementById('showAllJobs');
+    const url = new URL(window.location);
+    
+    if (checkbox.checked) {
+        url.searchParams.set('show_all_jobs', 'true');
+    } else {
+        url.searchParams.delete('show_all_jobs');
+    }
+    
+    window.location.href = url.toString();
+}
+</script>
+{% endblock %}

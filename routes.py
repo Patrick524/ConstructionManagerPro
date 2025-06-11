@@ -1710,6 +1710,94 @@ def approve_timesheet(job_id, user_id):
 
 
 # Admin routes
+@app.route('/admin/review-time')
+@login_required
+@admin_required
+def admin_review_time():
+    """Admin time review page - similar to foreman dashboard but for unassigned jobs"""
+    # Get date range parameters from query string
+    start_date_str = request.args.get('start_date')
+    week_offset_str = request.args.get('week_offset', '0')
+    show_all_jobs = request.args.get('show_all_jobs', 'false').lower() == 'true'
+
+    try:
+        week_offset = int(week_offset_str)
+    except ValueError:
+        week_offset = 0
+
+    # Initialize default values
+    today = date.today()
+    current_monday = get_week_start(today)
+    start_date = current_monday + timedelta(weeks=week_offset)
+    end_date = start_date + timedelta(days=6)
+
+    # If a specific start_date is provided, parse it and override the default
+    if start_date_str:
+        try:
+            if '/' in start_date_str:
+                parsed_date = datetime.strptime(start_date_str, '%m/%d/%Y').date()
+            elif '-' in start_date_str:
+                parsed_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            else:
+                parsed_date = None
+
+            if parsed_date:
+                # Align to Monday and override defaults
+                monday_date = get_week_start(parsed_date)
+                start_date = monday_date
+                end_date = monday_date + timedelta(days=6)
+                print(f"DEBUG: Admin review time - using provided date: {start_date} to {end_date}")
+        except ValueError:
+            # If parsing fails, keep the default values
+            print(f"DEBUG: Admin review time - date parsing failed, using defaults: {start_date} to {end_date}")
+
+    print(f"DEBUG: Admin review time - final date range: {start_date} to {end_date}, week_offset: {week_offset}")
+
+    # Query for time entries within the date range
+    entries_query = TimeEntry.query.join(Job).join(User).filter(
+        TimeEntry.date >= start_date,
+        TimeEntry.date <= end_date
+    )
+
+    # Apply job filter based on toggle
+    if not show_all_jobs:
+        # Default: Show only unassigned jobs (foreman_id is None)
+        entries_query = entries_query.filter(Job.foreman_id.is_(None))
+
+    # Get all entries and group by job and user
+    entries = entries_query.order_by(TimeEntry.date, Job.job_code, User.name).all()
+
+    # Group entries by job for display
+    job_data = {}
+    for entry in entries:
+        job_key = entry.job.id
+        if job_key not in job_data:
+            job_data[job_key] = {
+                'job': entry.job,
+                'workers': {},
+                'total_hours': 0,
+                'is_unassigned': entry.job.foreman_id is None
+            }
+
+        worker_key = entry.user.id
+        if worker_key not in job_data[job_key]['workers']:
+            job_data[job_key]['workers'][worker_key] = {
+                'user': entry.user,
+                'entries': [],
+                'total_hours': 0
+            }
+
+        job_data[job_key]['workers'][worker_key]['entries'].append(entry)
+        job_data[job_key]['workers'][worker_key]['total_hours'] += entry.hours
+        job_data[job_key]['total_hours'] += entry.hours
+
+    return render_template('admin/review_time.html',
+                           job_data=job_data,
+                           start_date=start_date,
+                           end_date=end_date,
+                           show_all_jobs=show_all_jobs)
+
+
 @app.route('/admin/dashboard')
 @login_required
 @admin_required
