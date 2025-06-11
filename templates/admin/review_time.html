@@ -4,7 +4,7 @@
 
 {% block extra_css %}
 <style>
-    /* Custom styles for admin review time page */
+    /* Custom styles for admin review time page, identical to foreman dashboard */
 </style>
 {% endblock %}
 
@@ -29,18 +29,18 @@
     </div>
 </nav>
 
-<div class="container-fluid pt-0" id="main-content">
-<div class="row mb-2">
+<div class="container-fluid pt-0" id="main-content"><!-- Uses CSS class to add proper margin top -->
+<div class="row mb-2"><!-- Reduced margin -->
     <div class="col-md-8">
-        <h1 class="page-title mb-2 pb-2">
+        <h1 class="page-title mb-2 pb-2"><!-- Reduced margins and padding -->
             <i class="fas fa-clipboard-check text-primary me-2"></i>Review Time
         </h1>
     </div>
 </div>
 
-<div class="row mb-2">
+<div class="row mb-2"><!-- Further reduced margin -->
     <div class="col-12">
-        <div class="alert alert-info py-2" role="alert" data-current-week-start="{{ start_date.strftime('%Y-%m-%d') }}">
+        <div class="alert alert-info py-2" role="alert" data-current-week-start="{{ start_date.strftime('%Y-%m-%d') }}"><!-- Reduced padding -->
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <i class="far fa-calendar-alt me-2"></i>
@@ -61,123 +61,151 @@
     </div>
 </div>
 
-<!-- Time entries by job -->
-{% if job_data %}
-    {% for job_id, job_info in job_data.items() %}
-    <div class="card mb-3 border-0 shadow-sm">
-        <div class="card-header bg-light border-0 py-2">
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center">
-                    <h5 class="mb-0 me-3">
-                        <i class="fas fa-building text-primary me-2"></i>
-                        {{ job_info.job.job_code }} - {{ job_info.job.description }}
-                    </h5>
-                    {% if job_info.is_unassigned %}
-                        <span class="badge bg-warning text-dark">
-                            <i class="fas fa-exclamation-triangle me-1"></i>Unassigned
-                        </span>
-                    {% else %}
-                        <span class="badge bg-success">
-                            <i class="fas fa-user-hard-hat me-1"></i>{{ job_info.job.foreman.name }}
-                        </span>
-                    {% endif %}
-                </div>
-                <div class="text-muted">
-                    <i class="fas fa-clock me-1"></i>
-                    <strong>{{ "%.1f"|format(job_info.total_hours) }} hours</strong>
-                </div>
-            </div>
-        </div>
-        
-        <div class="card-body p-0">
-            {% for worker_id, worker_info in job_info.workers.items() %}
-            <div class="border-bottom p-3 {% if loop.last %}border-0{% endif %}">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                        <h6 class="mb-1">
-                            <i class="fas fa-user text-secondary me-2"></i>
-                            {{ worker_info.user.name }}
-                        </h6>
-                        <small class="text-muted">{{ worker_info.user.email }}</small>
-                    </div>
-                    <div class="text-end">
-                        <span class="badge bg-primary">
-                            {{ "%.1f"|format(worker_info.total_hours) }} hours
-                        </span>
-                    </div>
-                </div>
-                
-                <!-- Daily breakdown -->
-                <div class="row g-2 mt-2">
-                    {% set entries_by_date = {} %}
-                    {% for entry in worker_info.entries %}
-                        {% set date_key = entry.date.strftime('%Y-%m-%d') %}
-                        {% if date_key not in entries_by_date %}
-                            {% set _ = entries_by_date.update({date_key: []}) %}
-                        {% endif %}
-                        {% set _ = entries_by_date[date_key].append(entry) %}
-                    {% endfor %}
-                    
-                    {% for date_str, entries in entries_by_date.items() %}
-                        {% set entry_date = entries[0].date %}
-                        <div class="col-md-6 col-lg-4">
-                            <div class="card card-body p-2 bg-light border-0">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <strong class="text-primary">{{ entry_date.strftime('%a %m/%d') }}</strong>
-                                    <span class="badge bg-secondary">
-                                        {{ "%.1f"|format(entries|sum(attribute='hours')) }}h
-                                    </span>
-                                </div>
-                                {% for entry in entries %}
-                                <div class="small text-muted mb-1">
-                                    <i class="fas fa-tools me-1"></i>
-                                    {{ entry.labor_activity.name }} - {{ "%.1f"|format(entry.hours) }}h
-                                    {% if entry.notes %}
-                                        <div class="text-muted mt-1" style="font-size: 0.8em;">
-                                            <i class="fas fa-sticky-note me-1"></i>{{ entry.notes }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                {% endfor %}
-                            </div>
+<div class="row mt-0">
+    <div class="col-12">
+        <div class="mt-14 flex flex-col gap-6">
+        {% if job_data %}
+            {% for job_item in job_data %}
+                {% if not job_item.workers %}
+                <!-- Compact card for empty jobs -->
+                <div class="card mb-2 approval-card empty-job trade-{{ job_item.job.trade_type }}">
+                    <div class="card-header py-2 approval-card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge trade-{{ job_item.job.trade_type }}">{{ job_item.job.trade_type|capitalize }}</span>
+                            {{ job_item.job.job_code }} - {{ job_item.job.description }}
+                            {% if job_item.is_unassigned %}
+                                <span class="badge bg-warning text-dark ms-2">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Unassigned
+                                </span>
+                            {% endif %}
+                            <small class="text-muted ms-3"><i class="fas fa-users-slash me-1"></i>No worker entries this week</small>
                         </div>
-                    {% endfor %}
-                </div>
-                
-                <!-- Action buttons for this worker's timesheet -->
-                <div class="mt-3 pt-2 border-top">
-                    <div class="d-flex gap-2">
-                        <a href="{{ url_for('foreman_enter_time', job_id=job_info.job.id, user_id=worker_info.user.id) }}" 
-                           class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-edit me-1"></i>Edit Time
-                        </a>
-                        <a href="{{ url_for('approve_timesheet', job_id=job_info.job.id, user_id=worker_info.user.id) }}" 
-                           class="btn btn-sm btn-success">
-                            <i class="fas fa-check me-1"></i>Approve
-                        </a>
+                        <span class="badge bg-secondary">0 Workers</span>
                     </div>
                 </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endfor %}
-{% else %}
-    <div class="card border-0 shadow-sm">
-        <div class="card-body text-center py-5">
-            <i class="fas fa-clock text-muted" style="font-size: 3rem;"></i>
-            <h4 class="text-muted mt-3">No Time Entries Found</h4>
-            <p class="text-muted">
-                {% if show_all_jobs %}
-                    No time entries found for this week across all jobs.
                 {% else %}
-                    No time entries found for unassigned jobs this week.
-                    <br>Try enabling "Show All Jobs" to see entries for all jobs.
+                <!-- Standard card for jobs with worker data -->
+                <div class="card mb-4 approval-card trade-{{ job_item.job.trade_type }}">
+                    <div class="card-header approval-card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge trade-{{ job_item.job.trade_type }}">{{ job_item.job.trade_type|capitalize }}</span>
+                            {{ job_item.job.job_code }} - {{ job_item.job.description }}
+                            {% if job_item.is_unassigned %}
+                                <span class="badge bg-warning text-dark ms-2">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Unassigned
+                                </span>
+                            {% endif %}
+                        </div>
+                        <span class="badge bg-info">{{ job_item.workers|length }} Workers</span>
+                    </div>
+
+                    <div class="card-body approval-card-body p-0">
+                        <div class="approval-table-container">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0 approval-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Worker</th>
+                                            <th>Hours</th>
+                                            <th>Days</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for worker_data in job_item.workers %}
+                                            <tr>
+                                                <td>
+                                                    {{ worker_data.worker.name }}
+                                                    {% if worker_data.has_notes %}
+                                                    <span class="ms-2 text-warning" title="Worker has notes">
+                                                        <i class="fas fa-sticky-note"></i>
+                                                    </span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ worker_data.total_hours }}</td>
+                                                <td>
+                                                    <div class="progress" style="height: 20px;">
+                                                        {% if worker_data.days_with_entries == 0 %}
+                                                            <div class="progress-bar bg-danger" 
+                                                                role="progressbar" 
+                                                                style="width: 100%;" 
+                                                                aria-valuenow="{{ worker_data.days_with_entries }}" 
+                                                                aria-valuemin="0" 
+                                                                aria-valuemax="7">
+                                                                {{ worker_data.days_with_entries }}/7
+                                                            </div>
+                                                        {% else %}
+                                                            <div class="progress-bar bg-{{ 'success' if worker_data.days_with_entries == 7 else 'warning' }}" 
+                                                                role="progressbar" 
+                                                                style="width: {{ (worker_data.days_with_entries / 7 * 100)|int }}%;" 
+                                                                aria-valuenow="{{ worker_data.days_with_entries }}" 
+                                                                aria-valuemin="0" 
+                                                                aria-valuemax="7">
+                                                                {{ worker_data.days_with_entries }}/7
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    {% if worker_data.is_approved %}
+                                                        <span class="badge bg-success">Approved</span>
+                                                    {% elif worker_data.has_all_days %}
+                                                        <span class="badge bg-primary">Ready for Approval</span>
+                                                    {% elif worker_data.days_with_entries > 0 and worker_data.days_with_entries < 5 %}
+                                                        <span class="badge bg-warning text-dark">Incomplete</span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">Pending</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <a href="{{ url_for('approve_timesheet', job_id=job_item.job.id, user_id=worker_data.worker.id, start_date=start_date.strftime('%Y-%m-%d')) }}" 
+                                                           class="btn {{ 'btn-primary' if worker_data.has_all_days and not worker_data.is_approved else 'btn-outline-secondary' }}"
+                                                           {{ 'disabled' if worker_data.is_approved else '' }}>
+                                                            {% if worker_data.is_approved %}
+                                                                <i class="fas fa-check me-1"></i> Approved
+                                                            {% else %}
+                                                                <i class="fas fa-clipboard-check me-1"></i> Review
+                                                            {% endif %}
+                                                        </a>
+                                                        <a href="{{ url_for('foreman_enter_time', job_id=job_item.job.id, user_id=worker_data.worker.id, week_start=start_date.strftime('%Y-%m-%d')) }}" 
+                                                           class="btn btn-outline-info"
+                                                           {{ 'disabled' if worker_data.is_approved else '' }}
+                                                           title="Enter time for this worker">
+                                                            <i class="fas fa-clock"></i>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                </div>
+                            </div>
+                    </div>
+                </div>
                 {% endif %}
-            </p>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info" role="alert">
+                <div class="text-center p-4">
+                    <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+                    <h4>No Time Entries Found</h4>
+                    <p>
+                        {% if show_all_jobs %}
+                            No time entries found for this week across all jobs.
+                        {% else %}
+                            No time entries found for unassigned jobs this week.
+                            <br>Try enabling "Show All Jobs" to see entries for all jobs.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        {% endif %}
         </div>
     </div>
-{% endif %}
+</div>
 
 </div>
 

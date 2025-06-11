@@ -1788,29 +1788,87 @@ def admin_review_time():
     for job in all_jobs_in_range:
         print(f"DEBUG: Job {job.job_code} - foreman_id: {job.foreman_id}")
 
-    # Group entries by job for display
-    job_data = {}
-    for entry in entries:
-        job_key = entry.job.id
-        if job_key not in job_data:
-            job_data[job_key] = {
-                'job': entry.job,
-                'workers': {},
-                'total_hours': 0,
-                'is_unassigned': entry.job.foreman_id is None
-            }
+    # Use the same data structure as foreman dashboard
+    # Get all jobs that have time entries in the date range
+    jobs_with_entries = Job.query.join(TimeEntry, Job.id == TimeEntry.job_id).filter(
+        TimeEntry.date >= start_date,
+        TimeEntry.date <= end_date
+    ).distinct()
 
-        worker_key = entry.user.id
-        if worker_key not in job_data[job_key]['workers']:
-            job_data[job_key]['workers'][worker_key] = {
-                'user': entry.user,
-                'entries': [],
-                'total_hours': 0
-            }
+    # Apply job filter based on toggle
+    if not show_all_jobs:
+        # Default: Show only unassigned jobs (foreman_id is None)
+        jobs_with_entries = jobs_with_entries.filter(Job.foreman_id.is_(None))
 
-        job_data[job_key]['workers'][worker_key]['entries'].append(entry)
-        job_data[job_key]['workers'][worker_key]['total_hours'] += entry.hours
-        job_data[job_key]['total_hours'] += entry.hours
+    jobs = jobs_with_entries.all()
+
+    # For each job, get all workers with time entries (same structure as foreman dashboard)
+    job_data = []
+    for job in jobs:
+        # Get unique workers who submitted time for this job in the date range
+        workers_query = db.session.query(User).join(TimeEntry, User.id == TimeEntry.user_id).\
+            filter(
+                TimeEntry.job_id == job.id,
+                TimeEntry.date >= start_date,
+                TimeEntry.date <= end_date,
+                User.role == 'worker'
+            ).distinct()
+
+        workers = workers_query.all()
+
+        # Get weekly approval status for each worker (same as foreman dashboard)
+        workers_data = []
+        for worker in workers:
+            # Check if the week is approved for this worker/job
+            is_approved = WeeklyApprovalLock.query.filter_by(
+                user_id=worker.id, job_id=job.id,
+                week_start=start_date).first() is not None
+
+            # Count total hours for the week
+            total_hours = db.session.query(db.func.sum(TimeEntry.hours)).\
+                filter(
+                    TimeEntry.user_id == worker.id,
+                    TimeEntry.job_id == job.id,
+                    TimeEntry.date >= start_date,
+                    TimeEntry.date <= end_date
+                ).scalar() or 0
+
+            # Check if all 7 days of the week have entries
+            days_with_entries = db.session.query(TimeEntry.date).\
+                filter(
+                    TimeEntry.user_id == worker.id,
+                    TimeEntry.job_id == job.id,
+                    TimeEntry.date >= start_date,
+                    TimeEntry.date <= end_date
+                ).distinct().count()
+
+            # Check if worker has any entries with notes for this job and week
+            has_notes = db.session.query(TimeEntry).\
+                filter(
+                    TimeEntry.user_id == worker.id,
+                    TimeEntry.job_id == job.id,
+                    TimeEntry.date >= start_date,
+                    TimeEntry.date <= end_date,
+                    TimeEntry.notes.isnot(None),
+                    db.func.trim(TimeEntry.notes) != ''
+                ).first() is not None
+
+            workers_data.append({
+                'worker': worker,
+                'is_approved': is_approved,
+                'total_hours': total_hours,
+                'days_with_entries': days_with_entries,
+                'has_all_days': days_with_entries >= 5,  # Standard work week is 5 days
+                'has_notes': has_notes  # Flag to indicate if worker has any notes
+            })
+
+        # Add is_unassigned flag for template
+        job_item = {
+            'job': job, 
+            'workers': workers_data,
+            'is_unassigned': job.foreman_id is None
+        }
+        job_data.append(job_item)
 
     return render_template('admin/review_time.html',
                            job_data=job_data,
