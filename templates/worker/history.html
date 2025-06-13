@@ -182,9 +182,14 @@
             const currentDate = new Date(mondayOfWeek);
             currentDate.setDate(mondayOfWeek.getDate() + i);
             const formattedDate = formatDate(currentDate);
+            
+            console.log(`Day ${i}: ${currentDate.toDateString()} (${formattedDate})`);
+            console.log('Existing dates:', existingDates);
+            console.log('Date exists?', existingDates.includes(formattedDate));
 
             if (!existingDates.includes(formattedDate)) {
                 emptyDays.push(formattedDate);
+                console.log('Added to empty days:', formattedDate);
             }
         }
 
