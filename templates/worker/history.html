@@ -185,6 +185,7 @@
             
             console.log(`Day ${i}: ${currentDate.toDateString()} (${formattedDate})`);
             console.log('Existing dates:', existingDates);
+            console.log('Checking if', formattedDate, 'exists in', existingDates);
             console.log('Date exists?', existingDates.includes(formattedDate));
 
             if (!existingDates.includes(formattedDate)) {
