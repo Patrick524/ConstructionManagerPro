@@ -25,10 +25,18 @@
                 <div class="row mb-4">
                     <div class="col-md-6 mb-3 mb-md-0">
                         <label for="date" class="form-label">Date</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="far fa-calendar"></i></span>
-                            {{ form.date(class="form-control") }}
-                        </div>
+                        {% if editing and entry_to_edit %}
+                            <div class="form-control-plaintext border rounded p-2 bg-light">
+                                <i class="far fa-calendar me-2"></i>
+                                <strong>{{ entry_to_edit.date.strftime('%A, %B %d, %Y') }}</strong>
+                            </div>
+                            {{ form.date(style="display: none;") }}
+                        {% else %}
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="far fa-calendar"></i></span>
+                                {{ form.date(class="form-control") }}
+                            </div>
+                        {% endif %}
                         {% if form.date.errors %}
                             <div class="text-danger">
                                 {% for error in form.date.errors %}
