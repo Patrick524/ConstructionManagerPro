@@ -196,11 +196,12 @@ function formatDate(date) {
 }
 
 /**
- * Format a date for display (Month Day, Year)
+ * Format a date for display (Day, Month Day, Year)
  */
 function formatDisplayDate(dateStr) {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { 
+        weekday: 'long',
         month: 'long', 
         day: 'numeric', 
         year: 'numeric' 
