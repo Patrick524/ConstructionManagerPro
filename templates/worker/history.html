@@ -181,18 +181,16 @@
             }
         }
 
-        // If there are empty days, show a warning
+        // If there are empty days, show a suggestion
         if (emptyDays.length > 0) {
             const alertDiv = document.createElement('div');
-            alertDiv.className = 'alert alert-warning mt-4';
+            alertDiv.className = 'alert alert-info mt-4';
             alertDiv.innerHTML = `
-                <h5><i class="fas fa-exclamation-triangle me-2"></i>Missing Time Entries</h5>
-                <p>You haven't entered time for the following days:</p>
+                <h5><i class="fas fa-lightbulb me-2"></i>💡 Quick Check</h5>
+                <p>Consider adding time for these days if you worked:</p>
                 <ul class="mb-0">
                     ${emptyDays.map(day => `<li>${formatDisplayDate(day)}</li>`).join('')}
                 </ul>
-                <hr>
-                <p class="mb-0">Please enter all your Monday - Friday time.</p>
             `;
 
             document.querySelector('.row:last-child').insertAdjacentElement('beforebegin', alertDiv);
