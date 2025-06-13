@@ -25,6 +25,9 @@
                 <div class="row mb-4">
                     <div class="col-md-6 mb-3 mb-md-0">
                         <label for="date" class="form-label">Date</label>
+                        {% if editing and entry_to_edit %}
+                        <div class="text-muted mb-2">{{ entry_to_edit.date.strftime('%A') }}</div>
+                        {% endif %}
                         <div class="input-group">
                             <span class="input-group-text"><i class="far fa-calendar"></i></span>
                             {{ form.date(class="form-control") }}
