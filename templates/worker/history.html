@@ -161,14 +161,13 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Check if there are days with no entries
         const emptyDays = [];
-        const startDate = new Date('{{ start_date.strftime("%Y-%m-%d") }}');
         
-        // Debug: Log the start date being used
-        console.log('Start date from backend:', '{{ start_date.strftime("%Y-%m-%d") }}');
-        console.log('Parsed start date:', startDate);
+        // Parse the date string more carefully to avoid timezone issues
+        const dateStr = '{{ start_date.strftime("%Y-%m-%d") }}';
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const mondayOfWeek = new Date(year, month - 1, day); // month is 0-indexed in JS
         
-        // The backend already provides Monday, so we can use it directly
-        const mondayOfWeek = startDate;
+        console.log('Week start date:', mondayOfWeek.toLocaleDateString());
         
         const existingDates = [
             {% for date, entries in entries_by_date.items() %}
