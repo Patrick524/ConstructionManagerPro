@@ -162,6 +162,10 @@
         // Check if there are days with no entries
         const emptyDays = [];
         const startDate = new Date('{{ start_date.strftime("%Y-%m-%d") }}');
+        
+        // Ensure we start from Monday of the week
+        const mondayOfWeek = getMondayOfWeek(startDate);
+        
         const existingDates = [
             {% for date, entries in entries_by_date.items() %}
                 {% if entries %}
@@ -172,8 +176,8 @@
 
         // Check for weekdays only (Monday through Friday)
         for (let i = 0; i < 5; i++) {
-            const currentDate = new Date(startDate);
-            currentDate.setDate(startDate.getDate() + i);
+            const currentDate = new Date(mondayOfWeek);
+            currentDate.setDate(mondayOfWeek.getDate() + i);
             const formattedDate = formatDate(currentDate);
 
             if (!existingDates.includes(formattedDate)) {
