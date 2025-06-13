@@ -792,6 +792,11 @@ def worker_history():
         if entry.date not in entries_by_date:
             entries_by_date[entry.date] = []
         entries_by_date[entry.date].append(entry)
+    
+    # Debug: Print the entries_by_date structure
+    print(f"DEBUG: entries_by_date keys: {list(entries_by_date.keys())}")
+    for date, date_entries in entries_by_date.items():
+        print(f"DEBUG: Date {date} has {len(date_entries)} entries")
 
     # Get weekly approval status
     week_start = get_week_start(start_date)

@@ -161,33 +161,34 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Check if there are days with no entries
         const emptyDays = [];
-        
+
         // Parse the date string more carefully to avoid timezone issues
         const dateStr = '{{ start_date.strftime("%Y-%m-%d") }}';
         const [year, month, day] = dateStr.split('-').map(Number);
         const mondayOfWeek = new Date(year, month - 1, day); // month is 0-indexed in JS
-        
+
         console.log('Week start date:', mondayOfWeek.toLocaleDateString());
-        
-        const existingDates = [
-            {% for date, entries in entries_by_date.items() %}
-                {% if entries %}
-                    '{{ date.strftime("%Y-%m-%d") }}',
-                {% endif %}
-            {% endfor %}
-        ];
+
+        // Get dates that already have entries (only include dates with actual entries)
+        const existingDates = [];
+        {% for date, entries in entries_by_date.items() %}
+            existingDates.push('{{ date.strftime("%Y-%m-%d") }}');
+        {% endfor %}
+
+        console.log('Existing dates:', existingDates);
 
         // Check for weekdays only (Monday through Friday)
         for (let i = 0; i < 5; i++) {
             const currentDate = new Date(mondayOfWeek);
             currentDate.setDate(mondayOfWeek.getDate() + i);
             const formattedDate = formatDate(currentDate);
-            
+
             console.log(`Day ${i}: ${currentDate.toDateString()} (${formattedDate})`);
             console.log('Existing dates:', existingDates);
             console.log('Checking if', formattedDate, 'exists in', existingDates);
             console.log('Date exists?', existingDates.includes(formattedDate));
 
+            // Only add to empty days if the date doesn't exist in our entries
             if (!existingDates.includes(formattedDate)) {
                 emptyDays.push(formattedDate);
                 console.log('Added to empty days:', formattedDate);
