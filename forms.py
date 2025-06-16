@@ -366,3 +366,22 @@ class JobWorkersForm(FlaskForm):
         # Populate worker choices
         self.workers.choices = [(worker.id, worker.name) 
                                for worker in User.query.filter_by(role='worker').order_by(User.name).all()]
+
+class GPSComplianceReportForm(FlaskForm):
+    """Form for generating GPS compliance reports"""
+    start_date = DateField('Start Date', validators=[DataRequired()])
+    end_date = DateField('End Date', validators=[DataRequired()])
+    format = SelectField('Format', choices=[
+        ('html', 'View on Page'),
+        ('pdf', 'Download PDF')
+    ], validators=[DataRequired()], default='html')
+    submit = SubmitField('Generate Report')
+
+    def __init__(self, *args, **kwargs):
+        super(GPSComplianceReportForm, self).__init__(*args, **kwargs)
+        
+        # Set default date range to last 7 days
+        if not self.start_date.data:
+            self.start_date.data = date.today() - timedelta(days=7)
+        if not self.end_date.data:
+            self.end_date.data = date.today()

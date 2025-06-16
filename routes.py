@@ -12,7 +12,7 @@ from models import User, Job, LaborActivity, TimeEntry, WeeklyApprovalLock, Cloc
 from forms import (LoginForm, RegistrationForm, TimeEntryForm, ApprovalForm,
                    JobForm, LaborActivityForm, UserManagementForm, ReportForm,
                    WeeklyTimesheetForm, ClockInForm, ClockOutForm, TradeForm,
-                   JobWorkersForm)
+                   JobWorkersForm, GPSComplianceReportForm)
 import pandas as pd
 import utils
 
@@ -2835,6 +2835,178 @@ def generate_reports():
         form.end_date.data = form.start_date.data + timedelta(days=6)
 
     return render_template('admin/reports.html', form=form)
+
+
+@app.route('/admin/gps_compliance', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_gps_compliance():
+    """GPS Compliance Report - Show clock-in violations by distance from job sites"""
+    form = GPSComplianceReportForm()
+    
+    violations_data = None
+    executive_summary = None
+    
+    if form.validate_on_submit():
+        start_date = form.start_date.data
+        end_date = form.end_date.data
+        
+        # Query clock sessions with GPS data within date range
+        clock_sessions = ClockSession.query.filter(
+            ClockSession.clock_in >= start_date,
+            ClockSession.clock_in <= end_date + timedelta(days=1),
+            ClockSession.clock_in_distance_mi.isnot(None),
+            ClockSession.clock_in_distance_mi > 0.5  # Only violations > 0.5 miles
+        ).join(User).join(Job).all()
+        
+        # Categorize violations
+        fraud_risk = []  # 5+ miles
+        major = []       # 2-5 miles  
+        minor = []       # 0.5-2 miles
+        worker_counts = {}
+        
+        total_clock_ins = ClockSession.query.filter(
+            ClockSession.clock_in >= start_date,
+            ClockSession.clock_in <= end_date + timedelta(days=1)
+        ).count()
+        
+        for session in clock_sessions:
+            distance = session.clock_in_distance_mi
+            violation_data = {
+                'worker_name': session.user.name,
+                'job_code': session.job.job_code,
+                'distance': round(distance, 2),
+                'datetime': session.clock_in,
+                'location': session.job.location or 'No location set'
+            }
+            
+            # Count violations per worker
+            if session.user.name not in worker_counts:
+                worker_counts[session.user.name] = 0
+            worker_counts[session.user.name] += 1
+            
+            # Categorize by distance
+            if distance >= 5.0:
+                fraud_risk.append(violation_data)
+            elif distance >= 2.0:
+                major.append(violation_data)
+            else:
+                minor.append(violation_data)
+        
+        # Calculate summary statistics
+        total_violations = len(clock_sessions)
+        compliant_count = total_clock_ins - total_violations
+        
+        executive_summary = {
+            'total_clock_ins': total_clock_ins,
+            'compliant_count': compliant_count,
+            'compliant_percentage': round((compliant_count / total_clock_ins * 100) if total_clock_ins > 0 else 0, 1),
+            'violations_count': total_violations,
+            'violations_percentage': round((total_violations / total_clock_ins * 100) if total_clock_ins > 0 else 0, 1),
+            'fraud_risk_count': len(fraud_risk),
+            'major_count': len(major),
+            'minor_count': len(minor)
+        }
+        
+        violations_data = {
+            'fraud_risk': sorted(fraud_risk, key=lambda x: x['distance'], reverse=True),
+            'major': sorted(major, key=lambda x: x['distance'], reverse=True),
+            'minor': sorted(minor, key=lambda x: x['distance'], reverse=True),
+            'worker_summary': sorted(worker_counts.items(), key=lambda x: x[1], reverse=True)
+        }
+        
+        # Handle PDF generation
+        if form.format.data == 'pdf':
+            from reportlab.lib.pagesizes import letter, A4
+            from reportlab.lib import colors
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+            from reportlab.lib.units import inch
+            
+            # Create PDF
+            buffer = BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch)
+            styles = getSampleStyleSheet()
+            story = []
+            
+            # Title
+            title_style = ParagraphStyle('CustomTitle', parent=styles['Title'], fontSize=16, spaceAfter=20)
+            story.append(Paragraph(f"GPS Compliance Report", title_style))
+            story.append(Paragraph(f"Date Range: {start_date.strftime('%m/%d/%Y')} to {end_date.strftime('%m/%d/%Y')}", styles['Normal']))
+            story.append(Spacer(1, 20))
+            
+            # Executive Summary
+            story.append(Paragraph("Executive Summary", styles['Heading2']))
+            summary_data = [
+                ['Total Clock-ins', str(executive_summary['total_clock_ins'])],
+                ['Compliant', f"{executive_summary['compliant_count']} ({executive_summary['compliant_percentage']}%)"],
+                ['Violations', f"{executive_summary['violations_count']} ({executive_summary['violations_percentage']}%)"],
+                ['Fraud Risk (5+ mi)', str(executive_summary['fraud_risk_count'])],
+                ['Major (2-5 mi)', str(executive_summary['major_count'])],
+                ['Minor (0.5-2 mi)', str(executive_summary['minor_count'])]
+            ]
+            summary_table = Table(summary_data, colWidths=[2*inch, 1.5*inch])
+            summary_table.setStyle(TableStyle([
+                ('BACKGROUND', (0,0), (-1,0), colors.grey),
+                ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+                ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0,0), (-1,0), 10),
+                ('BOTTOMPADDING', (0,0), (-1,0), 12),
+                ('BACKGROUND', (0,1), (-1,-1), colors.beige),
+                ('GRID', (0,0), (-1,-1), 1, colors.black)
+            ]))
+            story.append(summary_table)
+            story.append(Spacer(1, 20))
+            
+            # Violation tables
+            for category, violations, title in [
+                ('fraud_risk', violations_data['fraud_risk'], 'Fraud Risk Violations (5+ miles)'),
+                ('major', violations_data['major'], 'Major Violations (2-5 miles)'),
+                ('minor', violations_data['minor'], 'Minor Violations (0.5-2 miles)')
+            ]:
+                if violations:
+                    story.append(Paragraph(title, styles['Heading3']))
+                    table_data = [['Worker', 'Job', 'Distance (mi)', 'Date/Time']]
+                    for v in violations:
+                        table_data.append([
+                            v['worker_name'],
+                            v['job_code'],
+                            str(v['distance']),
+                            v['datetime'].strftime('%m/%d/%Y %H:%M')
+                        ])
+                    
+                    violations_table = Table(table_data, colWidths=[1.5*inch, 1*inch, 1*inch, 1.5*inch])
+                    violations_table.setStyle(TableStyle([
+                        ('BACKGROUND', (0,0), (-1,0), colors.grey),
+                        ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+                        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                        ('FONTSIZE', (0,0), (-1,-1), 8),
+                        ('BOTTOMPADDING', (0,0), (-1,0), 12),
+                        ('BACKGROUND', (0,1), (-1,-1), colors.beige),
+                        ('GRID', (0,0), (-1,-1), 1, colors.black)
+                    ]))
+                    story.append(violations_table)
+                    story.append(Spacer(1, 15))
+            
+            doc.build(story)
+            pdf_data = buffer.getvalue()
+            buffer.close()
+            
+            # Return PDF file
+            filename = f"gps_compliance_report_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.pdf"
+            return send_file(
+                BytesIO(pdf_data),
+                mimetype='application/pdf',
+                as_attachment=True,
+                download_name=filename
+            )
+    
+    return render_template('admin/gps_compliance.html', 
+                         form=form, 
+                         violations_data=violations_data,
+                         executive_summary=executive_summary)
 
 
 # API routes for AJAX calls

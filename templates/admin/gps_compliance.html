@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}GPS Compliance Report - Construction Timesheet{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 d-flex justify-content-between align-items-center mb-3">
+        <h1 class="page-title">
+            <i class="fas fa-map-marker-alt text-primary me-2"></i>GPS Compliance Report
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Report Parameters</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label for="start_date" class="form-label">Start Date</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="far fa-calendar"></i></span>
+                            {{ form.start_date(class="form-control") }}
+                        </div>
+                        {% if form.start_date.errors %}
+                            <div class="text-danger">
+                                {% for error in form.start_date.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="end_date" class="form-label">End Date</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="far fa-calendar"></i></span>
+                            {{ form.end_date(class="form-control") }}
+                        </div>
+                        {% if form.end_date.errors %}
+                            <div class="text-danger">
+                                {% for error in form.end_date.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="format" class="form-label">Format</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-file"></i></span>
+                            {{ form.format(class="form-control") }}
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="alert alert-info mt-3">
+            <h6><i class="fas fa-info-circle me-2"></i>About GPS Compliance</h6>
+            <p class="mb-2"><strong>Violation Categories:</strong></p>
+            <ul class="mb-0">
+                <li><strong>Fraud Risk (5+ miles):</strong> Serious policy violations</li>
+                <li><strong>Major (2-5 miles):</strong> Significant distance from job site</li>
+                <li><strong>Minor (0.5-2 miles):</strong> Acceptable but noteworthy distance</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="col-lg-8">
+        {% if executive_summary %}
+        <!-- Executive Summary -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Executive Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="stat-card p-3 bg-light rounded">
+                            <h6 class="text-muted mb-1">Total Clock-ins</h6>
+                            <h3 class="mb-0">{{ executive_summary.total_clock_ins }}</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="stat-card p-3 bg-success bg-opacity-10 rounded">
+                            <h6 class="text-muted mb-1">Compliant</h6>
+                            <h3 class="mb-0 text-success">
+                                {{ executive_summary.compliant_count }} 
+                                <small>({{ executive_summary.compliant_percentage }}%)</small>
+                            </h3>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="stat-card p-3 bg-warning bg-opacity-10 rounded">
+                            <h6 class="text-muted mb-1">Total Violations</h6>
+                            <h3 class="mb-0 text-warning">
+                                {{ executive_summary.violations_count }} 
+                                <small>({{ executive_summary.violations_percentage }}%)</small>
+                            </h3>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="stat-card p-3 bg-danger bg-opacity-10 rounded">
+                            <h6 class="text-muted mb-1">Fraud Risk (5+ mi)</h6>
+                            <h3 class="mb-0 text-danger">{{ executive_summary.fraud_risk_count }}</h3>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="stat-card p-3 bg-warning bg-opacity-10 rounded">
+                            <h6 class="text-muted mb-1">Major Violations (2-5 mi)</h6>
+                            <h3 class="mb-0 text-warning">{{ executive_summary.major_count }}</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="stat-card p-3 bg-info bg-opacity-10 rounded">
+                            <h6 class="text-muted mb-1">Minor Violations (0.5-2 mi)</h6>
+                            <h3 class="mb-0 text-info">{{ executive_summary.minor_count }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Violation Tables -->
+        {% if violations_data %}
+        
+        <!-- Fraud Risk Violations -->
+        {% if violations_data.fraud_risk %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Fraud Risk Violations (5+ miles)</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Worker</th>
+                                <th>Job</th>
+                                <th>Distance (mi)</th>
+                                <th>Date/Time</th>
+                                <th>Job Location</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for violation in violations_data.fraud_risk %}
+                            <tr>
+                                <td>{{ violation.worker_name }}</td>
+                                <td>{{ violation.job_code }}</td>
+                                <td><span class="badge bg-danger">{{ violation.distance }}</span></td>
+                                <td>{{ violation.datetime.strftime('%m/%d/%Y %I:%M %p') }}</td>
+                                <td>{{ violation.location }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Major Violations -->
+        {% if violations_data.major %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-exclamation-circle me-2"></i>Major Violations (2-5 miles)</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Worker</th>
+                                <th>Job</th>
+                                <th>Distance (mi)</th>
+                                <th>Date/Time</th>
+                                <th>Job Location</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for violation in violations_data.major %}
+                            <tr>
+                                <td>{{ violation.worker_name }}</td>
+                                <td>{{ violation.job_code }}</td>
+                                <td><span class="badge bg-warning">{{ violation.distance }}</span></td>
+                                <td>{{ violation.datetime.strftime('%m/%d/%Y %I:%M %p') }}</td>
+                                <td>{{ violation.location }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Minor Violations -->
+        {% if violations_data.minor %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Minor Violations (0.5-2 miles)</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Worker</th>
+                                <th>Job</th>
+                                <th>Distance (mi)</th>
+                                <th>Date/Time</th>
+                                <th>Job Location</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for violation in violations_data.minor %}
+                            <tr>
+                                <td>{{ violation.worker_name }}</td>
+                                <td>{{ violation.job_code }}</td>
+                                <td><span class="badge bg-info">{{ violation.distance }}</span></td>
+                                <td>{{ violation.datetime.strftime('%m/%d/%Y %I:%M %p') }}</td>
+                                <td>{{ violation.location }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Worker Summary -->
+        {% if violations_data.worker_summary %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-users me-2"></i>Worker Violation Summary</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Worker Name</th>
+                                <th>Total Violations</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for worker_name, violation_count in violations_data.worker_summary %}
+                            <tr>
+                                <td>{{ worker_name }}</td>
+                                <td>
+                                    {% if violation_count >= 5 %}
+                                        <span class="badge bg-danger">{{ violation_count }}</span>
+                                    {% elif violation_count >= 3 %}
+                                        <span class="badge bg-warning">{{ violation_count }}</span>
+                                    {% else %}
+                                        <span class="badge bg-info">{{ violation_count }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="alert alert-info">
+            <h5><i class="fas fa-check-circle me-2"></i>No Violations Found</h5>
+            <p class="mb-0">All clock-ins during the selected period were within acceptable distance limits (0.5 miles or less from job sites).</p>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="card shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-map-marker-alt fa-4x text-muted mb-3"></i>
+                <h4>Generate GPS Compliance Report</h4>
+                <p class="text-muted">Select a date range and click "Generate Report" to view GPS compliance violations.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
