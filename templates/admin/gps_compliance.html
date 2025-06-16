@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block title %}GPS Compliance Report - Construction Timesheet{% endblock %}
@@ -11,7 +12,8 @@
     </div>
 </div>
 
-<div class="row">
+<div class="row" id="gps-compliance">
+    <!-- Left column: Report Parameters -->
     <div class="col-lg-4 mb-4">
         <div class="card shadow-sm">
             <div class="card-header">
@@ -77,14 +79,13 @@
         </div>
     </div>
 
+    <!-- Right column: All content in one card -->
     <div class="col-lg-8">
         {% if executive_summary %}
-        <!-- Executive Summary -->
-        <div class="card shadow-sm">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Executive Summary</h5>
-            </div>
-            <div class="card-body">
+        <div class="card shadow-sm p-4">
+            <!-- Executive Summary -->
+            <section class="mb-3">
+                <h5><i class="fas fa-chart-line me-2"></i>Executive Summary</h5>
                 <div class="row">
                     <div class="col-md-6 mb-2">
                         <div class="stat-card p-3 rounded" style="background-color: #2563eb;">
@@ -141,19 +142,15 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </section>
 
-        <!-- Violation Tables -->
-        {% if violations_data %}
+            {% if violations_data %}
+            <hr>
 
-        <!-- Fraud Risk Violations -->
-        {% if violations_data.fraud_risk %}
-        <div class="card shadow-sm">
-            <div class="card-header bg-danger text-white">
-                <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Fraud Risk Violations (5+ miles)</h5>
-            </div>
-            <div class="card-body p-0">
+            <!-- Fraud Risk Violations -->
+            {% if violations_data.fraud_risk %}
+            <section class="mb-3">
+                <h5 class="text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Fraud Risk Violations (5+ miles)</h5>
                 <div class="table-responsive">
                     <table class="table table-striped mb-0">
                         <thead class="table-dark">
@@ -202,17 +199,14 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
+            </section>
+            <hr>
             {% endif %}
 
-        <!-- Major Violations -->
-        {% if violations_data.major %}
-        <div class="card shadow-sm">
-            <div class="card-header bg-warning text-dark">
-                <h5 class="mb-0"><i class="fas fa-exclamation-circle me-2"></i>Major Violations (2-5 miles)</h5>
-            </div>
-            <div class="card-body p-0">
+            <!-- Major Violations -->
+            {% if violations_data.major %}
+            <section class="mb-3">
+                <h5 class="text-warning"><i class="fas fa-exclamation-circle me-2"></i>Major Violations (2-5 miles)</h5>
                 <div class="table-responsive">
                     <table class="table table-striped mb-0">
                         <thead class="table-dark">
@@ -261,17 +255,14 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
+            </section>
+            <hr>
             {% endif %}
 
-        <!-- Minor Violations -->
-        {% if violations_data.minor %}
-        <div class="card shadow-sm">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Minor Violations (0.5-2 miles)</h5>
-            </div>
-            <div class="card-body p-0">
+            <!-- Minor Violations -->
+            {% if violations_data.minor %}
+            <section class="mb-3">
+                <h5 class="text-info"><i class="fas fa-info-circle me-2"></i>Minor Violations (0.5-2 miles)</h5>
                 <div class="table-responsive">
                     <table class="table table-striped mb-0">
                         <thead class="table-dark">
@@ -320,17 +311,14 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
+            </section>
+            <hr>
             {% endif %}
 
-        <!-- Worker Summary -->
-        {% if violations_data.worker_summary %}
-        <div class="card shadow-sm">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-users me-2"></i>Worker Violation Summary</h5>
-            </div>
-            <div class="card-body p-0">
+            <!-- Worker Summary -->
+            {% if violations_data.worker_summary %}
+            <section>
+                <h5 class="text-primary"><i class="fas fa-users me-2"></i>Worker Violation Summary</h5>
                 <div class="table-responsive">
                     <table class="table table-striped mb-0">
                         <thead class="table-dark">
@@ -381,16 +369,17 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
-        {% endif %}
+            </section>
+            {% endif %}
 
-        {% else %}
-        <div class="alert alert-info">
-            <h5><i class="fas fa-check-circle me-2"></i>No Violations Found</h5>
-            <p class="mb-0">All clock-ins during the selected period were within acceptable distance limits (0.5 miles or less from job sites).</p>
+            {% else %}
+            <hr>
+            <div class="alert alert-info">
+                <h5><i class="fas fa-check-circle me-2"></i>No Violations Found</h5>
+                <p class="mb-0">All clock-ins during the selected period were within acceptable distance limits (0.5 miles or less from job sites).</p>
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
 
         {% else %}
         <div class="card shadow-sm">
