@@ -460,3 +460,13 @@ body.activities-page .container {
 #gps-compliance .card { 
   margin-bottom: 0 !important; 
 }
+
+#gps-compliance .row {
+  flex-grow: 0 !important;
+  min-height: auto !important;
+}
+
+#gps-compliance .card {
+  margin-bottom: 0 !important;
+  height: auto !important;
+}
