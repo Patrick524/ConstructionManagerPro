@@ -2872,26 +2872,37 @@ def admin_gps_compliance():
         
         for session in clock_sessions:
             distance = session.clock_in_distance_mi
+            # Flag poor GPS accuracy (>100 meters)
+            poor_gps_accuracy = session.clock_in_accuracy and session.clock_in_accuracy > 100
+            
             violation_data = {
                 'worker_name': session.user.name,
                 'job_code': session.job.job_code,
+                'job_description': session.job.description,
                 'distance': round(distance, 2),
                 'datetime': session.clock_in,
-                'location': session.job.location or 'No location set'
+                'location': session.job.location or 'No location set',
+                'clock_in_latitude': session.clock_in_latitude,
+                'clock_in_longitude': session.clock_in_longitude,
+                'gps_accuracy': round(session.clock_in_accuracy, 1) if session.clock_in_accuracy else None,
+                'poor_gps_accuracy': poor_gps_accuracy
             }
             
             # Count violations per worker
             if session.user.name not in worker_counts:
-                worker_counts[session.user.name] = 0
-            worker_counts[session.user.name] += 1
+                worker_counts[session.user.name] = {'total': 0, 'fraud_risk': 0, 'major': 0, 'minor': 0}
+            worker_counts[session.user.name]['total'] += 1
             
             # Categorize by distance
             if distance >= 5.0:
                 fraud_risk.append(violation_data)
+                worker_counts[session.user.name]['fraud_risk'] += 1
             elif distance >= 2.0:
                 major.append(violation_data)
+                worker_counts[session.user.name]['major'] += 1
             else:
                 minor.append(violation_data)
+                worker_counts[session.user.name]['minor'] += 1
         
         # Calculate summary statistics
         total_violations = len(clock_sessions)
@@ -2912,7 +2923,7 @@ def admin_gps_compliance():
             'fraud_risk': sorted(fraud_risk, key=lambda x: x['distance'], reverse=True),
             'major': sorted(major, key=lambda x: x['distance'], reverse=True),
             'minor': sorted(minor, key=lambda x: x['distance'], reverse=True),
-            'worker_summary': sorted(worker_counts.items(), key=lambda x: x[1], reverse=True)
+            'worker_summary': sorted(worker_counts.items(), key=lambda x: x[1]['total'], reverse=True)
         }
         
         # Handle PDF generation
@@ -2967,16 +2978,26 @@ def admin_gps_compliance():
             ]:
                 if violations:
                     story.append(Paragraph(title, styles['Heading3']))
-                    table_data = [['Worker', 'Job', 'Distance (mi)', 'Date/Time']]
+                    table_data = [['Worker', 'Job', 'Distance (mi)', 'GPS Accuracy', 'Date/Time', 'Coordinates']]
                     for v in violations:
+                        gps_accuracy = f"{v['gps_accuracy']}m" if v['gps_accuracy'] else "N/A"
+                        if v['poor_gps_accuracy']:
+                            gps_accuracy += " (Poor)"
+                        
+                        coordinates = "N/A"
+                        if v['clock_in_latitude'] and v['clock_in_longitude']:
+                            coordinates = f"{v['clock_in_latitude']:.4f}, {v['clock_in_longitude']:.4f}"
+                        
                         table_data.append([
                             v['worker_name'],
-                            v['job_code'],
+                            f"{v['job_code']}\n{v['job_description'][:30]}..." if len(v['job_description']) > 30 else f"{v['job_code']}\n{v['job_description']}",
                             str(v['distance']),
-                            v['datetime'].strftime('%m/%d/%Y %H:%M')
+                            gps_accuracy,
+                            v['datetime'].strftime('%m/%d/%Y %H:%M'),
+                            coordinates
                         ])
                     
-                    violations_table = Table(table_data, colWidths=[1.5*inch, 1*inch, 1*inch, 1.5*inch])
+                    violations_table = Table(table_data, colWidths=[1.2*inch, 1.2*inch, 0.8*inch, 1*inch, 1*inch, 1*inch])
                     violations_table.setStyle(TableStyle([
                         ('BACKGROUND', (0,0), (-1,0), colors.grey),
                         ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),

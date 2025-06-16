@@ -152,7 +152,9 @@
                                 <th>Worker</th>
                                 <th>Job</th>
                                 <th>Distance (mi)</th>
+                                <th>GPS Accuracy</th>
                                 <th>Date/Time</th>
+                                <th>Clock-in Coordinates</th>
                                 <th>Job Location</th>
                             </tr>
                         </thead>
@@ -160,9 +162,31 @@
                             {% for violation in violations_data.fraud_risk %}
                             <tr>
                                 <td>{{ violation.worker_name }}</td>
-                                <td>{{ violation.job_code }}</td>
+                                <td>
+                                    <strong>{{ violation.job_code }}</strong><br>
+                                    <small class="text-muted">{{ violation.job_description }}</small>
+                                </td>
                                 <td><span class="badge bg-danger">{{ violation.distance }}</span></td>
+                                <td>
+                                    {% if violation.gps_accuracy %}
+                                        {% if violation.poor_gps_accuracy %}
+                                            <span class="badge bg-warning text-dark">{{ violation.gps_accuracy }}m</span>
+                                            <small class="text-warning d-block">Poor Signal</small>
+                                        {% else %}
+                                            <span class="badge bg-success">{{ violation.gps_accuracy }}m</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
                                 <td>{{ violation.datetime.strftime('%m/%d/%Y %I:%M %p') }}</td>
+                                <td>
+                                    {% if violation.clock_in_latitude and violation.clock_in_longitude %}
+                                        <small>{{ "%.4f"|format(violation.clock_in_latitude) }}, {{ "%.4f"|format(violation.clock_in_longitude) }}</small>
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
                                 <td>{{ violation.location }}</td>
                             </tr>
                             {% endfor %}
@@ -187,7 +211,9 @@
                                 <th>Worker</th>
                                 <th>Job</th>
                                 <th>Distance (mi)</th>
+                                <th>GPS Accuracy</th>
                                 <th>Date/Time</th>
+                                <th>Clock-in Coordinates</th>
                                 <th>Job Location</th>
                             </tr>
                         </thead>
@@ -195,9 +221,31 @@
                             {% for violation in violations_data.major %}
                             <tr>
                                 <td>{{ violation.worker_name }}</td>
-                                <td>{{ violation.job_code }}</td>
+                                <td>
+                                    <strong>{{ violation.job_code }}</strong><br>
+                                    <small class="text-muted">{{ violation.job_description }}</small>
+                                </td>
                                 <td><span class="badge bg-warning">{{ violation.distance }}</span></td>
+                                <td>
+                                    {% if violation.gps_accuracy %}
+                                        {% if violation.poor_gps_accuracy %}
+                                            <span class="badge bg-warning text-dark">{{ violation.gps_accuracy }}m</span>
+                                            <small class="text-warning d-block">Poor Signal</small>
+                                        {% else %}
+                                            <span class="badge bg-success">{{ violation.gps_accuracy }}m</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
                                 <td>{{ violation.datetime.strftime('%m/%d/%Y %I:%M %p') }}</td>
+                                <td>
+                                    {% if violation.clock_in_latitude and violation.clock_in_longitude %}
+                                        <small>{{ "%.4f"|format(violation.clock_in_latitude) }}, {{ "%.4f"|format(violation.clock_in_longitude) }}</small>
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
                                 <td>{{ violation.location }}</td>
                             </tr>
                             {% endfor %}
@@ -222,7 +270,9 @@
                                 <th>Worker</th>
                                 <th>Job</th>
                                 <th>Distance (mi)</th>
+                                <th>GPS Accuracy</th>
                                 <th>Date/Time</th>
+                                <th>Clock-in Coordinates</th>
                                 <th>Job Location</th>
                             </tr>
                         </thead>
@@ -230,9 +280,31 @@
                             {% for violation in violations_data.minor %}
                             <tr>
                                 <td>{{ violation.worker_name }}</td>
-                                <td>{{ violation.job_code }}</td>
+                                <td>
+                                    <strong>{{ violation.job_code }}</strong><br>
+                                    <small class="text-muted">{{ violation.job_description }}</small>
+                                </td>
                                 <td><span class="badge bg-info">{{ violation.distance }}</span></td>
+                                <td>
+                                    {% if violation.gps_accuracy %}
+                                        {% if violation.poor_gps_accuracy %}
+                                            <span class="badge bg-warning text-dark">{{ violation.gps_accuracy }}m</span>
+                                            <small class="text-warning d-block">Poor Signal</small>
+                                        {% else %}
+                                            <span class="badge bg-success">{{ violation.gps_accuracy }}m</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
                                 <td>{{ violation.datetime.strftime('%m/%d/%Y %I:%M %p') }}</td>
+                                <td>
+                                    {% if violation.clock_in_latitude and violation.clock_in_longitude %}
+                                        <small>{{ "%.4f"|format(violation.clock_in_latitude) }}, {{ "%.4f"|format(violation.clock_in_longitude) }}</small>
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
                                 <td>{{ violation.location }}</td>
                             </tr>
                             {% endfor %}
@@ -256,19 +328,43 @@
                             <tr>
                                 <th>Worker Name</th>
                                 <th>Total Violations</th>
+                                <th>Fraud Risk</th>
+                                <th>Major</th>
+                                <th>Minor</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for worker_name, violation_count in violations_data.worker_summary %}
+                            {% for worker_name, violation_counts in violations_data.worker_summary %}
                             <tr>
                                 <td>{{ worker_name }}</td>
                                 <td>
-                                    {% if violation_count >= 5 %}
-                                        <span class="badge bg-danger">{{ violation_count }}</span>
-                                    {% elif violation_count >= 3 %}
-                                        <span class="badge bg-warning">{{ violation_count }}</span>
+                                    {% if violation_counts.total >= 5 %}
+                                        <span class="badge bg-danger">{{ violation_counts.total }}</span>
+                                    {% elif violation_counts.total >= 3 %}
+                                        <span class="badge bg-warning">{{ violation_counts.total }}</span>
                                     {% else %}
-                                        <span class="badge bg-info">{{ violation_count }}</span>
+                                        <span class="badge bg-info">{{ violation_counts.total }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if violation_counts.fraud_risk > 0 %}
+                                        <span class="badge bg-danger">{{ violation_counts.fraud_risk }}</span>
+                                    {% else %}
+                                        <span class="text-muted">0</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if violation_counts.major > 0 %}
+                                        <span class="badge bg-warning">{{ violation_counts.major }}</span>
+                                    {% else %}
+                                        <span class="text-muted">0</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if violation_counts.minor > 0 %}
+                                        <span class="badge bg-info">{{ violation_counts.minor }}</span>
+                                    {% else %}
+                                        <span class="text-muted">0</span>
                                     {% endif %}
                                 </td>
                             </tr>
