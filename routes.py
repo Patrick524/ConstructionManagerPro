@@ -3014,6 +3014,33 @@ def admin_gps_compliance():
                     story.append(violations_table)
                     story.append(Spacer(1, 15))
             
+            # Worker Violation Summary
+            if violations_data['worker_summary']:
+                story.append(Paragraph("Worker Violation Summary", styles['Heading3']))
+                worker_table_data = [['Worker Name', 'Total Violations', 'Fraud Risk', 'Major', 'Minor']]
+                for worker_name, violation_counts in violations_data['worker_summary']:
+                    worker_table_data.append([
+                        worker_name,
+                        str(violation_counts['total']),
+                        str(violation_counts['fraud_risk']),
+                        str(violation_counts['major']),
+                        str(violation_counts['minor'])
+                    ])
+                
+                worker_table = Table(worker_table_data, colWidths=[2*inch, 1*inch, 1*inch, 1*inch, 1*inch])
+                worker_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0,0), (-1,0), colors.grey),
+                    ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+                    ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                    ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0,0), (-1,-1), 10),
+                    ('BOTTOMPADDING', (0,0), (-1,0), 12),
+                    ('BACKGROUND', (0,1), (-1,-1), colors.beige),
+                    ('GRID', (0,0), (-1,-1), 1, colors.black)
+                ]))
+                story.append(worker_table)
+                story.append(Spacer(1, 15))
+            
             doc.build(story)
             pdf_data = buffer.getvalue()
             buffer.close()
