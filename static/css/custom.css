@@ -480,3 +480,23 @@ body.activities-page .container {
 #gps-compliance .card + .card {
   margin-top: -1px !important;
 }
+
+/* Ultra-aggressive spacing removal for GPS compliance */
+#gps-compliance .col-lg-8 {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+#gps-compliance .card.shadow-sm {
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+#gps-compliance .card.shadow-sm:first-child {
+  border-bottom: none !important;
+}
+
+#gps-compliance .card.shadow-sm + .card.shadow-sm {
+  border-top: none !important;
+  margin-top: -2px !important;
+}
