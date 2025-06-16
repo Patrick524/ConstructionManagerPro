@@ -455,3 +455,8 @@ body.activities-page .container {
 .card.mt-2:first-of-type {
   margin-top: 8px !important;
 }
+
+/* GPS Compliance specific card spacing override */
+#gps-compliance .card { 
+  margin-bottom: 0 !important; 
+}
