@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block title %}GPS Compliance Report - Construction Timesheet{% endblock %}
@@ -159,7 +160,7 @@
                                 <th>Distance (mi)</th>
                                 <th>GPS Accuracy</th>
                                 <th>Date/Time</th>
-                                <th>Location Map</th>
+                                <th>Clock-in Coordinates</th>
                                 <th>Job Location</th>
                             </tr>
                         </thead>
@@ -187,76 +188,7 @@
                                 <td>{{ violation.datetime.strftime('%m/%d/%Y %I:%M %p') }}</td>
                                 <td>
                                     {% if violation.clock_in_latitude and violation.clock_in_longitude %}
-                                        <div id="map-{{ loop.parent.loop.index0 }}-{{ loop.index0 }}" style="width: 200px; height: 200px; border: 1px solid #ccc; border-radius: 4px;"></div>
-                                        <script>
-                                        (function() {
-                                            // Create map for violation {{ loop.parent.loop.index0 }}-{{ loop.index0 }}
-                                            var mapId = 'map-{{ loop.parent.loop.index0 }}-{{ loop.index0 }}';
-                                            var map = L.map(mapId, {
-                                                zoomControl: true,
-                                                scrollWheelZoom: false,
-                                                doubleClickZoom: false,
-                                                dragging: true
-                                            });
-
-                                            // Add OpenStreetMap tiles
-                                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                                attribution: '© OpenStreetMap contributors'
-                                            }).addTo(map);
-
-                                            // Job site coordinates (assuming they exist in the job model)
-                                            {% set job_lat = violation.job.latitude %}
-                                            {% set job_lon = violation.job.longitude %}
-
-                                            // Clock-in coordinates
-                                            var clockInLat = {{ violation.clock_in_latitude }};
-                                            var clockInLon = {{ violation.clock_in_longitude }};
-
-                                            // Create markers
-                                            var jobSiteMarker = L.marker([{{ job_lat or 0 }}, {{ job_lon or 0 }}], {
-                                                title: 'Job Site: {{ violation.job_code }}'
-                                            }).addTo(map);
-
-                                            var clockInMarker = L.marker([clockInLat, clockInLon], {
-                                                title: 'Clock-in Location'
-                                            }).addTo(map);
-
-                                            // Style the markers differently
-                                            jobSiteMarker.bindPopup('<strong>Job Site</strong><br>{{ violation.job_code }}<br>{{ violation.location }}');
-                                            clockInMarker.bindPopup('<strong>Clock-in Location</strong><br>Distance: {{ violation.distance }} mi<br>{{ violation.datetime.strftime("%m/%d/%Y %I:%M %p") }}');
-
-                                            {% if job_lat and job_lon %}
-                                            // Draw a red line between the two points
-                                            var polyline = L.polyline([
-                                                [{{ job_lat }}, {{ job_lon }}],
-                                                [clockInLat, clockInLon]
-                                            ], {
-                                                color: 'red',
-                                                weight: 2,
-                                                opacity: 0.7,
-                                                dashArray: '5, 10'
-                                            }).addTo(map);
-
-                                            // Create bounds that include both points
-                                            var bounds = L.latLngBounds([
-                                                [{{ job_lat }}, {{ job_lon }}],
-                                                [clockInLat, clockInLon]
-                                            ]);
-
-                                            // Fit the map to show both points with padding
-                                            map.fitBounds(bounds, { padding: [20, 20] });
-                                            {% else %}
-                                            // If no job coordinates, just center on clock-in location
-                                            map.setView([clockInLat, clockInLon], 15);
-                                            {% endif %}
-                                        })();
-                                        </script>
-                                        <small class="text-muted d-block mt-1">
-                                            Clock-in: {{ "%.4f"|format(violation.clock_in_latitude) }}, {{ "%.4f"|format(violation.clock_in_longitude) }}
-                                            {% if violation.job.latitude and violation.job.longitude %}
-                                                <br>Job Site: {{ "%.4f"|format(violation.job.latitude) }}, {{ "%.4f"|format(violation.job.longitude) }}
-                                            {% endif %}
-                                        </small>
+                                        <small>{{ "%.4f"|format(violation.clock_in_latitude) }}, {{ "%.4f"|format(violation.clock_in_longitude) }}</small>
                                     {% else %}
                                         <span class="text-muted">N/A</span>
                                     {% endif %}
@@ -284,7 +216,7 @@
                                 <th>Distance (mi)</th>
                                 <th>GPS Accuracy</th>
                                 <th>Date/Time</th>
-                                <th>Location Map</th>
+                                <th>Clock-in Coordinates</th>
                                 <th>Job Location</th>
                             </tr>
                         </thead>
@@ -312,76 +244,7 @@
                                 <td>{{ violation.datetime.strftime('%m/%d/%Y %I:%M %p') }}</td>
                                 <td>
                                     {% if violation.clock_in_latitude and violation.clock_in_longitude %}
-                                        <div id="map-{{ loop.parent.loop.index0 }}-{{ loop.index0 }}" style="width: 200px; height: 200px; border: 1px solid #ccc; border-radius: 4px;"></div>
-                                        <script>
-                                        (function() {
-                                            // Create map for violation {{ loop.parent.loop.index0 }}-{{ loop.index0 }}
-                                            var mapId = 'map-{{ loop.parent.loop.index0 }}-{{ loop.index0 }}';
-                                            var map = L.map(mapId, {
-                                                zoomControl: true,
-                                                scrollWheelZoom: false,
-                                                doubleClickZoom: false,
-                                                dragging: true
-                                            });
-
-                                            // Add OpenStreetMap tiles
-                                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                                attribution: '© OpenStreetMap contributors'
-                                            }).addTo(map);
-
-                                            // Job site coordinates (assuming they exist in the job model)
-                                            {% set job_lat = violation.job.latitude %}
-                                            {% set job_lon = violation.job.longitude %}
-
-                                            // Clock-in coordinates
-                                            var clockInLat = {{ violation.clock_in_latitude }};
-                                            var clockInLon = {{ violation.clock_in_longitude }};
-
-                                            // Create markers
-                                            var jobSiteMarker = L.marker([{{ job_lat or 0 }}, {{ job_lon or 0 }}], {
-                                                title: 'Job Site: {{ violation.job_code }}'
-                                            }).addTo(map);
-
-                                            var clockInMarker = L.marker([clockInLat, clockInLon], {
-                                                title: 'Clock-in Location'
-                                            }).addTo(map);
-
-                                            // Style the markers differently
-                                            jobSiteMarker.bindPopup('<strong>Job Site</strong><br>{{ violation.job_code }}<br>{{ violation.location }}');
-                                            clockInMarker.bindPopup('<strong>Clock-in Location</strong><br>Distance: {{ violation.distance }} mi<br>{{ violation.datetime.strftime("%m/%d/%Y %I:%M %p") }}');
-
-                                            {% if job_lat and job_lon %}
-                                            // Draw a red line between the two points
-                                            var polyline = L.polyline([
-                                                [{{ job_lat }}, {{ job_lon }}],
-                                                [clockInLat, clockInLon]
-                                            ], {
-                                                color: 'red',
-                                                weight: 2,
-                                                opacity: 0.7,
-                                                dashArray: '5, 10'
-                                            }).addTo(map);
-
-                                            // Create bounds that include both points
-                                            var bounds = L.latLngBounds([
-                                                [{{ job_lat }}, {{ job_lon }}],
-                                                [clockInLat, clockInLon]
-                                            ]);
-
-                                            // Fit the map to show both points with padding
-                                            map.fitBounds(bounds, { padding: [20, 20] });
-                                            {% else %}
-                                            // If no job coordinates, just center on clock-in location
-                                            map.setView([clockInLat, clockInLon], 15);
-                                            {% endif %}
-                                        })();
-                                        </script>
-                                        <small class="text-muted d-block mt-1">
-                                            Clock-in: {{ "%.4f"|format(violation.clock_in_latitude) }}, {{ "%.4f"|format(violation.clock_in_longitude) }}
-                                            {% if violation.job.latitude and violation.job.longitude %}
-                                                <br>Job Site: {{ "%.4f"|format(violation.job.latitude) }}, {{ "%.4f"|format(violation.job.longitude) }}
-                                            {% endif %}
-                                        </small>
+                                        <small>{{ "%.4f"|format(violation.clock_in_latitude) }}, {{ "%.4f"|format(violation.clock_in_longitude) }}</small>
                                     {% else %}
                                         <span class="text-muted">N/A</span>
                                     {% endif %}
@@ -409,7 +272,7 @@
                                 <th>Distance (mi)</th>
                                 <th>GPS Accuracy</th>
                                 <th>Date/Time</th>
-                                <th>Location Map</th>
+                                <th>Clock-in Coordinates</th>
                                 <th>Job Location</th>
                             </tr>
                         </thead>
@@ -437,76 +300,7 @@
                                 <td>{{ violation.datetime.strftime('%m/%d/%Y %I:%M %p') }}</td>
                                 <td>
                                     {% if violation.clock_in_latitude and violation.clock_in_longitude %}
-                                        <div id="map-{{ loop.parent.loop.index0 }}-{{ loop.index0 }}" style="width: 200px; height: 200px; border: 1px solid #ccc; border-radius: 4px;"></div>
-                                        <script>
-                                        (function() {
-                                            // Create map for violation {{ loop.parent.loop.index0 }}-{{ loop.index0 }}
-                                            var mapId = 'map-{{ loop.parent.loop.index0 }}-{{ loop.index0 }}';
-                                            var map = L.map(mapId, {
-                                                zoomControl: true,
-                                                scrollWheelZoom: false,
-                                                doubleClickZoom: false,
-                                                dragging: true
-                                            });
-
-                                            // Add OpenStreetMap tiles
-                                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                                attribution: '© OpenStreetMap contributors'
-                                            }).addTo(map);
-
-                                            // Job site coordinates (assuming they exist in the job model)
-                                            {% set job_lat = violation.job.latitude %}
-                                            {% set job_lon = violation.job.longitude %}
-
-                                            // Clock-in coordinates
-                                            var clockInLat = {{ violation.clock_in_latitude }};
-                                            var clockInLon = {{ violation.clock_in_longitude }};
-
-                                            // Create markers
-                                            var jobSiteMarker = L.marker([{{ job_lat or 0 }}, {{ job_lon or 0 }}], {
-                                                title: 'Job Site: {{ violation.job_code }}'
-                                            }).addTo(map);
-
-                                            var clockInMarker = L.marker([clockInLat, clockInLon], {
-                                                title: 'Clock-in Location'
-                                            }).addTo(map);
-
-                                            // Style the markers differently
-                                            jobSiteMarker.bindPopup('<strong>Job Site</strong><br>{{ violation.job_code }}<br>{{ violation.location }}');
-                                            clockInMarker.bindPopup('<strong>Clock-in Location</strong><br>Distance: {{ violation.distance }} mi<br>{{ violation.datetime.strftime("%m/%d/%Y %I:%M %p") }}');
-
-                                            {% if job_lat and job_lon %}
-                                            // Draw a red line between the two points
-                                            var polyline = L.polyline([
-                                                [{{ job_lat }}, {{ job_lon }}],
-                                                [clockInLat, clockInLon]
-                                            ], {
-                                                color: 'red',
-                                                weight: 2,
-                                                opacity: 0.7,
-                                                dashArray: '5, 10'
-                                            }).addTo(map);
-
-                                            // Create bounds that include both points
-                                            var bounds = L.latLngBounds([
-                                                [{{ job_lat }}, {{ job_lon }}],
-                                                [clockInLat, clockInLon]
-                                            ]);
-
-                                            // Fit the map to show both points with padding
-                                            map.fitBounds(bounds, { padding: [20, 20] });
-                                            {% else %}
-                                            // If no job coordinates, just center on clock-in location
-                                            map.setView([clockInLat, clockInLon], 15);
-                                            {% endif %}
-                                        })();
-                                        </script>
-                                        <small class="text-muted d-block mt-1">
-                                            Clock-in: {{ "%.4f"|format(violation.clock_in_latitude) }}, {{ "%.4f"|format(violation.clock_in_longitude) }}
-                                            {% if violation.job.latitude and violation.job.longitude %}
-                                                <br>Job Site: {{ "%.4f"|format(violation.job.latitude) }}, {{ "%.4f"|format(violation.job.longitude) }}
-                                            {% endif %}
-                                        </small>
+                                        <small>{{ "%.4f"|format(violation.clock_in_latitude) }}, {{ "%.4f"|format(violation.clock_in_longitude) }}</small>
                                     {% else %}
                                         <span class="text-muted">N/A</span>
                                     {% endif %}
