@@ -446,3 +446,12 @@ body.activities-page .container {
 .violations-container { 
   margin-top: 10px; 
 }
+
+/* Reduce spacing between summary and violations */
+.card.mb-2:last-of-type {
+  margin-bottom: 8px !important;
+}
+
+.card.mt-2:first-of-type {
+  margin-top: 8px !important;
+}
