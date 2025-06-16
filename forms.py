@@ -380,8 +380,8 @@ class GPSComplianceReportForm(FlaskForm):
     def __init__(self, *args, **kwargs):
         super(GPSComplianceReportForm, self).__init__(*args, **kwargs)
         
-        # Set default date range to last 7 days
+        # Set default date range to last 30 days to capture more violation data
         if not self.start_date.data:
-            self.start_date.data = date.today() - timedelta(days=7)
+            self.start_date.data = date.today() - timedelta(days=30)
         if not self.end_date.data:
             self.end_date.data = date.today()
