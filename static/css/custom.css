@@ -437,3 +437,12 @@ body.activities-page {
 body.activities-page .container {
   padding-top: 0 !important;
 }
+
+/* GPS Compliance Report spacing fixes */
+.executive-summary { 
+  margin-bottom: 20px; 
+}
+
+.violations-container { 
+  margin-top: 10px; 
+}
