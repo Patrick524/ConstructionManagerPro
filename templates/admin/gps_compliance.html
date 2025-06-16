@@ -80,19 +80,19 @@
     <div class="col-lg-8">
         {% if executive_summary %}
         <!-- Executive Summary -->
-        <div class="card shadow-sm mb-3">
+        <div class="card shadow-sm mb-2">
             <div class="card-header">
                 <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Executive Summary</h5>
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-2">
                         <div class="stat-card p-3 rounded" style="background-color: #2563eb;">
                             <h6 class="text-white mb-1">Total Clock-ins</h6>
                             <h3 class="mb-0 text-white">{{ executive_summary.total_clock_ins }}</h3>
                         </div>
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-2">
                         <div class="stat-card p-3 bg-info bg-opacity-10 rounded">
                             <h6 class="text-muted mb-1">Avg Distance</h6>
                             <h3 class="mb-0 text-info">
@@ -104,7 +104,7 @@
                             </h3>
                         </div>
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-2">
                         <div class="stat-card p-3 bg-success bg-opacity-10 rounded">
                             <h6 class="text-muted mb-1">Compliant</h6>
                             <h3 class="mb-0 text-success">
@@ -113,7 +113,7 @@
                             </h3>
                         </div>
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-2">
                         <div class="stat-card p-3 bg-warning bg-opacity-10 rounded">
                             <h6 class="text-muted mb-1">Total Violations</h6>
                             <h3 class="mb-0 text-warning">
@@ -122,19 +122,19 @@
                             </h3>
                         </div>
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-2">
                         <div class="stat-card p-3 bg-danger bg-opacity-10 rounded">
                             <h6 class="text-muted mb-1">Fraud Risk (5+ mi)</h6>
                             <h3 class="mb-0 text-danger">{{ executive_summary.fraud_risk_count }}</h3>
                         </div>
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-2">
                         <div class="stat-card p-3 bg-warning bg-opacity-10 rounded">
                             <h6 class="text-muted mb-1">Major Violations (2-5 mi)</h6>
                             <h3 class="mb-0 text-warning">{{ executive_summary.major_count }}</h3>
                         </div>
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-0">
                         <div class="stat-card p-3 bg-info bg-opacity-10 rounded">
                             <h6 class="text-muted mb-1">Minor Violations (0.5-2 mi)</h6>
                             <h3 class="mb-0 text-info">{{ executive_summary.minor_count }}</h3>
@@ -149,7 +149,7 @@
 
         <!-- Fraud Risk Violations -->
         {% if violations_data.fraud_risk %}
-        <div class="card shadow-sm mb-3">
+        <div class="card shadow-sm mb-3 mt-2">
             <div class="card-header bg-danger text-white">
                 <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Fraud Risk Violations (5+ miles)</h5>
             </div>
