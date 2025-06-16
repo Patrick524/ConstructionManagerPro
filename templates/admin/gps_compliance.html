@@ -80,7 +80,7 @@
     <div class="col-lg-8">
         {% if executive_summary %}
         <!-- Executive Summary -->
-        <div class="card shadow-sm mb-4">
+        <div class="card shadow-sm mb-3">
             <div class="card-header">
                 <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Executive Summary</h5>
             </div>
@@ -116,16 +116,13 @@
                             <h3 class="mb-0 text-danger">{{ executive_summary.fraud_risk_count }}</h3>
                         </div>
                     </div>
-                </div>
-                
-                <div class="row mt-3">
-                    <div class="col-md-6">
+                    <div class="col-md-6 mb-3">
                         <div class="stat-card p-3 bg-warning bg-opacity-10 rounded">
                             <h6 class="text-muted mb-1">Major Violations (2-5 mi)</h6>
                             <h3 class="mb-0 text-warning">{{ executive_summary.major_count }}</h3>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 mb-3">
                         <div class="stat-card p-3 bg-info bg-opacity-10 rounded">
                             <h6 class="text-muted mb-1">Minor Violations (0.5-2 mi)</h6>
                             <h3 class="mb-0 text-info">{{ executive_summary.minor_count }}</h3>
@@ -140,7 +137,7 @@
         
         <!-- Fraud Risk Violations -->
         {% if violations_data.fraud_risk %}
-        <div class="card shadow-sm mb-4">
+        <div class="card shadow-sm mb-3">
             <div class="card-header bg-danger text-white">
                 <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Fraud Risk Violations (5+ miles)</h5>
             </div>
@@ -199,7 +196,7 @@
         
         <!-- Major Violations -->
         {% if violations_data.major %}
-        <div class="card shadow-sm mb-4">
+        <div class="card shadow-sm mb-3">
             <div class="card-header bg-warning text-dark">
                 <h5 class="mb-0"><i class="fas fa-exclamation-circle me-2"></i>Major Violations (2-5 miles)</h5>
             </div>
@@ -258,7 +255,7 @@
         
         <!-- Minor Violations -->
         {% if violations_data.minor %}
-        <div class="card shadow-sm mb-4">
+        <div class="card shadow-sm mb-3">
             <div class="card-header bg-info text-white">
                 <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Minor Violations (0.5-2 miles)</h5>
             </div>
@@ -317,7 +314,7 @@
         
         <!-- Worker Summary -->
         {% if violations_data.worker_summary %}
-        <div class="card shadow-sm mb-4">
+        <div class="card shadow-sm mb-3">
             <div class="card-header">
                 <h5 class="mb-0"><i class="fas fa-users me-2"></i>Worker Violation Summary</h5>
             </div>
