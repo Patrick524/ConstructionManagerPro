@@ -20,7 +20,7 @@
             <div class="card-body">
                 <form method="POST">
                     {{ form.hidden_tag() }}
-                    
+
                     <div class="mb-3">
                         <label for="start_date" class="form-label">Start Date</label>
                         <div class="input-group">
@@ -35,7 +35,7 @@
                             </div>
                         {% endif %}
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="end_date" class="form-label">End Date</label>
                         <div class="input-group">
@@ -50,7 +50,7 @@
                             </div>
                         {% endif %}
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="format" class="form-label">Format</label>
                         <div class="input-group">
@@ -58,14 +58,14 @@
                             {{ form.format(class="form-control") }}
                         </div>
                     </div>
-                    
+
                     <div class="d-grid">
                         {{ form.submit(class="btn btn-primary") }}
                     </div>
                 </form>
             </div>
         </div>
-        
+
         <div class="alert alert-info mt-3">
             <h6><i class="fas fa-info-circle me-2"></i>About GPS Compliance</h6>
             <p class="mb-2"><strong>Violation Categories:</strong></p>
@@ -76,7 +76,7 @@
             </ul>
         </div>
     </div>
-    
+
     <div class="col-lg-8">
         {% if executive_summary %}
         <!-- Executive Summary -->
@@ -90,6 +90,18 @@
                         <div class="stat-card p-3 bg-light rounded">
                             <h6 class="text-muted mb-1">Total Clock-ins</h6>
                             <h3 class="mb-0">{{ executive_summary.total_clock_ins }}</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="stat-card p-3 bg-info bg-opacity-10 rounded">
+                            <h6 class="text-muted mb-1">Avg Distance</h6>
+                            <h3 class="mb-0 text-info">
+                                {% if executive_summary.avg_distance %}
+                                    {{ "%.1f"|format(executive_summary.avg_distance) }} mi
+                                {% else %}
+                                    0.0 mi
+                                {% endif %}
+                            </h3>
                         </div>
                     </div>
                     <div class="col-md-6 mb-3">
@@ -131,10 +143,10 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Violation Tables -->
         {% if violations_data %}
-        
+
         <!-- Fraud Risk Violations -->
         {% if violations_data.fraud_risk %}
         <div class="card shadow-sm mb-3">
@@ -193,7 +205,7 @@
             </div>
         </div>
         {% endif %}
-        
+
         <!-- Major Violations -->
         {% if violations_data.major %}
         <div class="card shadow-sm mb-3">
@@ -252,7 +264,7 @@
             </div>
         </div>
         {% endif %}
-        
+
         <!-- Minor Violations -->
         {% if violations_data.minor %}
         <div class="card shadow-sm mb-3">
@@ -311,7 +323,7 @@
             </div>
         </div>
         {% endif %}
-        
+
         <!-- Worker Summary -->
         {% if violations_data.worker_summary %}
         <div class="card shadow-sm mb-3">
@@ -372,14 +384,14 @@
             </div>
         </div>
         {% endif %}
-        
+
         {% else %}
         <div class="alert alert-info">
             <h5><i class="fas fa-check-circle me-2"></i>No Violations Found</h5>
             <p class="mb-0">All clock-ins during the selected period were within acceptable distance limits (0.5 miles or less from job sites).</p>
         </div>
         {% endif %}
-        
+
         {% else %}
         <div class="card shadow-sm">
             <div class="card-body text-center py-5">
