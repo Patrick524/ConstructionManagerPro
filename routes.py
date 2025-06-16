@@ -2857,7 +2857,10 @@ def admin_gps_compliance():
             ClockSession.clock_in <= end_date + timedelta(days=1),
             ClockSession.clock_in_distance_mi.isnot(None),
             ClockSession.clock_in_distance_mi > 0.5  # Only violations > 0.5 miles
-        ).join(User).join(Job).all()
+        ).options(
+            db.joinedload(ClockSession.user),
+            db.joinedload(ClockSession.job)
+        ).all()
         
         # Categorize violations
         fraud_risk = []  # 5+ miles
