@@ -2989,7 +2989,11 @@ def admin_gps_compliance():
                         
                         coordinates = "N/A"
                         if v['clock_in_latitude'] and v['clock_in_longitude']:
-                            coordinates = f"{v['clock_in_latitude']:.4f}, {v['clock_in_longitude']:.4f}"
+                            coordinates = f"Clock-in: {v['clock_in_latitude']:.4f}, {v['clock_in_longitude']:.4f}"
+                            # Add job site coordinates if available
+                            job = Job.query.get(v.get('job_id'))
+                            if job and job.latitude and job.longitude:
+                                coordinates += f"\nJob Site: {job.latitude:.4f}, {job.longitude:.4f}"
                         
                         table_data.append([
                             v['worker_name'],

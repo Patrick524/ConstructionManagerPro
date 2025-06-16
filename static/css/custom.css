@@ -500,3 +500,28 @@ body.activities-page .container {
   border-top: none !important;
   margin-top: -2px !important;
 }
+
+/* GPS Compliance Map Styling */
+.leaflet-container {
+  font-family: inherit;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+/* Ensure map containers have proper dimensions */
+[id^="map-"] {
+  min-width: 200px;
+  min-height: 200px;
+}
+
+/* Style the map popups */
+.leaflet-popup-content {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.leaflet-popup-content strong {
+  color: #333;
+}
