@@ -464,9 +464,19 @@ body.activities-page .container {
 #gps-compliance .row {
   flex-grow: 0 !important;
   min-height: auto !important;
+  margin-bottom: 0 !important;
 }
 
 #gps-compliance .card {
   margin-bottom: 0 !important;
   height: auto !important;
+}
+
+#gps-compliance .col-lg-8 > * {
+  margin-bottom: 0 !important;
+  margin-top: 0 !important;
+}
+
+#gps-compliance .card + .card {
+  margin-top: -1px !important;
 }
