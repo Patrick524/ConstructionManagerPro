@@ -365,9 +365,7 @@ def generate_job_cost_csv(data, title="Job Cost Report"):
         'Trade_Category',
         'Hours',
         'Burden_Rate_Per_Hour',
-        'Total_Labor_Cost',
-        'Entry_ID',
-        'Created_Date'
+        'Total_Labor_Cost'
     ]
     writer.writerow(headers)
     
@@ -376,21 +374,10 @@ def generate_job_cost_csv(data, title="Job Cost Report"):
         # Format date in US style (MM/DD/YYYY)
         formatted_date = row['date'].strftime('%m/%d/%Y') if hasattr(row['date'], 'strftime') else row['date']
         
-        # Format created date if available
-        created_date = ""
-        if 'created_at' in row and row['created_at']:
-            if hasattr(row['created_at'], 'strftime'):
-                created_date = row['created_at'].strftime('%m/%d/%Y')
-            else:
-                created_date = str(row['created_at'])
-        
         # Clean numeric values - remove currency symbols and ensure proper formatting
         burden_rate = float(row['burden_rate']) if row['burden_rate'] else 0.00
         total_cost = float(row['total_cost']) if 'total_cost' in row and row['total_cost'] else 0.00
         hours = float(row['hours']) if row['hours'] else 0.00
-        
-        # Get entry ID if available
-        entry_id = row.get('id', '')
         
         # Get trade category if available
         trade_category = row.get('trade_category', '')
@@ -404,9 +391,7 @@ def generate_job_cost_csv(data, title="Job Cost Report"):
             trade_category,
             f"{hours:.2f}",
             f"{burden_rate:.2f}",
-            f"{total_cost:.2f}",
-            entry_id,
-            created_date
+            f"{total_cost:.2f}"
         ])
     
     output.seek(0)
