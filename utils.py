@@ -351,64 +351,63 @@ def generate_pdf_report(data, columns, title="Report"):
     return pdf_data
 
 def generate_job_cost_csv(data, title="Job Cost Report"):
-    """Generate a specialized CSV report for job costing with summary metrics."""
+    """Generate a flat CSV report for job costing suitable for accounting software import."""
     output = io.StringIO()
+    writer = csv.writer(output)
     
-    # Group data by job
-    jobs = {}
-    total_hours = 0
-    total_cost = 0
+    # Write column headers for accounting software import
+    headers = [
+        'Date',
+        'Job_Code',
+        'Job_Description', 
+        'Worker_Name',
+        'Labor_Activity',
+        'Trade_Category',
+        'Hours',
+        'Burden_Rate_Per_Hour',
+        'Total_Labor_Cost',
+        'Entry_ID',
+        'Created_Date'
+    ]
+    writer.writerow(headers)
     
+    # Write each entry as a separate row
     for row in data:
-        job_code = row['job_code']
-        if job_code not in jobs:
-            jobs[job_code] = {
-                'description': row['job_description'],
-                'entries': [],
-                'total_hours': 0,
-                'total_cost': 0
-            }
+        # Format date in US style (MM/DD/YYYY)
+        formatted_date = row['date'].strftime('%m/%d/%Y') if hasattr(row['date'], 'strftime') else row['date']
         
-        hours = float(row['hours'])
-        cost = float(row['total_cost']) if 'total_cost' in row else 0
+        # Format created date if available
+        created_date = ""
+        if 'created_at' in row and row['created_at']:
+            if hasattr(row['created_at'], 'strftime'):
+                created_date = row['created_at'].strftime('%m/%d/%Y')
+            else:
+                created_date = str(row['created_at'])
         
-        jobs[job_code]['entries'].append(row)
-        jobs[job_code]['total_hours'] += hours
-        jobs[job_code]['total_cost'] += cost
+        # Clean numeric values - remove currency symbols and ensure proper formatting
+        burden_rate = float(row['burden_rate']) if row['burden_rate'] else 0.00
+        total_cost = float(row['total_cost']) if 'total_cost' in row and row['total_cost'] else 0.00
+        hours = float(row['hours']) if row['hours'] else 0.00
         
-        total_hours += hours
-        total_cost += cost
-    
-    # Write header
-    output.write(f"{title}\n")
-    output.write(f"Generated: {datetime.now().strftime('%m/%d/%Y %H:%M:%S')}\n\n")
-    
-    # Write summary metrics
-    output.write("SUMMARY METRICS\n")
-    output.write(f"Total Labor Cost,${total_cost:,.2f}\n")
-    output.write(f"Total Hours,{total_hours:.2f}\n")
-    output.write(f"Average Cost per Hour,${(total_cost/total_hours) if total_hours > 0 else 0:,.2f}\n")
-    output.write(f"Number of Jobs,{len(jobs)}\n\n")
-    
-    # Write detailed data grouped by job
-    output.write("DETAILED BREAKDOWN\n")
-    
-    for job_code in sorted(jobs.keys()):
-        job_data = jobs[job_code]
-        output.write(f"\nJob: {job_code} - {job_data['description']}\n")
-        output.write("Date,Worker,Activity,Hours,Burden Rate,Total Cost\n")
+        # Get entry ID if available
+        entry_id = row.get('id', '')
         
-        for entry in job_data['entries']:
-            burden_rate = f"${float(entry['burden_rate']):,.2f}" if entry['burden_rate'] else "N/A"
-            total_cost_entry = f"${float(entry['total_cost']):,.2f}" if 'total_cost' in entry else "$0.00"
-            
-            # Format date in US style (MM/DD/YYYY)
-            formatted_date = entry['date'].strftime('%m/%d/%Y') if hasattr(entry['date'], 'strftime') else entry['date']
-            output.write(f"{formatted_date},{entry['worker_name']},{entry['activity']},{entry['hours']},{burden_rate},{total_cost_entry}\n")
+        # Get trade category if available
+        trade_category = row.get('trade_category', '')
         
-        output.write(f"Job Subtotal:,,,{job_data['total_hours']:.2f},${job_data['total_cost']:,.2f}\n")
-    
-    output.write(f"\nGRAND TOTAL:,,,{total_hours:.2f},${total_cost:,.2f}\n")
+        writer.writerow([
+            formatted_date,
+            row['job_code'],
+            row['job_description'],
+            row['worker_name'],
+            row['activity'],
+            trade_category,
+            f"{hours:.2f}",
+            f"{burden_rate:.2f}",
+            f"{total_cost:.2f}",
+            entry_id,
+            created_date
+        ])
     
     output.seek(0)
     return output.getvalue()
