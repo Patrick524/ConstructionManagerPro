@@ -758,7 +758,8 @@ def generate_payroll_csv(data, title="Payroll Report"):
         for entry in unapproved_entries:
             # Format activity name without spaces for QB compatibility
             activity_formatted = entry['activity'].replace(' ', '_').replace('-', '_')
-            output.write(f"{entry['employee_id']},{entry['worker_name']},{entry['date']},{entry['job_code']},{activity_formatted},{entry['hours']},UNAPPROVED\n")
+            # Use worker_name as employee identifier since employee_id is not available
+            output.write(f"{entry['worker_name']},{entry['worker_name']},{entry['date']},{entry['job_code']},{activity_formatted},{entry['hours']},UNAPPROVED\n")
         
         output.write(f"\nTotal Unapproved Entries: {len(unapproved_entries)}\n")
         output.write("=" * 60 + "\n\n")
@@ -766,27 +767,26 @@ def generate_payroll_csv(data, title="Payroll Report"):
     # Calculate summary totals per worker
     worker_totals = {}
     for entry in approved_entries:
-        employee_id = entry['employee_id']
         worker_name = entry['worker_name']
         hours = float(entry['hours'])
         
-        if employee_id not in worker_totals:
-            worker_totals[employee_id] = {
+        if worker_name not in worker_totals:
+            worker_totals[worker_name] = {
                 'name': worker_name,
                 'total_hours': 0,
                 'entries': 0
             }
         
-        worker_totals[employee_id]['total_hours'] += hours
-        worker_totals[employee_id]['entries'] += 1
+        worker_totals[worker_name]['total_hours'] += hours
+        worker_totals[worker_name]['entries'] += 1
     
     # Write summary section for validation
     output.write("PAYROLL SUMMARY - TOTAL HOURS PER WORKER\n")
     output.write("Employee_ID,Employee_Name,Total_Hours,Entry_Count\n")
     
-    for employee_id in sorted(worker_totals.keys()):
-        worker = worker_totals[employee_id]
-        output.write(f"{employee_id},{worker['name']},{worker['total_hours']:.2f},{worker['entries']}\n")
+    for worker_name in sorted(worker_totals.keys()):
+        worker = worker_totals[worker_name]
+        output.write(f"{worker_name},{worker['name']},{worker['total_hours']:.2f},{worker['entries']}\n")
     
     total_all_hours = sum(worker['total_hours'] for worker in worker_totals.values())
     total_all_entries = sum(worker['entries'] for worker in worker_totals.values())
@@ -811,7 +811,7 @@ def generate_payroll_csv(data, title="Payroll Report"):
         week_ending = entry_date + timedelta(days=days_until_sunday)
         week_ending_str = week_ending.strftime('%m/%d/%Y')
         
-        output.write(f"{entry['employee_id']},{entry['worker_name']},{entry['date']},{entry['job_code']},{activity_formatted},{entry['hours']},{day_of_week},{week_ending_str}\n")
+        output.write(f"{entry['worker_name']},{entry['worker_name']},{entry['date']},{entry['job_code']},{activity_formatted},{entry['hours']},{day_of_week},{week_ending_str}\n")
     
     output.write(f"\nTotal Approved Entries: {len(approved_entries)}\n")
     output.write(f"Total Hours: {total_all_hours:.2f}\n")

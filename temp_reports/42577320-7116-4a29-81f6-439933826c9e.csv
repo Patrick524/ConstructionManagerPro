@@ -1,0 +1,82 @@
+date,hours,approved,worker_name,job_code,job_description,activity,trade_category
+2025-06-02,4.0,False,Robert Johnson, TAC-2025-038,Pierce County Justice Center Renovation - Phase 2,Sanding,drywall
+2025-06-02,8.0,True,Robert Johnson,RES-6-11-25,Tacoma Apartment,Hanging Drywall,drywall
+2025-06-03,8.0,True,Robert Johnson,RES-6-11-25,Tacoma Apartment,Hanging Drywall,drywall
+2025-06-04,8.0,True,Robert Johnson,RES-6-11-25,Tacoma Apartment,Hanging Drywall,drywall
+2025-06-05,2.0,True,Robert Johnson,RES-6-11-25,Tacoma Apartment,Hanging Drywall,drywall
+2025-06-05,1.0,True,Robert Johnson,8004,Columbia Bank HQ Reno,Hanging Drywall,drywall
+2025-06-06,8.0,,Brad Bradley,8012,Embassy Suites by Hilton,Taping and Mudding,drywall
+2025-06-06,6.0,,John Smith,8012,Embassy Suites by Hilton,Surface Preparation,painting
+2025-06-06,5.5,,Memoree Cushing,8012,Embassy Suites by Hilton,Priming,painting
+2025-06-06,7.5,,Robert Johnson,8012,Embassy Suites by Hilton,Hanging Drywall,drywall
+2025-06-09,4.5,,Brad Bradley,8012,Embassy Suites by Hilton,Hanging Drywall,drywall
+2025-06-09,7.0,,John Smith,8012,Embassy Suites by Hilton,Painting,painting
+2025-06-09,8.0,,Memoree Cushing,8012,Embassy Suites by Hilton,Sanding,drywall
+2025-06-09,6.5,,Robert Johnson,8012,Embassy Suites by Hilton,Taping and Mudding,drywall
+2025-06-10,6.0,,Brad Bradley,8012,Embassy Suites by Hilton,Surface Preparation,painting
+2025-06-10,7.5,,John Smith,8012,Embassy Suites by Hilton,Hanging Drywall,drywall
+2025-06-10,4.0,,Memoree Cushing,8012,Embassy Suites by Hilton,Painting,painting
+2025-06-10,5.0,,Robert Johnson,8012,Embassy Suites by Hilton,Sanding,drywall
+2025-06-11,7.0,,Brad Bradley,8012,Embassy Suites by Hilton,Painting,painting
+2025-06-11,5.5,,John Smith,8012,Embassy Suites by Hilton,Taping and Mudding,drywall
+2025-06-11,6.5,,Memoree Cushing,8012,Embassy Suites by Hilton,Hanging Drywall,drywall
+2025-06-11,8.0,,Robert Johnson,8012,Embassy Suites by Hilton,Priming,painting
+2025-06-12,8.0,,Brad Bradley,8012,Embassy Suites by Hilton,Priming,painting
+2025-06-12,6.0,,John Smith,8012,Embassy Suites by Hilton,Sanding,drywall
+2025-06-12,5.0,,Memoree Cushing,8012,Embassy Suites by Hilton,Taping and Mudding,drywall
+2025-06-12,4.5,,Robert Johnson,8012,Embassy Suites by Hilton,Painting,painting
+2025-06-12,8.0,False,Robert Johnson,RES-6-11-25,Tacoma Apartment,Hanging Drywall,drywall
+2025-06-13,6.5,,Brad Bradley,8012,Embassy Suites by Hilton,Sanding,drywall
+2025-06-13,4.0,,John Smith,8012,Embassy Suites by Hilton,Priming,painting
+2025-06-13,8.0,,Memoree Cushing,8012,Embassy Suites by Hilton,Surface Preparation,painting
+2025-06-13,8.0,False,Robert Johnson,RES-6-11-25,Tacoma Apartment,Hanging Drywall,drywall
+2025-06-13,7.0,,Robert Johnson,8012,Embassy Suites by Hilton,Hanging Drywall,drywall
+2025-06-16,5.5,,Brad Bradley,8012,Embassy Suites by Hilton,Priming,painting
+2025-06-16,2.11,False,Brad Bradley,8002,Marriott Bellevue TI,Hanging Drywall,drywall
+2025-06-16,0.4,False,Brad Bradley,8002,Marriott Bellevue TI,Hanging Drywall,drywall
+2025-06-16,0.64,False,Brad Bradley,8005,Expedia Offices TI,Hanging Drywall,drywall
+2025-06-16,8.0,False,Brad Bradley,8004,Columbia Bank HQ Reno,Hanging Drywall,drywall
+2025-06-16,8.0,,John Smith,8012,Embassy Suites by Hilton,Hanging Drywall,drywall
+2025-06-16,7.0,,Memoree Cushing,8012,Embassy Suites by Hilton,Painting,painting
+2025-06-16,8.0,False,Robert Johnson,8002,Marriott Bellevue TI,Hanging Drywall,drywall
+2025-06-16,6.0,,Robert Johnson,8012,Embassy Suites by Hilton,Taping and Mudding,drywall
+2025-06-17,6.5,,Brad Bradley,8012,Embassy Suites by Hilton,Taping and Mudding,drywall
+2025-06-17,4.5,,John Smith,8012,Embassy Suites by Hilton,Surface Preparation,painting
+2025-06-17,8.0,,Memoree Cushing,8012,Embassy Suites by Hilton,Hanging Drywall,drywall
+2025-06-17,7.5,,Robert Johnson,8012,Embassy Suites by Hilton,Sanding,drywall
+2025-06-18,4.0,,Brad Bradley,8012,Embassy Suites by Hilton,Sanding,drywall
+2025-06-18,6.5,,John Smith,8012,Embassy Suites by Hilton,Painting,painting
+2025-06-18,7.5,,Memoree Cushing,8012,Embassy Suites by Hilton,Priming,painting
+2025-06-18,5.0,,Robert Johnson,8012,Embassy Suites by Hilton,Surface Preparation,painting
+2025-06-19,7.0,,Brad Bradley,8012,Embassy Suites by Hilton,Hanging Drywall,drywall
+2025-06-19,5.5,,John Smith,8012,Embassy Suites by Hilton,Taping and Mudding,drywall
+2025-06-19,4.5,,Memoree Cushing,8012,Embassy Suites by Hilton,Surface Preparation,painting
+2025-06-19,8.0,,Robert Johnson,8012,Embassy Suites by Hilton,Painting,painting
+2025-06-20,5.0,,Brad Bradley,8012,Embassy Suites by Hilton,Painting,painting
+2025-06-20,7.5,,John Smith,8012,Embassy Suites by Hilton,Sanding,drywall
+2025-06-20,8.0,,Memoree Cushing,8012,Embassy Suites by Hilton,Taping and Mudding,drywall
+2025-06-20,6.0,,Robert Johnson,8012,Embassy Suites by Hilton,Hanging Drywall,drywall
+2025-06-23,8.0,,Brad Bradley,8012,Embassy Suites by Hilton,Surface Preparation,painting
+2025-06-23,6.5,,John Smith,8012,Embassy Suites by Hilton,Hanging Drywall,drywall
+2025-06-23,4.0,,Memoree Cushing,8012,Embassy Suites by Hilton,Sanding,drywall
+2025-06-23,7.0,,Robert Johnson,8012,Embassy Suites by Hilton,Priming,painting
+2025-06-24,6.0,,Brad Bradley,8012,Embassy Suites by Hilton,Hanging Drywall,drywall
+2025-06-24,7.5,,John Smith,8012,Embassy Suites by Hilton,Painting,painting
+2025-06-24,8.0,,Memoree Cushing,8012,Embassy Suites by Hilton,Priming,painting
+2025-06-24,5.5,,Robert Johnson,8012,Embassy Suites by Hilton,Taping and Mudding,drywall
+2025-06-25,7.0,,Brad Bradley,8012,Embassy Suites by Hilton,Painting,painting
+2025-06-25,6.5,,John Smith,8012,Embassy Suites by Hilton,Surface Preparation,painting
+2025-06-25,5.0,,Memoree Cushing,8012,Embassy Suites by Hilton,Taping and Mudding,drywall
+2025-06-25,4.5,,Robert Johnson,8012,Embassy Suites by Hilton,Sanding,drywall
+2025-06-26,6.5,,Brad Bradley,8012,Embassy Suites by Hilton,Priming,painting
+2025-06-26,4.5,,John Smith,8012,Embassy Suites by Hilton,Hanging Drywall,drywall
+2025-06-26,7.0,,Memoree Cushing,8012,Embassy Suites by Hilton,Surface Preparation,painting
+2025-06-26,8.0,,Robert Johnson,8012,Embassy Suites by Hilton,Painting,painting
+2025-06-27,4.0,,Brad Bradley,8012,Embassy Suites by Hilton,Sanding,drywall
+2025-06-27,8.0,,John Smith,8012,Embassy Suites by Hilton,Taping and Mudding,drywall
+2025-06-27,7.5,,Memoree Cushing,8012,Embassy Suites by Hilton,Painting,painting
+2025-06-27,5.5,,Robert Johnson,8012,Embassy Suites by Hilton,Surface Preparation,painting
+2025-06-30,8.0,,Brad Bradley,8012,Embassy Suites by Hilton,Taping and Mudding,drywall
+2025-06-30,6.0,,John Smith,8012,Embassy Suites by Hilton,Priming,painting
+2025-06-30,5.5,,Memoree Cushing,8012,Embassy Suites by Hilton,Hanging Drywall,drywall
+2025-06-30,7.0,,Robert Johnson,8012,Embassy Suites by Hilton,Hanging Drywall,drywall
