@@ -732,73 +732,18 @@ def generate_payroll_pdf(data, title="Payroll Report"):
     return pdf_data
 
 def generate_payroll_csv(data, title="Payroll Report"):
-    """Generate a specialized QuickBooks-compatible payroll CSV report."""
+    """Generate a flat QuickBooks-compatible payroll CSV report."""
     output = io.StringIO()
+    writer = csv.writer(output)
     
-    # Separate approved and unapproved entries
-    approved_entries = []
-    unapproved_entries = []
+    # Write only the CSV header row
+    writer.writerow(['Employee_Name', 'Date', 'Job_Code', 'Activity_Code', 'Hours', 'Day_of_Week', 'Week_Ending'])
     
-    for row in data:
-        if row.get('approved', False):
-            approved_entries.append(row)
-        else:
-            unapproved_entries.append(row)
+    # Filter to approved entries only and sort by worker name then date
+    approved_entries = [row for row in data if row.get('approved', False)]
+    sorted_entries = sorted(approved_entries, key=lambda x: (x['worker_name'], x['date']))
     
-    # Write header
-    output.write(f"{title}\n")
-    output.write(f"Generated: {datetime.now().strftime('%m/%d/%Y %H:%M:%S')}\n\n")
-    
-    # Flag unapproved entries at top for review
-    if unapproved_entries:
-        output.write("*** ATTENTION: UNAPPROVED ENTRIES FOUND ***\n")
-        output.write("The following entries require approval before payroll processing:\n\n")
-        output.write("Employee_ID,Employee_Name,Date,Job_Code,Activity,Hours,Status\n")
-        
-        for entry in unapproved_entries:
-            # Format activity name without spaces for QB compatibility
-            activity_formatted = entry['activity'].replace(' ', '_').replace('-', '_')
-            # Use worker_name as employee identifier since employee_id is not available
-            output.write(f"{entry['worker_name']},{entry['worker_name']},{entry['date']},{entry['job_code']},{activity_formatted},{entry['hours']},UNAPPROVED\n")
-        
-        output.write(f"\nTotal Unapproved Entries: {len(unapproved_entries)}\n")
-        output.write("=" * 60 + "\n\n")
-    
-    # Calculate summary totals per worker
-    worker_totals = {}
-    for entry in approved_entries:
-        worker_name = entry['worker_name']
-        hours = float(entry['hours'])
-        
-        if worker_name not in worker_totals:
-            worker_totals[worker_name] = {
-                'name': worker_name,
-                'total_hours': 0,
-                'entries': 0
-            }
-        
-        worker_totals[worker_name]['total_hours'] += hours
-        worker_totals[worker_name]['entries'] += 1
-    
-    # Write summary section for validation
-    output.write("PAYROLL SUMMARY - TOTAL HOURS PER WORKER\n")
-    output.write("Employee_ID,Employee_Name,Total_Hours,Entry_Count\n")
-    
-    for worker_name in sorted(worker_totals.keys()):
-        worker = worker_totals[worker_name]
-        output.write(f"{worker_name},{worker['name']},{worker['total_hours']:.2f},{worker['entries']}\n")
-    
-    total_all_hours = sum(worker['total_hours'] for worker in worker_totals.values())
-    total_all_entries = sum(worker['entries'] for worker in worker_totals.values())
-    
-    output.write(f"GRAND_TOTAL,ALL_WORKERS,{total_all_hours:.2f},{total_all_entries}\n\n")
-    output.write("=" * 60 + "\n\n")
-    
-    # Write detailed QB-compatible data
-    output.write("QUICKBOOKS IMPORT DATA - APPROVED ENTRIES ONLY\n")
-    output.write("Employee_ID,Employee_Name,Date,Job_Code,Activity_Code,Hours,Day_of_Week,Week_Ending\n")
-    
-    for entry in approved_entries:
+    for entry in sorted_entries:
         # Format activity name without spaces for QB compatibility
         activity_formatted = entry['activity'].replace(' ', '_').replace('-', '_')
         
@@ -811,19 +756,18 @@ def generate_payroll_csv(data, title="Payroll Report"):
         week_ending = entry_date + timedelta(days=days_until_sunday)
         week_ending_str = week_ending.strftime('%m/%d/%Y')
         
-        output.write(f"{entry['worker_name']},{entry['worker_name']},{entry['date']},{entry['job_code']},{activity_formatted},{entry['hours']},{day_of_week},{week_ending_str}\n")
-    
-    output.write(f"\nTotal Approved Entries: {len(approved_entries)}\n")
-    output.write(f"Total Hours: {total_all_hours:.2f}\n")
-    
-    # Add import instructions
-    output.write("\n" + "=" * 60 + "\n")
-    output.write("QUICKBOOKS IMPORT INSTRUCTIONS:\n")
-    output.write("1. Use 'QUICKBOOKS IMPORT DATA' section above\n")
-    output.write("2. Map Employee_ID to QuickBooks Employee ID\n")
-    output.write("3. Map Activity_Code to QuickBooks Service Items\n")
-    output.write("4. Map Job_Code to QuickBooks Customer:Job\n")
-    output.write("5. Import hours using Week_Ending dates for payroll periods\n")
+        # Format date as MM/DD/YYYY
+        formatted_date = entry_date.strftime('%m/%d/%Y')
+        
+        writer.writerow([
+            entry['worker_name'],
+            formatted_date,
+            entry['job_code'],
+            activity_formatted,
+            f"{float(entry['hours']):.2f}",
+            day_of_week,
+            week_ending_str
+        ])
     
     output.seek(0)
     return output.getvalue()
