@@ -737,7 +737,7 @@ def generate_payroll_csv(data, title="Payroll Report"):
     writer = csv.writer(output)
     
     # Write only the CSV header row
-    writer.writerow(['Employee_Name', 'Date', 'Job_Code', 'Activity_Code', 'Hours', 'Day_of_Week', 'Week_Ending'])
+    writer.writerow(['Employee_Name', 'Date', 'Job_Code', 'Job_Description', 'Activity_Code', 'Hours', 'Day_of_Week', 'Week_Ending'])
     
     # Filter to approved entries only and sort by worker name then date
     approved_entries = [row for row in data if row.get('approved', False)]
@@ -763,6 +763,7 @@ def generate_payroll_csv(data, title="Payroll Report"):
             entry['worker_name'],
             formatted_date,
             entry['job_code'],
+            entry['job_description'],
             activity_formatted,
             f"{float(entry['hours']):.2f}",
             day_of_week,
