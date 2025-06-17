@@ -1,0 +1,82 @@
+Date,Job_Code,Job_Description,Worker_Name,Labor_Activity,Trade_Category,Hours,Burden_Rate_Per_Hour,Total_Labor_Cost
+06/02/2025, TAC-2025-038,Pierce County Justice Center Renovation - Phase 2,Robert Johnson,Sanding,drywall,4.00,65.00,260.00
+06/16/2025,8002,Marriott Bellevue TI,Brad Bradley,Hanging Drywall,drywall,0.40,61.50,24.60
+06/16/2025,8002,Marriott Bellevue TI,Brad Bradley,Hanging Drywall,drywall,2.11,61.50,129.76
+06/16/2025,8002,Marriott Bellevue TI,Robert Johnson,Hanging Drywall,drywall,8.00,65.00,520.00
+06/16/2025,8004,Columbia Bank HQ Reno,Brad Bradley,Hanging Drywall,drywall,8.00,61.50,492.00
+06/05/2025,8004,Columbia Bank HQ Reno,Robert Johnson,Hanging Drywall,drywall,1.00,65.00,65.00
+06/16/2025,8005,Expedia Offices TI,Brad Bradley,Hanging Drywall,drywall,0.64,61.50,39.36
+06/06/2025,8012,Embassy Suites by Hilton,Brad Bradley,Taping and Mudding,drywall,8.00,61.50,492.00
+06/09/2025,8012,Embassy Suites by Hilton,Brad Bradley,Hanging Drywall,drywall,4.50,61.50,276.75
+06/10/2025,8012,Embassy Suites by Hilton,Brad Bradley,Surface Preparation,painting,6.00,61.50,369.00
+06/11/2025,8012,Embassy Suites by Hilton,Brad Bradley,Painting,painting,7.00,61.50,430.50
+06/12/2025,8012,Embassy Suites by Hilton,Brad Bradley,Priming,painting,8.00,61.50,492.00
+06/13/2025,8012,Embassy Suites by Hilton,Brad Bradley,Sanding,drywall,6.50,61.50,399.75
+06/16/2025,8012,Embassy Suites by Hilton,Brad Bradley,Priming,painting,5.50,61.50,338.25
+06/17/2025,8012,Embassy Suites by Hilton,Brad Bradley,Taping and Mudding,drywall,6.50,61.50,399.75
+06/18/2025,8012,Embassy Suites by Hilton,Brad Bradley,Sanding,drywall,4.00,61.50,246.00
+06/19/2025,8012,Embassy Suites by Hilton,Brad Bradley,Hanging Drywall,drywall,7.00,61.50,430.50
+06/20/2025,8012,Embassy Suites by Hilton,Brad Bradley,Painting,painting,5.00,61.50,307.50
+06/23/2025,8012,Embassy Suites by Hilton,Brad Bradley,Surface Preparation,painting,8.00,61.50,492.00
+06/24/2025,8012,Embassy Suites by Hilton,Brad Bradley,Hanging Drywall,drywall,6.00,61.50,369.00
+06/25/2025,8012,Embassy Suites by Hilton,Brad Bradley,Painting,painting,7.00,61.50,430.50
+06/26/2025,8012,Embassy Suites by Hilton,Brad Bradley,Priming,painting,6.50,61.50,399.75
+06/27/2025,8012,Embassy Suites by Hilton,Brad Bradley,Sanding,drywall,4.00,61.50,246.00
+06/30/2025,8012,Embassy Suites by Hilton,Brad Bradley,Taping and Mudding,drywall,8.00,61.50,492.00
+06/06/2025,8012,Embassy Suites by Hilton,John Smith,Surface Preparation,painting,6.00,59.00,354.00
+06/09/2025,8012,Embassy Suites by Hilton,John Smith,Painting,painting,7.00,59.00,413.00
+06/10/2025,8012,Embassy Suites by Hilton,John Smith,Hanging Drywall,drywall,7.50,59.00,442.50
+06/11/2025,8012,Embassy Suites by Hilton,John Smith,Taping and Mudding,drywall,5.50,59.00,324.50
+06/12/2025,8012,Embassy Suites by Hilton,John Smith,Sanding,drywall,6.00,59.00,354.00
+06/13/2025,8012,Embassy Suites by Hilton,John Smith,Priming,painting,4.00,59.00,236.00
+06/16/2025,8012,Embassy Suites by Hilton,John Smith,Hanging Drywall,drywall,8.00,59.00,472.00
+06/17/2025,8012,Embassy Suites by Hilton,John Smith,Surface Preparation,painting,4.50,59.00,265.50
+06/18/2025,8012,Embassy Suites by Hilton,John Smith,Painting,painting,6.50,59.00,383.50
+06/19/2025,8012,Embassy Suites by Hilton,John Smith,Taping and Mudding,drywall,5.50,59.00,324.50
+06/20/2025,8012,Embassy Suites by Hilton,John Smith,Sanding,drywall,7.50,59.00,442.50
+06/23/2025,8012,Embassy Suites by Hilton,John Smith,Hanging Drywall,drywall,6.50,59.00,383.50
+06/24/2025,8012,Embassy Suites by Hilton,John Smith,Painting,painting,7.50,59.00,442.50
+06/25/2025,8012,Embassy Suites by Hilton,John Smith,Surface Preparation,painting,6.50,59.00,383.50
+06/26/2025,8012,Embassy Suites by Hilton,John Smith,Hanging Drywall,drywall,4.50,59.00,265.50
+06/27/2025,8012,Embassy Suites by Hilton,John Smith,Taping and Mudding,drywall,8.00,59.00,472.00
+06/30/2025,8012,Embassy Suites by Hilton,John Smith,Priming,painting,6.00,59.00,354.00
+06/06/2025,8012,Embassy Suites by Hilton,Memoree Cushing,Priming,painting,5.50,30.00,165.00
+06/09/2025,8012,Embassy Suites by Hilton,Memoree Cushing,Sanding,drywall,8.00,30.00,240.00
+06/10/2025,8012,Embassy Suites by Hilton,Memoree Cushing,Painting,painting,4.00,30.00,120.00
+06/11/2025,8012,Embassy Suites by Hilton,Memoree Cushing,Hanging Drywall,drywall,6.50,30.00,195.00
+06/12/2025,8012,Embassy Suites by Hilton,Memoree Cushing,Taping and Mudding,drywall,5.00,30.00,150.00
+06/13/2025,8012,Embassy Suites by Hilton,Memoree Cushing,Surface Preparation,painting,8.00,30.00,240.00
+06/16/2025,8012,Embassy Suites by Hilton,Memoree Cushing,Painting,painting,7.00,30.00,210.00
+06/17/2025,8012,Embassy Suites by Hilton,Memoree Cushing,Hanging Drywall,drywall,8.00,30.00,240.00
+06/18/2025,8012,Embassy Suites by Hilton,Memoree Cushing,Priming,painting,7.50,30.00,225.00
+06/19/2025,8012,Embassy Suites by Hilton,Memoree Cushing,Surface Preparation,painting,4.50,30.00,135.00
+06/20/2025,8012,Embassy Suites by Hilton,Memoree Cushing,Taping and Mudding,drywall,8.00,30.00,240.00
+06/23/2025,8012,Embassy Suites by Hilton,Memoree Cushing,Sanding,drywall,4.00,30.00,120.00
+06/24/2025,8012,Embassy Suites by Hilton,Memoree Cushing,Priming,painting,8.00,30.00,240.00
+06/25/2025,8012,Embassy Suites by Hilton,Memoree Cushing,Taping and Mudding,drywall,5.00,30.00,150.00
+06/26/2025,8012,Embassy Suites by Hilton,Memoree Cushing,Surface Preparation,painting,7.00,30.00,210.00
+06/27/2025,8012,Embassy Suites by Hilton,Memoree Cushing,Painting,painting,7.50,30.00,225.00
+06/30/2025,8012,Embassy Suites by Hilton,Memoree Cushing,Hanging Drywall,drywall,5.50,30.00,165.00
+06/06/2025,8012,Embassy Suites by Hilton,Robert Johnson,Hanging Drywall,drywall,7.50,65.00,487.50
+06/09/2025,8012,Embassy Suites by Hilton,Robert Johnson,Taping and Mudding,drywall,6.50,65.00,422.50
+06/10/2025,8012,Embassy Suites by Hilton,Robert Johnson,Sanding,drywall,5.00,65.00,325.00
+06/11/2025,8012,Embassy Suites by Hilton,Robert Johnson,Priming,painting,8.00,65.00,520.00
+06/12/2025,8012,Embassy Suites by Hilton,Robert Johnson,Painting,painting,4.50,65.00,292.50
+06/13/2025,8012,Embassy Suites by Hilton,Robert Johnson,Hanging Drywall,drywall,7.00,65.00,455.00
+06/16/2025,8012,Embassy Suites by Hilton,Robert Johnson,Taping and Mudding,drywall,6.00,65.00,390.00
+06/17/2025,8012,Embassy Suites by Hilton,Robert Johnson,Sanding,drywall,7.50,65.00,487.50
+06/18/2025,8012,Embassy Suites by Hilton,Robert Johnson,Surface Preparation,painting,5.00,65.00,325.00
+06/19/2025,8012,Embassy Suites by Hilton,Robert Johnson,Painting,painting,8.00,65.00,520.00
+06/20/2025,8012,Embassy Suites by Hilton,Robert Johnson,Hanging Drywall,drywall,6.00,65.00,390.00
+06/23/2025,8012,Embassy Suites by Hilton,Robert Johnson,Priming,painting,7.00,65.00,455.00
+06/24/2025,8012,Embassy Suites by Hilton,Robert Johnson,Taping and Mudding,drywall,5.50,65.00,357.50
+06/25/2025,8012,Embassy Suites by Hilton,Robert Johnson,Sanding,drywall,4.50,65.00,292.50
+06/26/2025,8012,Embassy Suites by Hilton,Robert Johnson,Painting,painting,8.00,65.00,520.00
+06/27/2025,8012,Embassy Suites by Hilton,Robert Johnson,Surface Preparation,painting,5.50,65.00,357.50
+06/30/2025,8012,Embassy Suites by Hilton,Robert Johnson,Hanging Drywall,drywall,7.00,65.00,455.00
+06/02/2025,RES-6-11-25,Tacoma Apartment,Robert Johnson,Hanging Drywall,drywall,8.00,65.00,520.00
+06/03/2025,RES-6-11-25,Tacoma Apartment,Robert Johnson,Hanging Drywall,drywall,8.00,65.00,520.00
+06/04/2025,RES-6-11-25,Tacoma Apartment,Robert Johnson,Hanging Drywall,drywall,8.00,65.00,520.00
+06/05/2025,RES-6-11-25,Tacoma Apartment,Robert Johnson,Hanging Drywall,drywall,2.00,65.00,130.00
+06/12/2025,RES-6-11-25,Tacoma Apartment,Robert Johnson,Hanging Drywall,drywall,8.00,65.00,520.00
+06/13/2025,RES-6-11-25,Tacoma Apartment,Robert Johnson,Hanging Drywall,drywall,8.00,65.00,520.00

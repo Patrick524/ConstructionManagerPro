@@ -369,8 +369,11 @@ def generate_job_cost_csv(data, title="Job Cost Report"):
     ]
     writer.writerow(headers)
     
+    # Sort data by date first, then by job_code
+    sorted_data = sorted(data, key=lambda x: (x['date'], x['job_code']))
+    
     # Write each entry as a separate row
-    for row in data:
+    for row in sorted_data:
         # Format date in US style (MM/DD/YYYY)
         formatted_date = row['date'].strftime('%m/%d/%Y') if hasattr(row['date'], 'strftime') else row['date']
         
