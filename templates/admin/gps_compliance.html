@@ -170,7 +170,7 @@
                                     <strong>{{ violation.job_code }}</strong><br>
                                     <small class="text-muted">{{ violation.job_description }}</small>
                                 </td>
-                                <td>{{ violation.distance }} mi 🔴</td>
+                                <td><span class="badge bg-danger">{{ violation.distance }}</span></td>
                                 <td>{{ violation.datetime.strftime('%m/%d/%y %I:%M %p') }}</td>
                                 <td>
                                     <span class="text-2xl" style="cursor: pointer; font-size: 1.5rem;" 
