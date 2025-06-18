@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 
 {% block title %}GPS Compliance Report - Construction Timesheet{% endblock %}
@@ -173,8 +172,17 @@
                                 <td><span class="badge bg-danger">{{ violation.distance }}</span></td>
                                 <td>{{ violation.datetime.strftime('%m/%d/%y %I:%M %p') }}</td>
                                 <td>
-                                    <span class="text-2xl" style="cursor: pointer; font-size: 1.5rem;" 
-                                          title="View location on map">🗺️</span>
+                                    <span class="text-2xl violation-map-icon" style="cursor: pointer; font-size: 1.5rem;" 
+                                          title="View location on map"
+                                          data-worker-name="{{ violation.worker_name }}"
+                                          data-job-code="{{ violation.job_code }}"
+                                          data-job-description="{{ violation.job_description }}"
+                                          data-distance="{{ violation.distance }}"
+                                          data-job-lat="{{ violation.job_latitude }}"
+                                          data-job-lng="{{ violation.job_longitude }}"
+                                          data-clock-lat="{{ violation.clock_in_latitude }}"
+                                          data-clock-lng="{{ violation.clock_in_longitude }}"
+                                          data-datetime="{{ violation.datetime.strftime('%m/%d/%y %I:%M %p') }}">🗺️</span>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -374,4 +382,217 @@
         {% endif %}
     </div>
 </div>
+
+<!-- GPS Violation Map Modal -->
+<div class="modal fade" id="gpsViolationModal" tabindex="-1" aria-labelledby="gpsViolationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-white" id="gpsViolationModalLabel">GPS Violation Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="violationMap" style="height: 500px; width: 100%;"></div>
+                <div class="p-3 text-white">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-user me-2"></i>Worker Information</h6>
+                            <p class="mb-1"><strong>Name:</strong> <span id="modalWorkerName"></span></p>
+                            <p class="mb-0"><strong>Clock-in Time:</strong> <span id="modalDateTime"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-briefcase me-2"></i>Job Information</h6>
+                            <p class="mb-1"><strong>Job Code:</strong> <span id="modalJobCode"></span></p>
+                            <p class="mb-1"><strong>Description:</strong> <span id="modalJobDescription"></span></p>
+                            <p class="mb-0"><strong>Distance:</strong> <span id="modalDistance"></span> miles</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet CSS and JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+let violationMap = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click event listeners to all map icons
+    const mapIcons = document.querySelectorAll('.violation-map-icon');
+
+    mapIcons.forEach(icon => {
+        icon.addEventListener('click', function() {
+            showViolationMap(this);
+        });
+    });
+
+    // Initialize modal event listeners
+    const modal = document.getElementById('gpsViolationModal');
+    modal.addEventListener('shown.bs.modal', function() {
+        // Invalidate map size when modal is shown
+        if (violationMap) {
+            setTimeout(() => {
+                violationMap.invalidateSize();
+            }, 100);
+        }
+    });
+
+    modal.addEventListener('hidden.bs.modal', function() {
+        // Clean up map when modal is closed
+        if (violationMap) {
+            violationMap.remove();
+            violationMap = null;
+        }
+    });
+});
+
+function showViolationMap(iconElement) {
+    // Get data from the clicked icon
+    const workerName = iconElement.dataset.workerName;
+    const jobCode = iconElement.dataset.jobCode;
+    const jobDescription = iconElement.dataset.jobDescription;
+    const distance = iconElement.dataset.distance;
+    const jobLat = parseFloat(iconElement.dataset.jobLat);
+    const jobLng = parseFloat(iconElement.dataset.jobLng);
+    const clockLat = parseFloat(iconElement.dataset.clockLat);
+    const clockLng = iconElement.dataset.clockLng;
+    const datetime = iconElement.dataset.datetime;
+
+    // Check if we have valid coordinates
+    if (!jobLat || !jobLng || !clockLat || !clockLng) {
+        alert('Missing location data for this violation');
+        return;
+    }
+
+    // Update modal content
+    document.getElementById('modalWorkerName').textContent = workerName;
+    document.getElementById('modalJobCode').textContent = jobCode;
+    document.getElementById('modalJobDescription').textContent = jobDescription;
+    document.getElementById('modalDistance').textContent = distance;
+    document.getElementById('modalDateTime').textContent = datetime;
+
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('gpsViolationModal'));
+    modal.show();
+
+    // Initialize the map after modal is shown
+    setTimeout(() => {
+        initViolationMap(jobLat, jobLng, clockLat, clockLng, distance, workerName, jobCode);
+    }, 300);
+}
+
+function initViolationMap(jobLat, jobLng, clockLat, clockLng, distance, workerName, jobCode) {
+    // Remove existing map if it exists
+    if (violationMap) {
+        violationMap.remove();
+    }
+
+    // Initialize the map
+    violationMap = L.map('violationMap');
+
+    // Add tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(violationMap);
+
+    // Create custom icons
+    const jobIcon = L.divIcon({
+        html: '<div style="background-color: #dc3545; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>',
+        className: 'custom-marker',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+    });
+
+    const clockIcon = L.divIcon({
+        html: '<div style="background-color: #0d6efd; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>',
+        className: 'custom-marker',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+    });
+
+    // Add markers
+    const jobMarker = L.marker([jobLat, jobLng], { icon: jobIcon })
+        .addTo(violationMap)
+        .bindPopup(`<strong>Job Site</strong><br>${jobCode}<br>Lat: ${jobLat.toFixed(4)}<br>Lng: ${jobLng.toFixed(4)}`);
+
+    const clockMarker = L.marker([clockLat, clockLng], { icon: clockIcon })
+        .addTo(violationMap)
+        .bindPopup(`<strong>Clock-in Location</strong><br>${workerName}<br>Lat: ${clockLat.toFixed(4)}<br>Lng: ${clockLng.toFixed(4)}`);
+
+    // Draw line between points
+    const line = L.polyline([[jobLat, jobLng], [clockLat, clockLng]], {
+        color: '#ffc107',
+        weight: 3,
+        opacity: 0.8,
+        dashArray: '5, 10'
+    }).addTo(violationMap);
+
+    // Add distance label at midpoint
+    const midLat = (jobLat + clockLat) / 2;
+    const midLng = (jobLng + clockLng) / 2;
+
+    const distanceLabel = L.marker([midLat, midLng], {
+        icon: L.divIcon({
+            html: `<div style="background: rgba(0,0,0,0.8); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap;">${distance} miles</div>`,
+            className: 'distance-label',
+            iconSize: [0, 0],
+            iconAnchor: [0, 0]
+        })
+    }).addTo(violationMap);
+
+    // Fit map to show both points
+    const group = new L.featureGroup([jobMarker, clockMarker]);
+    violationMap.fitBounds(group.getBounds().pad(0.1));
+
+    // Ensure minimum zoom level for visibility
+    if (violationMap.getZoom() > 15) {
+        violationMap.setZoom(15);
+    }
+}
+</script>
+
+<style>
+/* Custom styles for the violation map modal */
+.custom-marker {
+    background: none !important;
+    border: none !important;
+}
+
+.distance-label {
+    background: none !important;
+    border: none !important;
+}
+
+#gpsViolationModal .modal-xl {
+    max-width: 90%;
+}
+
+@media (max-width: 768px) {
+    #gpsViolationModal .modal-xl {
+        max-width: 95%;
+        margin: 1rem;
+    }
+
+    #violationMap {
+        height: 400px !important;
+    }
+}
+
+/* Modal animation */
+#gpsViolationModal .modal-dialog {
+    transition: transform 0.3s ease-out;
+}
+
+#gpsViolationModal.show .modal-dialog {
+    transform: scale(1);
+}
+
+#gpsViolationModal .modal-dialog {
+    transform: scale(0.9);
+}
+</style>
 {% endblock %}
