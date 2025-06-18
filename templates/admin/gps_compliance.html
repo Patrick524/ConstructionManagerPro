@@ -158,7 +158,6 @@
                                 <th>Worker</th>
                                 <th>Job</th>
                                 <th>Distance (mi)</th>
-                                <th>GPS Accuracy</th>
                                 <th>Date/Time</th>
                                 <th>Clock-in Coordinates</th>
                                 <th>Job Location</th>
@@ -173,18 +172,6 @@
                                     <small class="text-muted">{{ violation.job_description }}</small>
                                 </td>
                                 <td><span class="badge bg-danger">{{ violation.distance }}</span></td>
-                                <td>
-                                    {% if violation.gps_accuracy %}
-                                        {% if violation.poor_gps_accuracy %}
-                                            <span class="badge bg-warning text-dark">{{ violation.gps_accuracy }}m</span>
-                                            <small class="text-warning d-block">Poor Signal</small>
-                                        {% else %}
-                                            <span class="badge bg-success">{{ violation.gps_accuracy }}m</span>
-                                        {% endif %}
-                                    {% else %}
-                                        <span class="text-muted">N/A</span>
-                                    {% endif %}
-                                </td>
                                 <td>{{ violation.datetime.strftime('%m/%d/%Y %I:%M %p') }}</td>
                                 <td>
                                     {% if violation.clock_in_latitude and violation.clock_in_longitude %}
