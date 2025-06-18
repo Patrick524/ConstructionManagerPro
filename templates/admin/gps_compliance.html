@@ -156,11 +156,10 @@
                         <thead class="table-dark">
                             <tr>
                                 <th>Worker</th>
-                                <th>Job</th>
-                                <th>Distance (mi)</th>
+                                <th>Job Site</th>
+                                <th>Distance</th>
                                 <th>Date/Time</th>
-                                <th>Clock-in Coordinates</th>
-                                <th>Job Location</th>
+                                <th>Map</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -171,16 +170,12 @@
                                     <strong>{{ violation.job_code }}</strong><br>
                                     <small class="text-muted">{{ violation.job_description }}</small>
                                 </td>
-                                <td><span class="badge bg-danger">{{ violation.distance }}</span></td>
-                                <td>{{ violation.datetime.strftime('%m/%d/%Y %I:%M %p') }}</td>
+                                <td>{{ violation.distance }} mi 🔴</td>
+                                <td>{{ violation.datetime.strftime('%m/%d/%y %I:%M %p') }}</td>
                                 <td>
-                                    {% if violation.clock_in_latitude and violation.clock_in_longitude %}
-                                        <small>{{ "%.4f"|format(violation.clock_in_latitude) }}, {{ "%.4f"|format(violation.clock_in_longitude) }}</small>
-                                    {% else %}
-                                        <span class="text-muted">N/A</span>
-                                    {% endif %}
+                                    <span class="text-2xl" style="cursor: pointer; font-size: 1.5rem;" 
+                                          title="View location on map">🗺️</span>
                                 </td>
-                                <td>{{ violation.location }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
