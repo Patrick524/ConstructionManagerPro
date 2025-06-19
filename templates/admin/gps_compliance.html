@@ -459,12 +459,15 @@ function showViolationMap(iconElement) {
     const jobLat = parseFloat(iconElement.dataset.jobLat);
     const jobLng = parseFloat(iconElement.dataset.jobLng);
     const clockLat = parseFloat(iconElement.dataset.clockLat);
-    const clockLng = iconElement.dataset.clockLng;
+    const clockLng = parseFloat(iconElement.dataset.clockLng);
     const datetime = iconElement.dataset.datetime;
 
+    console.log('Map data:', { jobLat, jobLng, clockLat, clockLng });
+
     // Check if we have valid coordinates
-    if (!jobLat || !jobLng || !clockLat || !clockLng) {
-        alert('Missing location data for this violation');
+    if (isNaN(jobLat) || isNaN(jobLng) || isNaN(clockLat) || isNaN(clockLng)) {
+        console.error('Invalid coordinates:', { jobLat, jobLng, clockLat, clockLng });
+        alert('Missing or invalid location data for this violation');
         return;
     }
 
@@ -489,69 +492,76 @@ function initViolationMap(jobLat, jobLng, clockLat, clockLng, distance, workerNa
     // Remove existing map if it exists
     if (violationMap) {
         violationMap.remove();
+        violationMap = null;
     }
 
-    // Initialize the map
-    violationMap = L.map('violationMap');
+    // Initialize the map with Seattle area as default center
+    violationMap = L.map('violationMap').setView([47.6062, -122.3321], 10);
 
-    // Add tile layer
+    // Add tile layer first
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
     }).addTo(violationMap);
 
-    // Create custom icons
-    const jobIcon = L.divIcon({
-        html: '<div style="background-color: #dc3545; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>',
-        className: 'custom-marker',
-        iconSize: [20, 20],
-        iconAnchor: [10, 10]
-    });
+    // Force map size invalidation
+    setTimeout(() => {
+        violationMap.invalidateSize();
+        
+        // Create custom icons
+        const jobIcon = L.divIcon({
+            html: '<div style="background-color: #dc3545; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>',
+            className: 'custom-marker',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+        });
 
-    const clockIcon = L.divIcon({
-        html: '<div style="background-color: #0d6efd; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>',
-        className: 'custom-marker',
-        iconSize: [20, 20],
-        iconAnchor: [10, 10]
-    });
+        const clockIcon = L.divIcon({
+            html: '<div style="background-color: #0d6efd; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>',
+            className: 'custom-marker',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+        });
 
-    // Add markers
-    const jobMarker = L.marker([jobLat, jobLng], { icon: jobIcon })
-        .addTo(violationMap)
-        .bindPopup(`<strong>Job Site</strong><br>${jobCode}<br>Lat: ${jobLat.toFixed(4)}<br>Lng: ${jobLng.toFixed(4)}`);
+        // Add markers
+        const jobMarker = L.marker([jobLat, jobLng], { icon: jobIcon })
+            .addTo(violationMap)
+            .bindPopup(`<strong>Job Site</strong><br>${jobCode}<br>Lat: ${jobLat.toFixed(4)}<br>Lng: ${jobLng.toFixed(4)}`);
 
-    const clockMarker = L.marker([clockLat, clockLng], { icon: clockIcon })
-        .addTo(violationMap)
-        .bindPopup(`<strong>Clock-in Location</strong><br>${workerName}<br>Lat: ${clockLat.toFixed(4)}<br>Lng: ${clockLng.toFixed(4)}`);
+        const clockMarker = L.marker([clockLat, clockLng], { icon: clockIcon })
+            .addTo(violationMap)
+            .bindPopup(`<strong>Clock-in Location</strong><br>${workerName}<br>Lat: ${clockLat.toFixed(4)}<br>Lng: ${clockLng.toFixed(4)}`);
 
-    // Draw line between points
-    const line = L.polyline([[jobLat, jobLng], [clockLat, clockLng]], {
-        color: '#ffc107',
-        weight: 3,
-        opacity: 0.8,
-        dashArray: '5, 10'
-    }).addTo(violationMap);
+        // Draw line between points
+        const line = L.polyline([[jobLat, jobLng], [clockLat, clockLng]], {
+            color: '#ffc107',
+            weight: 3,
+            opacity: 0.8,
+            dashArray: '5, 10'
+        }).addTo(violationMap);
 
-    // Add distance label at midpoint
-    const midLat = (jobLat + clockLat) / 2;
-    const midLng = (jobLng + clockLng) / 2;
+        // Add distance label at midpoint
+        const midLat = (jobLat + clockLat) / 2;
+        const midLng = (jobLng + clockLng) / 2;
 
-    const distanceLabel = L.marker([midLat, midLng], {
-        icon: L.divIcon({
-            html: `<div style="background: rgba(0,0,0,0.8); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap;">${distance} miles</div>`,
-            className: 'distance-label',
-            iconSize: [0, 0],
-            iconAnchor: [0, 0]
-        })
-    }).addTo(violationMap);
+        const distanceLabel = L.marker([midLat, midLng], {
+            icon: L.divIcon({
+                html: `<div style="background: rgba(0,0,0,0.8); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap;">${distance} miles</div>`,
+                className: 'distance-label',
+                iconSize: [0, 0],
+                iconAnchor: [0, 0]
+            })
+        }).addTo(violationMap);
 
-    // Fit map to show both points
-    const group = new L.featureGroup([jobMarker, clockMarker]);
-    violationMap.fitBounds(group.getBounds().pad(0.1));
+        // Fit map to show both points
+        const group = new L.featureGroup([jobMarker, clockMarker]);
+        violationMap.fitBounds(group.getBounds().pad(0.1));
 
-    // Ensure minimum zoom level for visibility
-    if (violationMap.getZoom() > 15) {
-        violationMap.setZoom(15);
-    }
+        // Ensure minimum zoom level for visibility
+        if (violationMap.getZoom() > 15) {
+            violationMap.setZoom(15);
+        }
+    }, 100);
 }
 </script>
 
@@ -579,7 +589,14 @@ function initViolationMap(jobLat, jobLng, clockLat, clockLng, distance, workerNa
 
     #violationMap {
         height: 400px !important;
+        min-height: 400px;
+        width: 100%;
     }
+
+#violationMap .leaflet-container {
+    height: 400px !important;
+    width: 100% !important;
+}
 }
 
 /* Modal animation */
