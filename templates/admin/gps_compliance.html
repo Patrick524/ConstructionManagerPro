@@ -178,11 +178,11 @@
                                           data-job-code="{{ violation.job_code }}"
                                           data-job-description="{{ violation.job_description }}"
                                           data-distance="{{ violation.distance }}"
+                                          data-datetime="{{ violation.datetime.strftime('%m/%d/%y %I:%M %p') }}"
                                           data-job-lat="{{ violation.job_latitude }}"
                                           data-job-lng="{{ violation.job_longitude }}"
                                           data-clock-lat="{{ violation.clock_in_latitude }}"
-                                          data-clock-lng="{{ violation.clock_in_longitude }}"
-                                          data-datetime="{{ violation.datetime.strftime('%m/%d/%y %I:%M %p') }}">🗺️</span>
+                                          data-clock-lng="{{ violation.clock_in_longitude }}">🗺️</span>
                                 </td>
                             </tr>
                             {% endfor %}

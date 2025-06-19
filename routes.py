@@ -2887,6 +2887,8 @@ def admin_gps_compliance():
                 'location': session.job.location or 'No location set',
                 'clock_in_latitude': session.clock_in_latitude,
                 'clock_in_longitude': session.clock_in_longitude,
+                'job_latitude': session.job.latitude,
+                'job_longitude': session.job.longitude,
                 'gps_accuracy': round(session.clock_in_accuracy, 1) if session.clock_in_accuracy else None,
                 'poor_gps_accuracy': poor_gps_accuracy
             }
