@@ -540,18 +540,7 @@ function initViolationMap(jobLat, jobLng, clockLat, clockLng, distance, workerNa
             dashArray: '5, 10'
         }).addTo(violationMap);
 
-        // Add distance label at midpoint
-        const midLat = (jobLat + clockLat) / 2;
-        const midLng = (jobLng + clockLng) / 2;
-
-        const distanceLabel = L.marker([midLat, midLng], {
-            icon: L.divIcon({
-                html: `<div style="background: rgba(255,255,255,0.9); color: black; padding: 6px 10px; border-radius: 4px; font-size: 12px; white-space: nowrap; border: 1px solid #ccc; font-weight: bold;">${distance} miles</div>`,
-                className: 'distance-label',
-                iconSize: [0, 0],
-                iconAnchor: [0, 0]
-            })
-        }).addTo(violationMap);
+        
 
         // Fit map to show both points
         const group = new L.featureGroup([jobMarker, clockMarker]);
