@@ -5,33 +5,33 @@
 {% block extra_css %}
 <style>
 /* Alternating row colors for the time entries table */
-.table tbody tr {
+.table.table-hover tbody tr {
     background-color: #ffffff !important;
 }
 
-.table tbody tr.odd-day {
-    background-color: #f1f5f9 !important;
+.table.table-hover tbody tr.odd-day {
+    background-color: #f8f9fa !important;
 }
 
-.table tbody tr.even-day {
+.table.table-hover tbody tr.even-day {
     background-color: #ffffff !important;
 }
 
-/* Override any Bootstrap classes */
-.table-hover tbody tr.odd-day:hover {
-    background-color: #e2e8f0 !important;
+/* Hover effects */
+.table.table-hover tbody tr.odd-day:hover {
+    background-color: #e9ecef !important;
 }
 
-.table-hover tbody tr.even-day:hover {
-    background-color: #f8fafc !important;
+.table.table-hover tbody tr.even-day:hover {
+    background-color: #f8f9fa !important;
 }
 
-/* Keep the existing missing day styling */
-.table tbody tr.table-danger {
+/* Keep the existing missing day styling - highest priority */
+.table.table-hover tbody tr.table-danger {
     background-color: #f8d7da !important;
 }
 
-.table tbody tr.table-danger:hover {
+.table.table-hover tbody tr.table-danger:hover {
     background-color: #f1aeb5 !important;
 }
 </style>
