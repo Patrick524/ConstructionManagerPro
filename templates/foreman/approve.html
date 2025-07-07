@@ -4,36 +4,21 @@
 
 {% block extra_css %}
 <style>
-/* Alternating row colors for the time entries table */
-.table.table-hover tbody tr {
-    background-color: #ffffff !important;
-}
-
-.table.table-hover tbody tr.odd-day {
-    background-color: #e9ecef !important;
-}
-
-.table.table-hover tbody tr.even-day {
-    background-color: #ffffff !important;
-}
-
-/* Hover effects */
-.table.table-hover tbody tr.odd-day:hover {
-    background-color: #dee2e6 !important;
-}
-
-.table.table-hover tbody tr.even-day:hover {
+  /* Zebra stripes for approval table */
+  .approval-table tbody tr:not(.table-danger):nth-child(odd) {
     background-color: #f8f9fa !important;
-}
+  }
+  .approval-table tbody tr:not(.table-danger):nth-child(even) {
+    background-color: #ffffff !important;
+  }
 
-/* Keep the existing missing day styling - highest priority */
-.table.table-hover tbody tr.table-danger {
+  /* Preserve your error-row styling */
+  .approval-table tbody tr.table-danger {
     background-color: #f8d7da !important;
-}
-
-.table.table-hover tbody tr.table-danger:hover {
+  }
+  .approval-table tbody tr.table-danger:hover {
     background-color: #f1aeb5 !important;
-}
+  }
 </style>
 {% endblock %}
 
