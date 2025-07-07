@@ -2,6 +2,24 @@
 
 {% block title %}Approve Timesheet - Construction Timesheet{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Alternating row colors for the time entries table */
+.table tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+
+.table tbody tr:nth-child(even) {
+    background-color: #f8fafc;
+}
+
+/* Ensure hover effects still work */
+.table tbody tr:hover {
+    background-color: #e3f2fd !important;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
