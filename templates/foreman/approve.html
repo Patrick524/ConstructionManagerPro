@@ -132,7 +132,8 @@
                         </thead>
                         <tbody>
                             {% for day, day_entries in entries_by_date.items() %}
-                                {% set day_class = 'odd-day' if loop.index0 % 2 == 0 else 'even-day' %}
+                                {% set outer_loop = loop %}
+                                {% set day_class = 'odd-day' if outer_loop.index0 % 2 == 0 else 'even-day' %}
                                 {% if day_entries %}
                                     {% for entry in day_entries %}
                                         <tr class="{{ day_class }}">
