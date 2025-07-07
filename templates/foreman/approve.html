@@ -5,21 +5,34 @@
 {% block extra_css %}
 <style>
 /* Alternating row colors for the time entries table */
-.table tbody tr:nth-child(odd) {
+.table tbody tr {
+    background-color: #ffffff !important;
+}
+
+.table tbody tr.odd-day {
     background-color: #f1f5f9 !important;
 }
 
-.table tbody tr:nth-child(even) {
+.table tbody tr.even-day {
     background-color: #ffffff !important;
 }
 
 /* Override any Bootstrap classes */
-.table-hover tbody tr:nth-child(odd):hover {
+.table-hover tbody tr.odd-day:hover {
     background-color: #e2e8f0 !important;
 }
 
-.table-hover tbody tr:nth-child(even):hover {
+.table-hover tbody tr.even-day:hover {
     background-color: #f8fafc !important;
+}
+
+/* Keep the existing missing day styling */
+.table tbody tr.table-danger {
+    background-color: #f8d7da !important;
+}
+
+.table tbody tr.table-danger:hover {
+    background-color: #f1aeb5 !important;
 }
 </style>
 {% endblock %}
@@ -119,9 +132,10 @@
                         </thead>
                         <tbody>
                             {% for day, day_entries in entries_by_date.items() %}
+                                {% set day_class = 'odd-day' if loop.index0 % 2 == 0 else 'even-day' %}
                                 {% if day_entries %}
                                     {% for entry in day_entries %}
-                                        <tr>
+                                        <tr class="{{ day_class }}">
                                             {% if loop.first %}
                                                 <td rowspan="{{ day_entries|length }}">{{ day.strftime('%a') }}</td>
                                                 <td rowspan="{{ day_entries|length }}">{{ day.strftime('%b %d') }}</td>
