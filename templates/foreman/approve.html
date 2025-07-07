@@ -4,21 +4,9 @@
 
 {% block extra_css %}
 <style>
-  /* Zebra stripes for approval table */
-  .approval-table tbody tr:not(.table-danger):nth-child(odd) {
-    background-color: #f8f9fa !important;
-  }
-  .approval-table tbody tr:not(.table-danger):nth-child(even) {
-    background-color: #ffffff !important;
-  }
-
-  /* Preserve your error-row styling */
-  .approval-table tbody tr.table-danger {
-    background-color: #f8d7da !important;
-  }
-  .approval-table tbody tr.table-danger:hover {
-    background-color: #f1aeb5 !important;
-  }
+  .approval-table tbody tr:nth-child(odd)  { background-color: rgba(255,255,255,.10) !important; }
+  .approval-table tbody tr:nth-child(even) { background-color: rgba(255,255,255,.05) !important; }
+  .approval-table tbody tr.table-danger  { background-color: #f8d7da         !important; }
 </style>
 {% endblock %}
 
