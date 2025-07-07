@@ -6,38 +6,20 @@
 <style>
 /* Alternating row colors for the time entries table */
 .table tbody tr:nth-child(odd) {
-    background-color: #ffffff !important;
+    background-color: #f1f5f9 !important;
 }
 
 .table tbody tr:nth-child(even) {
-    background-color: #f8fafc !important;
-}
-
-/* More specific targeting for table rows */
-.table-responsive .table tbody tr:nth-child(odd) {
     background-color: #ffffff !important;
 }
 
-.table-responsive .table tbody tr:nth-child(even) {
+/* Override any Bootstrap classes */
+.table-hover tbody tr:nth-child(odd):hover {
+    background-color: #e2e8f0 !important;
+}
+
+.table-hover tbody tr:nth-child(even):hover {
     background-color: #f8fafc !important;
-}
-
-/* Override Bootstrap table-hover class */
-.table-hover tbody tr:nth-child(odd) {
-    background-color: #ffffff !important;
-}
-
-.table-hover tbody tr:nth-child(even) {
-    background-color: #f8fafc !important;
-}
-
-/* Ensure hover effects still work */
-.table tbody tr:hover {
-    background-color: #e3f2fd !important;
-}
-
-.table-hover tbody tr:hover {
-    background-color: #e3f2fd !important;
 }
 </style>
 {% endblock %}
