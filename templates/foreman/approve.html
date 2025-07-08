@@ -4,20 +4,23 @@
 
 {% block extra_css %}
 <style>
-  .approval-table tbody tr:nth-child(odd)  { background-color: rgba(255,255,255,.10) !important; }
-  .approval-table tbody tr:nth-child(even) { background-color: rgba(255,255,255,.05) !important; }
-  .approval-table tbody tr.table-danger  { background-color: #f8d7da         !important; }
+/* Alternating row colors for the time entries table */
+.table tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+
+.table tbody tr:nth-child(even) {
+    background-color: #f8fafc;
+}
+
+/* Ensure hover effects still work */
+.table tbody tr:hover {
+    background-color: #e3f2fd !important;
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<div style="background-color: #ffffff; height: 50px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: black; border: 1px solid #ccc;">
-  TEST: Light Stripe
-</div>
-<div style="background-color: #dee2e6; height: 50px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: black; border: 1px solid #ccc;">
-  TEST: Dark Stripe
-</div>
-
 <div class="row mb-4">
     <div class="col-md-8">
         <h1 class="page-title">
@@ -96,11 +99,11 @@
     <div class="col-lg-8">
         <div class="card mb-4">
             <div class="card-header bg-secondary text-white">
-                <h5 class="mb-0">Time Entries for Review <small class="text-light">- Live at <span id="current-time-pst"></span></small></h5>
+                <h5 class="mb-0">Time Entries for Review</h5>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0 approval-table">
+                    <table class="table table-hover mb-0">
                         <thead>
                             <tr>
                                 <th>Day</th>
@@ -112,11 +115,9 @@
                         </thead>
                         <tbody>
                             {% for day, day_entries in entries_by_date.items() %}
-                                {% set outer_loop = loop %}
-                                {% set day_class = 'odd-day' if outer_loop.index0 % 2 == 0 else 'even-day' %}
                                 {% if day_entries %}
                                     {% for entry in day_entries %}
-                                        <tr class="{{ day_class }}">
+                                        <tr>
                                             {% if loop.first %}
                                                 <td rowspan="{{ day_entries|length }}">{{ day.strftime('%a') }}</td>
                                                 <td rowspan="{{ day_entries|length }}">{{ day.strftime('%b %d') }}</td>
@@ -206,24 +207,6 @@
 
 {% block extra_js %}
 <script>
-    // Display current PST time
-    function updatePSTTime() {
-        const now = new Date();
-        const pstTime = now.toLocaleString("en-US", {
-            timeZone: "America/Los_Angeles",
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: true
-        });
-        const timeElement = document.getElementById('current-time-pst');
-        if (timeElement) {
-            timeElement.textContent = pstTime + ' PST';
-        }
-    }
-    
-    // Update time immediately and then every second
-    updatePSTTime();
-    setInterval(updatePSTTime, 1000);
+    // No validation script needed anymore - button always enabled
 </script>
 {% endblock %}
