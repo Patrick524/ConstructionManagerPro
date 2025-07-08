@@ -4,18 +4,32 @@
 
 {% block extra_css %}
 <style>
-/* Alternating row colors for the time entries table */
-.table tbody tr:nth-child(odd) {
-    background-color: #ffffff;
+/* Alternating row colors for the Time Entries for Review table only */
+.card .table tbody tr:nth-child(odd):not(.table-danger) {
+    background-color: #1a1f2e;
+    color: #ffffff;
 }
 
-.table tbody tr:nth-child(even) {
-    background-color: #f8fafc;
+.card .table tbody tr:nth-child(even):not(.table-danger) {
+    background-color: #334155;
+    color: #ffffff;
 }
 
-/* Ensure hover effects still work */
-.table tbody tr:hover {
-    background-color: #e3f2fd !important;
+/* Hover effect for Time Entries table */
+.card .table tbody tr:hover:not(.table-danger) {
+    background-color: #475569 !important;
+    color: #ffffff;
+}
+
+/* Preserve table-danger styling for missing entries */
+.card .table tbody tr.table-danger {
+    background-color: #dc3545 !important;
+    color: #ffffff;
+}
+
+.card .table tbody tr.table-danger:hover {
+    background-color: #c82333 !important;
+    color: #ffffff;
 }
 </style>
 {% endblock %}
