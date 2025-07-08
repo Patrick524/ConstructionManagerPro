@@ -1374,13 +1374,13 @@ def foreman_enter_time(job_id, user_id):
             url_for('foreman_dashboard',
                     start_date=week_start.strftime('%m/%d/%Y')))
 
-    # Get existing entries for display purposes
-    existing_entries = TimeEntry.query.filter(
+    # Get existing entries for display purposes - ALL activities for the week
+    all_existing_entries = TimeEntry.query.filter(
         TimeEntry.user_id == user_id,
         TimeEntry.job_id == job_id,
         TimeEntry.date >= week_start,
         TimeEntry.date <= week_end
-    ).all()
+    ).options(db.joinedload(TimeEntry.labor_activity)).order_by(TimeEntry.date, TimeEntry.labor_activity_id).all()
 
     if form.validate_on_submit():
         # Get the dates for each day of the week
@@ -1438,7 +1438,8 @@ def foreman_enter_time(job_id, user_id):
                                          job=job,
                                          week_start=week_start,
                                          week_end=week_end,
-                                         existing_entries=existing_entries)
+                                         existing_entries=existing_entries,
+                                         all_existing_entries=all_existing_entries)
 
         # After validation passes, delete any existing entries for this week with the same activity
         # This ensures we don't get duplicate entries if the foreman submits multiple times
@@ -1583,7 +1584,8 @@ def foreman_enter_time(job_id, user_id):
                            job=job,
                            week_start=week_start,
                            week_end=week_end,
-                           existing_entries=existing_entries)
+                           existing_entries=existing_entries,
+                           all_existing_entries=all_existing_entries)
 
 
 @app.route('/foreman/approve/<int:job_id>/<int:user_id>',
