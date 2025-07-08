@@ -96,7 +96,7 @@
     <div class="col-lg-8">
         <div class="card mb-4">
             <div class="card-header bg-secondary text-white">
-                <h5 class="mb-0">Time Entries for Review</h5>
+                <h5 class="mb-0">Time Entries for Review <small class="text-light">- Live at <span id="current-time-pst"></span></small></h5>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -206,6 +206,24 @@
 
 {% block extra_js %}
 <script>
-    // No validation script needed anymore - button always enabled
+    // Display current PST time
+    function updatePSTTime() {
+        const now = new Date();
+        const pstTime = now.toLocaleString("en-US", {
+            timeZone: "America/Los_Angeles",
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        });
+        const timeElement = document.getElementById('current-time-pst');
+        if (timeElement) {
+            timeElement.textContent = pstTime + ' PST';
+        }
+    }
+    
+    // Update time immediately and then every second
+    updatePSTTime();
+    setInterval(updatePSTTime, 1000);
 </script>
 {% endblock %}
