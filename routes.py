@@ -1713,17 +1713,35 @@ def approve_timesheet(job_id, user_id):
                 url_for('foreman_dashboard',
                         start_date=week_start.strftime('%m/%d/%Y')))
 
-    # Group entries by date for display
+    # Group entries by date for display - convert weekdays to sorted list for proper chronological order
+    weekdays_sorted = sorted(weekdays)  # Sort Monday through Friday chronologically
     entries_by_date = {}
-    for day in weekdays:
+    
+    # First, initialize with weekdays in chronological order
+    for day in weekdays_sorted:
         entries_by_date[day] = []
 
+    # Then add any entries that fall outside the expected week range
     for entry in entries:
         if entry.date in entries_by_date:
             entries_by_date[entry.date].append(entry)
         else:
             # Handle entries that fall outside the expected week range
             entries_by_date[entry.date] = [entry]
+    
+    # Create ordered dictionary to ensure chronological display in template
+    from collections import OrderedDict
+    entries_by_date_ordered = OrderedDict()
+    
+    # Add weekdays first in chronological order
+    for day in weekdays_sorted:
+        if day in entries_by_date:
+            entries_by_date_ordered[day] = entries_by_date[day]
+    
+    # Add any other dates in chronological order
+    other_dates = sorted([d for d in entries_by_date.keys() if d not in weekdays_sorted])
+    for day in other_dates:
+        entries_by_date_ordered[day] = entries_by_date[day]
 
     # Calculate daily and weekly totals
     daily_totals = {
@@ -1736,7 +1754,7 @@ def approve_timesheet(job_id, user_id):
                            form=form,
                            worker=worker,
                            job=job,
-                           entries_by_date=entries_by_date,
+                           entries_by_date=entries_by_date_ordered,
                            daily_totals=daily_totals,
                            weekly_total=weekly_total,
                            missing_days=missing_days,
