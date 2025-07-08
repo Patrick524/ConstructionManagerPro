@@ -3271,55 +3271,6 @@ def get_report_file():
         return redirect(url_for('generate_reports'))
 
 
-@app.route('/today-billing')
-@login_required
-def today_billing():
-    """Show today's billing summary"""
-    today = date.today()
-    
-    # Get all approved time entries for today
-    time_entries = TimeEntry.query.filter(
-        TimeEntry.date == today,
-        TimeEntry.approved == True
-    ).options(
-        db.joinedload(TimeEntry.user),
-        db.joinedload(TimeEntry.job),
-        db.joinedload(TimeEntry.labor_activity)
-    ).all()
-    
-    # Calculate totals
-    total_hours = sum(entry.hours for entry in time_entries)
-    total_cost = sum(entry.hours * (entry.user.burden_rate or 0) for entry in time_entries)
-    
-    # Group by job
-    job_summary = {}
-    for entry in time_entries:
-        job_key = f"{entry.job.job_code} - {entry.job.description}"
-        if job_key not in job_summary:
-            job_summary[job_key] = {
-                'hours': 0,
-                'cost': 0,
-                'workers': set(),
-                'entries': []
-            }
-        job_summary[job_key]['hours'] += entry.hours
-        job_summary[job_key]['cost'] += entry.hours * (entry.user.burden_rate or 0)
-        job_summary[job_key]['workers'].add(entry.user.name)
-        job_summary[job_key]['entries'].append(entry)
-    
-    # Convert workers set to count
-    for job in job_summary.values():
-        job['worker_count'] = len(job['workers'])
-        job['workers'] = list(job['workers'])
-    
-    return render_template('billing/today.html',
-                         time_entries=time_entries,
-                         job_summary=job_summary,
-                         total_hours=total_hours,
-                         total_cost=total_cost,
-                         today=today)
-
-
 @app.route('/debug')
 def debug_route():
     """Debug route to test rendering and basic functionality"""
