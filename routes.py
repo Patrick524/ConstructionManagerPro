@@ -1467,7 +1467,11 @@ def foreman_enter_time(job_id, user_id):
                 db.session.rollback()
                 flash(f'Error saving daily adjustments: {str(e)}', 'danger')
             
-            return redirect(url_for('foreman_enter_time', job_id=job_id, user_id=user_id))
+            # Redirect back to foreman dashboard with the same week
+            if current_user.is_admin():
+                return redirect(url_for('admin_review_time', start_date=week_start.strftime('%Y-%m-%d')))
+            else:
+                return redirect(url_for('foreman_dashboard', start_date=week_start.strftime('%m/%d/%Y')))
         
         # Get the dates for each day of the week
         monday = form.week_start.data
