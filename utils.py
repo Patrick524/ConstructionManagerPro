@@ -931,3 +931,49 @@ def geocode_address(address):
     except Exception as e:
         print(f"Error geocoding address '{address}': {str(e)}")
         return None
+
+def generate_device_audit_csv(data, title="Device Audit Log"):
+    """Generate a CSV report for device audit logs."""
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write CSV header row
+    writer.writerow(['Timestamp', 'Employee', 'Action', 'Device_ID', 'Latitude', 'Longitude', 'User_Agent'])
+    
+    # Sort entries by timestamp (most recent first)
+    sorted_entries = sorted(data, key=lambda x: x['timestamp'], reverse=True)
+    
+    for entry in sorted_entries:
+        # Format timestamp to readable format
+        if isinstance(entry['timestamp'], str):
+            # Parse the timestamp string
+            try:
+                timestamp_obj = datetime.fromisoformat(entry['timestamp'].replace('Z', '+00:00'))
+            except:
+                timestamp_obj = datetime.strptime(entry['timestamp'], '%Y-%m-%d %H:%M:%S.%f')
+        else:
+            timestamp_obj = entry['timestamp']
+        
+        formatted_timestamp = timestamp_obj.strftime('%m/%d/%Y %H:%M:%S')
+        
+        # Format coordinates (handle None/null values)
+        latitude = f"{entry['latitude']:.6f}" if entry['latitude'] is not None else ""
+        longitude = f"{entry['longitude']:.6f}" if entry['longitude'] is not None else ""
+        
+        # Truncate user agent for readability
+        user_agent = entry.get('user_agent', '')
+        if len(user_agent) > 80:
+            user_agent = user_agent[:77] + '...'
+        
+        writer.writerow([
+            formatted_timestamp,
+            entry['employee_name'],
+            entry['action'],
+            entry.get('device_id', ''),
+            latitude,
+            longitude,
+            user_agent
+        ])
+    
+    output.seek(0)
+    return output.getvalue()

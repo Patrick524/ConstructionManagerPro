@@ -2668,8 +2668,22 @@ def generate_reports():
         user_id = form.user_id.data if form.user_id.data != 0 else None
         report_format = form.format.data
 
-        # Build the base query - include burden_rate for job cost reports
-        if report_type == 'job_cost':
+        # Build the base query - different for device audit logs
+        if report_type == 'device_audit':
+            from models import DeviceLog
+            query = db.session.query(
+                DeviceLog.ts.label('timestamp'), 
+                User.name.label('employee_name'),
+                DeviceLog.action,
+                DeviceLog.device_id,
+                DeviceLog.lat.label('latitude'),
+                DeviceLog.lng.label('longitude'),
+                DeviceLog.ua.label('user_agent')
+            ).join(User, DeviceLog.user_id == User.id).filter(
+                DeviceLog.ts >= start_date,
+                DeviceLog.ts <= end_date + timedelta(days=1)  # Include full end date
+            )
+        elif report_type == 'job_cost':
             query = db.session.query(
                 TimeEntry.id, TimeEntry.date, TimeEntry.hours, TimeEntry.approved,
                 User.name.label('worker_name'), User.burden_rate, Job.job_code,
@@ -2695,14 +2709,22 @@ def generate_reports():
                                                      TimeEntry.date <= end_date)
 
         # Apply filters
-        if job_id:
-            query = query.filter(TimeEntry.job_id == job_id)
+        if report_type == 'device_audit':
+            # For device audit, user_id filter applies to DeviceLog.user_id
+            if user_id:
+                query = query.filter(DeviceLog.user_id == user_id)
+        else:
+            # For other reports, apply standard TimeEntry filters
+            if job_id:
+                query = query.filter(TimeEntry.job_id == job_id)
 
-        if user_id:
-            query = query.filter(TimeEntry.user_id == user_id)
+            if user_id:
+                query = query.filter(TimeEntry.user_id == user_id)
 
         # Order the results
-        if report_type == 'payroll':
+        if report_type == 'device_audit':
+            query = query.order_by(DeviceLog.ts.desc())  # Most recent first
+        elif report_type == 'payroll':
             query = query.order_by(User.name, TimeEntry.date)
         elif report_type == 'job_labor':
             query = query.order_by(Job.job_code, TimeEntry.date)
@@ -2715,7 +2737,12 @@ def generate_reports():
         results = query.all()
 
         # Create pandas dataframe from results
-        if report_type == 'job_cost':
+        if report_type == 'device_audit':
+            columns = [
+                'timestamp', 'employee_name', 'action', 'device_id', 
+                'latitude', 'longitude', 'user_agent'
+            ]
+        elif report_type == 'job_cost':
             columns = [
                 'id', 'date', 'hours', 'approved', 'worker_name', 'burden_rate', 'job_code',
                 'job_description', 'activity', 'trade_category'
@@ -2745,7 +2772,8 @@ def generate_reports():
             'payroll': 'Payroll Report',
             'job_labor': 'Job Labor Report',
             'employee_hours': 'Employee Hours Report',
-            'job_cost': 'Job Cost Report'
+            'job_cost': 'Job Cost Report',
+            'device_audit': 'Device Audit Log'
         }
         report_title = f"{report_titles.get(report_type, 'Report')} ({start_date.strftime('%m/%d/%Y')} to {end_date.strftime('%m/%d/%Y')})"
 
@@ -2754,16 +2782,21 @@ def generate_reports():
 
         # Generate report file
         if report_format == 'csv':
-            # Use specialized payroll CSV for payroll reports, standard CSV for others
+            # Use specialized CSV generators for specific report types
             if report_type == 'payroll':
                 csv_data = utils.generate_payroll_csv(data_dicts, report_title)
             elif report_type == 'job_cost':
                 csv_data = utils.generate_job_cost_csv(data_dicts, report_title)
+            elif report_type == 'device_audit':
+                csv_data = utils.generate_device_audit_csv(data_dicts, report_title)
             else:
                 csv_data = utils.generate_csv_report(data_dicts, columns)
 
             # Generate filename
-            filename = f"{report_type}_{start_date.strftime('%m%d%Y')}_{end_date.strftime('%m%d%Y')}.csv"
+            if report_type == 'device_audit':
+                filename = f"device_audit_log_{start_date.strftime('%m%d%Y')}_{end_date.strftime('%m%d%Y')}.csv"
+            else:
+                filename = f"{report_type}_{start_date.strftime('%m%d%Y')}_{end_date.strftime('%m%d%Y')}.csv"
             
             # If this is a preview request, return the CSV data directly
             if is_preview:
@@ -2844,13 +2877,18 @@ def generate_reports():
                 pdf_buffer = utils.generate_job_cost_pdf(data_dicts, title=report_title)
             elif report_type == 'payroll' or report_type == 'employee_hours':
                 pdf_buffer = utils.generate_payroll_pdf(data_dicts, title=report_title)
+            elif report_type == 'device_audit':
+                pdf_buffer = utils.generate_pdf_report(data_dicts, columns, title=report_title)
             else:
                 pdf_buffer = utils.generate_pdf_report(data_dicts,
                                                        columns,
                                                        title=report_title)
 
             # Generate filename
-            filename = f"{report_type}_{start_date.strftime('%m%d%Y')}_{end_date.strftime('%m%d%Y')}.pdf"
+            if report_type == 'device_audit':
+                filename = f"device_audit_log_{start_date.strftime('%m%d%Y')}_{end_date.strftime('%m%d%Y')}.pdf"
+            else:
+                filename = f"{report_type}_{start_date.strftime('%m%d%Y')}_{end_date.strftime('%m%d%Y')}.pdf"
             print(f"DEBUG: PDF filename generated: {filename}")
             
             # If this is a preview request, return the PDF data directly
