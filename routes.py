@@ -1316,7 +1316,7 @@ def foreman_enter_time(job_id, user_id):
     # Populate labor activity choices based on job trade
     labor_activities = LaborActivity.query.filter_by(
         trade_category=job.trade_type).all()
-    form.labor_activity_id.choices = [(activity.id, activity.name)
+    form.labor_activity_id.choices = [('ALL', 'ALL (View All Activities)')] + [(activity.id, activity.name)
                                       for activity in labor_activities]
 
     # Get week start from query parameters or default to current week
@@ -1383,6 +1383,18 @@ def foreman_enter_time(job_id, user_id):
     ).options(db.joinedload(TimeEntry.labor_activity)).order_by(TimeEntry.date, TimeEntry.labor_activity_id).all()
 
     if form.validate_on_submit():
+        # Prevent submission if "ALL" is selected
+        if form.labor_activity_id.data == 'ALL':
+            flash('Cannot save time entries in "ALL" view. Please select a specific labor activity to edit.', 'warning')
+            return render_template('foreman/enter_time.html',
+                                 form=form,
+                                 worker=worker,
+                                 job=job,
+                                 week_start=week_start,
+                                 week_end=week_end,
+                                 existing_entries=existing_entries,
+                                 all_existing_entries=all_existing_entries)
+        
         # Get the dates for each day of the week
         monday = form.week_start.data
         dates = [monday + timedelta(days=i) for i in range(7)]
@@ -1494,8 +1506,8 @@ def foreman_enter_time(job_id, user_id):
         form.sunday_hours.data = 0.0
 
         # Load existing entries for this week with eager loading of labor_activity
-        if form.labor_activity_id.data:
-            # If labor activity is already selected, get entries for that specific activity
+        if form.labor_activity_id.data and form.labor_activity_id.data != 'ALL':
+            # If specific labor activity is selected, get entries for that activity only
             existing_entries = TimeEntry.query.filter(
                 TimeEntry.user_id == user_id, TimeEntry.job_id == job_id,
                 TimeEntry.labor_activity_id == form.labor_activity_id.data,
@@ -1530,7 +1542,11 @@ def foreman_enter_time(job_id, user_id):
                 # Populate notes field
                 form.notes.data = existing_entries[0].notes
         else:
-            # If no labor activity selected, get all entries and pick the first activity
+            # If no labor activity selected or "ALL" is selected, set default to "ALL"
+            form.labor_activity_id.data = 'ALL'
+            
+            # For "ALL" view, get all entries but don't populate the form fields
+            # The form will be handled by JavaScript to show totals across all activities
             existing_entries = TimeEntry.query.filter(
                 TimeEntry.user_id == user_id, TimeEntry.job_id == job_id,
                 TimeEntry.date >= week_start,
@@ -1538,45 +1554,30 @@ def foreman_enter_time(job_id, user_id):
                     db.joinedload(TimeEntry.labor_activity)).all()
 
             if existing_entries:
-                # Group by labor_activity_id
-                entries_by_activity = {}
+                # Calculate total hours per day across all activities for "ALL" view
+                daily_totals = {}
                 for entry in existing_entries:
-                    if entry.labor_activity_id not in entries_by_activity:
-                        entries_by_activity[entry.labor_activity_id] = []
-                    entries_by_activity[entry.labor_activity_id].append(entry)
+                    day_index = (entry.date - week_start).days
+                    if 0 <= day_index <= 6:  # Make sure it's within the week
+                        if day_index not in daily_totals:
+                            daily_totals[day_index] = 0
+                        daily_totals[day_index] += entry.hours
 
-                if entries_by_activity:
-                    # Get the first activity and its entries
-                    activity_id, first_entries = next(
-                        iter(entries_by_activity.items()))
-                    form.labor_activity_id.data = activity_id
-
-                    # Create a dictionary to store hours by day index
-                    day_entries = {}
-                    for entry in first_entries:
-                        day_index = (entry.date - week_start).days
-                        if 0 <= day_index <= 6:  # Make sure it's within the week
-                            day_entries[day_index] = entry.hours
-
-                    # Map each day to the form field
-                    if 0 in day_entries:
-                        form.monday_hours.data = day_entries[0]
-                    if 1 in day_entries:
-                        form.tuesday_hours.data = day_entries[1]
-                    if 2 in day_entries:
-                        form.wednesday_hours.data = day_entries[2]
-                    if 3 in day_entries:
-                        form.thursday_hours.data = day_entries[3]
-                    if 4 in day_entries:
-                        form.friday_hours.data = day_entries[4]
-                    if 5 in day_entries:
-                        form.saturday_hours.data = day_entries[5]
-                    if 6 in day_entries:
-                        form.sunday_hours.data = day_entries[6]
-
-                    # Populate notes field
-                    if first_entries:
-                        form.notes.data = first_entries[0].notes
+                # Map total hours to form fields for "ALL" view
+                if 0 in daily_totals:
+                    form.monday_hours.data = daily_totals[0]
+                if 1 in daily_totals:
+                    form.tuesday_hours.data = daily_totals[1]
+                if 2 in daily_totals:
+                    form.wednesday_hours.data = daily_totals[2]
+                if 3 in daily_totals:
+                    form.thursday_hours.data = daily_totals[3]
+                if 4 in daily_totals:
+                    form.friday_hours.data = daily_totals[4]
+                if 5 in daily_totals:
+                    form.saturday_hours.data = daily_totals[5]
+                if 6 in daily_totals:
+                    form.sunday_hours.data = daily_totals[6]
 
     return render_template('foreman/enter_time.html',
                            form=form,

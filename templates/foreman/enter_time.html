@@ -279,8 +279,25 @@
         {% for entry in all_existing_entries %}
         '{{ entry.labor_activity_id }}_{{ (entry.date - week_start).days }}': {
             hours: {{ entry.hours }},
-            notes: {{ entry.notes|tojson if entry.notes else '""' }}
+            notes: {{ (entry.notes or "")|tojson }}
         },
+        {% endfor %}
+        {% endif %}
+    };
+    
+    // Store all entries grouped by day for "ALL" view
+    const allEntriesByDay = {
+        {% if all_existing_entries %}
+        {% for i in range(7) %}
+        {{ i }}: [
+            {% for entry in all_existing_entries if (entry.date - week_start).days == i %}
+            {
+                activity: {{ entry.labor_activity.name|tojson }},
+                hours: {{ entry.hours }},
+                notes: {{ (entry.notes or "")|tojson }}
+            }{{ "," if not loop.last }}
+            {% endfor %}
+        ],
         {% endfor %}
         {% endif %}
     };
@@ -295,6 +312,11 @@
             laborActivitySelector.addEventListener('change', function() {
                 loadHoursForActivity(this.value);
             });
+            
+            // Load the initially selected activity on page load
+            if (laborActivitySelector.value) {
+                loadHoursForActivity(laborActivitySelector.value);
+            }
         }
         
         // Add clear-on-focus behavior to time input fields
@@ -399,14 +421,56 @@
             notesField.value = '';
         }
         
-        // Load hours for the selected activity
-        if (activityId) {
+        const submitButton = document.querySelector('input[type="submit"]');
+        const hoursGrid = document.querySelector('.hours-grid');
+        const notesRow = notesField?.closest('.row');
+        
+        if (activityId === 'ALL') {
+            // For "ALL" view, show total hours across all activities and disable editing
+            console.log('Loading ALL view with totals');
+            
+            for (let day = 0; day < 7; day++) {
+                let totalHours = 0;
+                const dayEntries = allEntriesByDay[day] || [];
+                
+                dayEntries.forEach(entry => {
+                    totalHours += entry.hours;
+                });
+                
+                const input = document.getElementById(dayInputs[day]);
+                if (input) {
+                    input.value = totalHours.toString();
+                    input.readOnly = true;
+                    input.style.backgroundColor = '#f8f9fa';
+                    input.title = 'Read-only: Total across all activities';
+                }
+            }
+            
+            // Disable form submission for "ALL" view
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = 'Select Specific Activity to Edit';
+                submitButton.title = 'Cannot edit in ALL view - select a specific activity to make changes';
+            }
+            
+            // Show read-only message
+            if (notesField) {
+                notesField.readOnly = true;
+                notesField.style.backgroundColor = '#f8f9fa';
+                notesField.placeholder = 'Read-only view - select specific activity to edit';
+            }
+            
+        } else if (activityId) {
+            // For specific activity, load hours for that activity only and enable editing
             for (let day = 0; day < 7; day++) {
                 const key = activityId + '_' + day;
                 if (existingEntriesData[key]) {
                     const input = document.getElementById(dayInputs[day]);
                     if (input) {
                         input.value = existingEntriesData[key].hours.toString();
+                        input.readOnly = false;
+                        input.style.backgroundColor = '';
+                        input.title = '';
                         console.log('Set', dayInputs[day], 'to', existingEntriesData[key].hours);
                     }
                     
@@ -416,6 +480,30 @@
                     }
                 }
             }
+            
+            // Enable form submission for specific activity
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Save Time Entry';
+                submitButton.title = '';
+            }
+            
+            // Enable notes editing
+            if (notesField) {
+                notesField.readOnly = false;
+                notesField.style.backgroundColor = '';
+                notesField.placeholder = 'Enter any additional information about this week\'s work';
+            }
+            
+            // Enable hour inputs
+            dayInputs.forEach(inputId => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.readOnly = false;
+                    input.style.backgroundColor = '';
+                    input.title = '';
+                }
+            });
         }
         
         // Recalculate total
