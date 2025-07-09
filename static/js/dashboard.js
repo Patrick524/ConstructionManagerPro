@@ -164,13 +164,17 @@ function setupDateRangeSelectors() {
     const dateRangePicker = document.getElementById('date-range-picker');
     
     if (dateRangePicker) {
+        // Get current week start from the page data
+        const currentWeekElement = document.querySelector('[data-current-week-start]');
+        const currentWeekStart = currentWeekElement ? currentWeekElement.dataset.currentWeekStart : null;
+        
         // For single week selection
         flatpickr(dateRangePicker, {
             mode: 'single',
             dateFormat: 'Y-m-d',
             altInput: true,
             altFormat: 'F j, Y',
-            defaultDate: 'today',
+            defaultDate: currentWeekStart || 'today',
             onClose: function(selectedDates, dateStr) {
                 if (selectedDates.length > 0) {
                     // Get the Monday of the selected week
@@ -179,11 +183,11 @@ function setupDateRangeSelectors() {
                     const diff = selected.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is Sunday
                     const monday = new Date(selected.setDate(diff));
                     
-                    // Format as YYYY-MM-DD
-                    const year = monday.getFullYear();
+                    // Format as MM/DD/YYYY for foreman dashboard
                     const month = String(monday.getMonth() + 1).padStart(2, '0');
                     const date = String(monday.getDate()).padStart(2, '0');
-                    const formattedDate = `${year}-${month}-${date}`;
+                    const year = monday.getFullYear();
+                    const formattedDate = `${month}/${date}/${year}`;
                     
                     // Update URL and reload
                     const url = new URL(window.location);
