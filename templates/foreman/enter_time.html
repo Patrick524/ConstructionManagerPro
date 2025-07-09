@@ -451,7 +451,6 @@
                 if (input) {
                     input.value = totalHours.toString();
                     input.readOnly = true;
-                    input.style.backgroundColor = '#f8f9fa';
                     input.title = 'Read-only: Total across all activities';
                 }
             }
@@ -466,7 +465,6 @@
             // Show read-only message
             if (notesField) {
                 notesField.readOnly = true;
-                notesField.style.backgroundColor = '#f8f9fa';
                 notesField.placeholder = 'Read-only view - select specific activity to edit';
             }
             
@@ -479,7 +477,6 @@
                 const input = document.getElementById(inputId);
                 if (input) {
                     input.readOnly = false;
-                    input.style.backgroundColor = '';
                     input.title = '';
                     input.value = '0.0'; // Reset to 0 first
                 }
@@ -512,7 +509,6 @@
             // Enable notes editing
             if (notesField) {
                 notesField.readOnly = false;
-                notesField.style.backgroundColor = '';
                 notesField.placeholder = 'Enter any additional information about this week\'s work';
             }
             
