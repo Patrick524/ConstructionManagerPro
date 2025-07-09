@@ -9,6 +9,7 @@ from flask import render_template, redirect, url_for, flash, request, jsonify, s
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db
 from models import User, Job, LaborActivity, TimeEntry, WeeklyApprovalLock, ClockSession, Trade, job_workers
+from sqlalchemy import func
 from forms import (LoginForm, RegistrationForm, TimeEntryForm, ApprovalForm,
                    JobForm, LaborActivityForm, UserManagementForm, ReportForm,
                    WeeklyTimesheetForm, ClockInForm, ClockOutForm, TradeForm,
@@ -1383,17 +1384,91 @@ def foreman_enter_time(job_id, user_id):
     ).options(db.joinedload(TimeEntry.labor_activity)).order_by(TimeEntry.date, TimeEntry.labor_activity_id).all()
 
     if form.validate_on_submit():
-        # Prevent submission if "ALL" is selected
+        # Handle "ALL" view - allow quick daily total adjustments
         if form.labor_activity_id.data == 'ALL':
-            flash('Cannot save time entries in "ALL" view. Please select a specific labor activity to edit.', 'warning')
-            return render_template('foreman/enter_time.html',
-                                 form=form,
-                                 worker=worker,
-                                 job=job,
-                                 week_start=week_start,
-                                 week_end=week_end,
-                                 existing_entries=existing_entries,
-                                 all_existing_entries=all_existing_entries)
+            # Get General Work labor activity for this job's trade
+            general_work_activity = LaborActivity.query.filter_by(
+                name='General Work',
+                trade_category=job.trade_type
+            ).first()
+            
+            if not general_work_activity:
+                flash('General Work labor activity not found for this trade type.', 'danger')
+                return render_template('foreman/enter_time.html',
+                                     form=form,
+                                     worker=worker,
+                                     job=job,
+                                     week_start=week_start,
+                                     week_end=week_end,
+                                     existing_entries=existing_entries,
+                                     all_existing_entries=all_existing_entries)
+            
+            # Handle daily total adjustments by calculating differences and creating General Work entries
+            monday = form.week_start.data
+            dates = [monday + timedelta(days=i) for i in range(7)]
+            hours = [
+                form.monday_hours.data or 0,
+                form.tuesday_hours.data or 0,
+                form.wednesday_hours.data or 0,
+                form.thursday_hours.data or 0,
+                form.friday_hours.data or 0,
+                form.saturday_hours.data or 0,
+                form.sunday_hours.data or 0
+            ]
+            
+            for i, (date, target_hours) in enumerate(zip(dates, hours)):
+                # Calculate current total for this day across all activities
+                current_total = db.session.query(func.sum(TimeEntry.hours)).filter(
+                    TimeEntry.user_id == user_id,
+                    TimeEntry.job_id == job_id,
+                    TimeEntry.date == date
+                ).scalar() or 0
+                
+                # Calculate difference
+                difference = target_hours - current_total
+                
+                if difference > 0:
+                    # Add additional time as General Work
+                    new_entry = TimeEntry(
+                        user_id=user_id,
+                        job_id=job_id,
+                        labor_activity_id=general_work_activity.id,
+                        date=date,
+                        hours=difference,
+                        notes=form.notes.data,
+                        created_by_user_id=current_user.id
+                    )
+                    db.session.add(new_entry)
+                elif difference < 0:
+                    # If target is less than current, try to reduce existing General Work entries first
+                    general_work_entries = TimeEntry.query.filter(
+                        TimeEntry.user_id == user_id,
+                        TimeEntry.job_id == job_id,
+                        TimeEntry.labor_activity_id == general_work_activity.id,
+                        TimeEntry.date == date
+                    ).all()
+                    
+                    reduction_needed = abs(difference)
+                    for entry in general_work_entries:
+                        if reduction_needed <= 0:
+                            break
+                        if entry.hours <= reduction_needed:
+                            # Remove entire entry
+                            reduction_needed -= entry.hours
+                            db.session.delete(entry)
+                        else:
+                            # Reduce entry hours
+                            entry.hours -= reduction_needed
+                            reduction_needed = 0
+            
+            try:
+                db.session.commit()
+                flash(f'Daily total adjustments saved successfully for {worker.name}. Additional time added as General Work.', 'success')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error saving daily adjustments: {str(e)}', 'danger')
+            
+            return redirect(url_for('foreman_enter_time', job_id=job_id, user_id=user_id))
         
         # Get the dates for each day of the week
         monday = form.week_start.data

@@ -105,6 +105,21 @@
     font-weight: 500;
 }
 
+/* Special styling for ALL view editable fields */
+.hours-input.all-view-editable {
+    border: 2px solid var(--bs-warning) !important;
+    background-color: var(--bs-warning-bg-subtle) !important;
+    color: var(--bs-warning-text-emphasis) !important;
+    font-weight: 600;
+}
+
+.hours-input.all-view-editable:focus {
+    border-color: var(--bs-warning) !important;
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-warning-rgb), 0.25);
+    background-color: var(--bs-warning) !important;
+    color: var(--bs-dark) !important;
+}
+
 .activity-entry {
     padding: 1rem;
     margin-bottom: 1rem;

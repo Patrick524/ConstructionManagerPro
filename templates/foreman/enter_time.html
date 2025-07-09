@@ -436,8 +436,8 @@
         const notesRow = notesField?.closest('.row');
         
         if (activityId === 'ALL') {
-            // For "ALL" view, show total hours across all activities and disable editing
-            console.log('Loading ALL view with totals');
+            // For "ALL" view, show total hours across all activities and ALLOW editing for quick daily total adjustments
+            console.log('Loading ALL view with totals - EDITABLE for quick adjustments');
             
             for (let day = 0; day < 7; day++) {
                 let totalHours = 0;
@@ -450,22 +450,23 @@
                 const input = document.getElementById(dayInputs[day]);
                 if (input) {
                     input.value = totalHours.toString();
-                    input.readOnly = true;
-                    input.title = 'Read-only: Total across all activities';
+                    input.readOnly = false; // Allow editing for quick daily total adjustments
+                    input.title = 'Editable: Adjust daily total - additional time will be added as General Work';
+                    input.classList.add('all-view-editable');
                 }
             }
             
-            // Disable form submission for "ALL" view
+            // Enable form submission for "ALL" view quick adjustments
             if (submitButton) {
-                submitButton.disabled = true;
-                submitButton.textContent = 'Select Specific Activity to Edit';
-                submitButton.title = 'Cannot edit in ALL view - select a specific activity to make changes';
+                submitButton.disabled = false;
+                submitButton.textContent = 'Save Daily Total Adjustments';
+                submitButton.title = 'Additional hours will be saved as General Work entries';
             }
             
-            // Show read-only message
+            // Enable notes for ALL view
             if (notesField) {
-                notesField.readOnly = true;
-                notesField.placeholder = 'Read-only view - select specific activity to edit';
+                notesField.readOnly = false;
+                notesField.placeholder = 'Notes for daily total adjustments (applies to General Work entries)';
             }
             
         } else if (activityId) {
@@ -479,6 +480,7 @@
                     input.readOnly = false;
                     input.title = '';
                     input.value = '0.0'; // Reset to 0 first
+                    input.classList.remove('all-view-editable'); // Remove special ALL view styling
                 }
             });
             
