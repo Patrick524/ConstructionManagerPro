@@ -153,7 +153,15 @@ def generate_pdf_report(data, columns, title="Report"):
         'job_code': 'Job Code',
         'job_description': 'Job Description',
         'activity': 'Activity',
-        'trade_category': 'Trade Category'
+        'trade_category': 'Trade Category',
+        # Device Audit Log specific headers
+        'timestamp': 'Timestamp',
+        'employee_name': 'Employee',
+        'action': 'Action',
+        'device_id': 'Device ID',
+        'latitude': 'Latitude',
+        'longitude': 'Longitude',
+        'user_agent': 'User Agent'
     }
 
     # Format the data for the table
@@ -169,16 +177,43 @@ def generate_pdf_report(data, columns, title="Report"):
         formatted_row = []
         for col in columns:
             value = row.get(col, '')
-            # Format dates to USA style (MM/DD/YYYY)
-            if col == 'date' and isinstance(value, (datetime, date)):
+            
+            # Device Audit Log specific formatting
+            if col == 'timestamp':
+                # Format timestamp for display
+                if isinstance(value, str):
+                    try:
+                        timestamp_obj = datetime.fromisoformat(value.replace('Z', '+00:00'))
+                    except:
+                        timestamp_obj = datetime.strptime(value, '%Y-%m-%d %H:%M:%S.%f')
+                else:
+                    timestamp_obj = value
+                value = timestamp_obj.strftime('%m/%d/%Y %H:%M:%S')
+            elif col == 'latitude' or col == 'longitude':
+                # Format coordinates to 5 decimal places, blank if null/NaN
+                if value is not None and str(value).lower() not in ['nan', 'none', '']:
+                    try:
+                        value = f"{float(value):.5f}"
+                    except (ValueError, TypeError):
+                        value = ""
+                else:
+                    value = ""
+            elif col == 'device_id':
+                # Truncate Device ID to first 8 characters plus "…"
+                if value and len(str(value)) > 8:
+                    value = str(value)[:8] + "…"
+            elif col == 'user_agent':
+                # Truncate User Agent to max 60 characters with trailing "…"
+                if value and len(str(value)) > 60:
+                    value = str(value)[:57] + "…"
+            # Standard formatting for other report types
+            elif col == 'date' and isinstance(value, (datetime, date)):
                 value = value.strftime('%m/%d/%Y')
-            # Format booleans
             elif col == 'approved':
                 value = 'Yes' if value else 'No'
-            # Format numeric values
             elif col == 'hours' and isinstance(value, (int, float)):
                 value = f"{value:.2f}"  # Format with 2 decimal places
-            # Truncate long text fields to prevent bleeding
+            # Truncate long text fields for standard reports
             elif isinstance(value, str):
                 if 'description' in col and len(value) > 25:
                     value = value[:22] + '...'
@@ -207,7 +242,7 @@ def generate_pdf_report(data, columns, title="Report"):
             col_widths.append(0.9*inch)  # Boolean columns
         elif 'description' in col or col == 'job_description':
             col_widths.append(2.2*inch)  # Description columns need more space
-        elif col == 'worker_name':
+        elif col == 'worker_name' or col == 'employee_name':
             col_widths.append(1.5*inch)  # Name columns need moderate space
         elif col == 'job_code':
             col_widths.append(1.1*inch)  # Job codes are moderately sized
@@ -215,6 +250,17 @@ def generate_pdf_report(data, columns, title="Report"):
             col_widths.append(1.4*inch)  # Activity names need moderate space
         elif col == 'trade_category':
             col_widths.append(1.1*inch)  # Trade categories are short
+        # Device Audit Log specific column widths
+        elif col == 'timestamp':
+            col_widths.append(1.5*inch)  # Fixed width for timestamp alignment
+        elif col == 'action':
+            col_widths.append(0.8*inch)  # Actions are short (clock_in/clock_out)
+        elif col == 'device_id':
+            col_widths.append(1.0*inch)  # Truncated device IDs
+        elif col == 'latitude' or col == 'longitude':
+            col_widths.append(1.0*inch)  # Coordinate columns
+        elif col == 'user_agent':
+            col_widths.append(2.5*inch)  # User agent needs more space even when truncated
         else:
             col_widths.append(1.3*inch)  # Default width for other columns
     
