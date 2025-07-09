@@ -309,14 +309,24 @@
         // Add labor activity selector functionality
         const laborActivitySelector = document.getElementById('labor_activity_selector');
         if (laborActivitySelector) {
+            console.log('Labor activity selector found with options:', laborActivitySelector.options.length);
+            console.log('Available options:');
+            for (let i = 0; i < laborActivitySelector.options.length; i++) {
+                console.log(`  ${i}: ${laborActivitySelector.options[i].value} - ${laborActivitySelector.options[i].text}`);
+            }
+            
             laborActivitySelector.addEventListener('change', function() {
+                console.log('Labor activity changed to:', this.value);
                 loadHoursForActivity(this.value);
             });
             
             // Load the initially selected activity on page load
             if (laborActivitySelector.value) {
+                console.log('Loading initial activity:', laborActivitySelector.value);
                 loadHoursForActivity(laborActivitySelector.value);
             }
+        } else {
+            console.log('Labor activity selector not found');
         }
         
         // Add clear-on-focus behavior to time input fields
@@ -462,15 +472,26 @@
             
         } else if (activityId) {
             // For specific activity, load hours for that activity only and enable editing
+            console.log('Loading specific activity:', activityId);
+            
+            // First, enable all hour inputs (this is important to do before loading data)
+            dayInputs.forEach(inputId => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.readOnly = false;
+                    input.style.backgroundColor = '';
+                    input.title = '';
+                    input.value = '0.0'; // Reset to 0 first
+                }
+            });
+            
+            // Now load specific activity data
             for (let day = 0; day < 7; day++) {
                 const key = activityId + '_' + day;
                 if (existingEntriesData[key]) {
                     const input = document.getElementById(dayInputs[day]);
                     if (input) {
                         input.value = existingEntriesData[key].hours.toString();
-                        input.readOnly = false;
-                        input.style.backgroundColor = '';
-                        input.title = '';
                         console.log('Set', dayInputs[day], 'to', existingEntriesData[key].hours);
                     }
                     
@@ -495,15 +516,7 @@
                 notesField.placeholder = 'Enter any additional information about this week\'s work';
             }
             
-            // Enable hour inputs
-            dayInputs.forEach(inputId => {
-                const input = document.getElementById(inputId);
-                if (input) {
-                    input.readOnly = false;
-                    input.style.backgroundColor = '';
-                    input.title = '';
-                }
-            });
+            console.log('Enabled editing for activity:', activityId);
         }
         
         // Recalculate total
