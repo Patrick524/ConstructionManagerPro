@@ -1435,8 +1435,7 @@ def foreman_enter_time(job_id, user_id):
                         labor_activity_id=general_work_activity.id,
                         date=date,
                         hours=difference,
-                        notes=form.notes.data,
-                        created_by_user_id=current_user.id
+                        notes=form.notes.data
                     )
                     db.session.add(new_entry)
                 elif difference < 0:
