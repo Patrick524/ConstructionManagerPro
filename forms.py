@@ -212,10 +212,19 @@ class UserManagementForm(FlaskForm):
         if self.role.data == 'worker' and (field.data is None or field.data <= 0):
             raise ValidationError('Burden rate is required for Field Workers and must be greater than $0.')
 
+def coerce_activity_id(value):
+    """Custom coercion function to handle both 'ALL' string and integer IDs"""
+    if value == 'ALL':
+        return 'ALL'
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return None
+
 class WeeklyTimesheetForm(FlaskForm):
     """Form for weekly timesheet entry (more efficient interface)"""
     job_id = SelectField('Job', coerce=int, validators=[DataRequired()])
-    labor_activity_id = SelectField('Labor Activity', coerce=int, validators=[DataRequired()])
+    labor_activity_id = SelectField('Labor Activity', coerce=coerce_activity_id, validators=[Optional()])
     week_start = DateField('Week Starting', validators=[DataRequired()])
     
     # Daily hours fields with improved validation that properly accepts empty values
