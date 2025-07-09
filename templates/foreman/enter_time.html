@@ -141,8 +141,18 @@
             <div class="row mb-3">
                 <label class="col-md-3 col-form-label">{{ form.labor_activity_id.label }}:</label>
                 <div class="col-md-9">
-                    {{ form.labor_activity_id(class="form-select") }}
-                    <div class="form-text">Select the type of work performed this week</div>
+                    {{ form.labor_activity_id(class="form-select", id="labor_activity_selector") }}
+                    <div class="form-text">Select the type of work to view/edit hours for that activity only</div>
+                    {% if all_existing_entries %}
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            This worker has entries for: 
+                            {% set activities = all_existing_entries | map(attribute='labor_activity.name') | list | unique %}
+                            {{ activities | join(', ') }}
+                        </small>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             
@@ -263,9 +273,29 @@
         }
     });
 
-    // Initialize date pickers
+    // Store existing entries data for JavaScript
+    const existingEntriesData = {
+        {% if all_existing_entries %}
+        {% for entry in all_existing_entries %}
+        '{{ entry.labor_activity_id }}_{{ (entry.date - week_start).days }}': {
+            hours: {{ entry.hours }},
+            notes: {{ entry.notes|tojson if entry.notes else '""' }}
+        },
+        {% endfor %}
+        {% endif %}
+    };
+
+    // Initialize date pickers and form functionality
     document.addEventListener('DOMContentLoaded', function() {
         initDatePickers();
+        
+        // Add labor activity selector functionality
+        const laborActivitySelector = document.getElementById('labor_activity_selector');
+        if (laborActivitySelector) {
+            laborActivitySelector.addEventListener('change', function() {
+                loadHoursForActivity(this.value);
+            });
+        }
         
         // Add clear-on-focus behavior to time input fields
         const hoursInputs = document.querySelectorAll('.hours-input');
@@ -354,6 +384,44 @@
         }, 2000);
     }
     
+    function loadHoursForActivity(activityId) {
+        console.log('Loading hours for activity:', activityId);
+        
+        // Reset all hour inputs to 0
+        const dayInputs = ['monday_hours', 'tuesday_hours', 'wednesday_hours', 'thursday_hours', 'friday_hours', 'saturday_hours', 'sunday_hours'];
+        dayInputs.forEach(inputId => {
+            document.getElementById(inputId).value = '0.0';
+        });
+        
+        // Clear notes
+        const notesField = document.querySelector('textarea[name="notes"]');
+        if (notesField) {
+            notesField.value = '';
+        }
+        
+        // Load hours for the selected activity
+        if (activityId) {
+            for (let day = 0; day < 7; day++) {
+                const key = activityId + '_' + day;
+                if (existingEntriesData[key]) {
+                    const input = document.getElementById(dayInputs[day]);
+                    if (input) {
+                        input.value = existingEntriesData[key].hours.toString();
+                        console.log('Set', dayInputs[day], 'to', existingEntriesData[key].hours);
+                    }
+                    
+                    // Load notes from the first entry found
+                    if (existingEntriesData[key].notes && notesField && !notesField.value) {
+                        notesField.value = existingEntriesData[key].notes;
+                    }
+                }
+            }
+        }
+        
+        // Recalculate total
+        calculateTotal();
+    }
+
     function calculateTotal() {
         const hours = [
             parseFloat(document.getElementById('monday_hours').value) || 0,
