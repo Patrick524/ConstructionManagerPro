@@ -150,6 +150,21 @@ class ClockSession(db.Model):
     notes = db.Column(db.Text, nullable=True)
     is_active = db.Column(db.Boolean, default=True)  # Used to track if session is currently active
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class DeviceLog(db.Model):
+    """Device audit log for clock in/out actions"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    ts = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    action = db.Column(db.String(10), nullable=False)  # 'IN' or 'OUT'
+    device_id = db.Column(db.String(36), nullable=True)  # UUID stored in localStorage
+    ua = db.Column(db.Text, nullable=True)  # User agent string
+    lat = db.Column(db.Float, nullable=True)  # GPS latitude
+    lng = db.Column(db.Float, nullable=True)  # GPS longitude
+    
+    # Relationships
+    user = db.relationship('User', backref='device_logs', lazy='select')
     
     # Location tracking fields
     clock_in_latitude = db.Column(db.Float, nullable=True)

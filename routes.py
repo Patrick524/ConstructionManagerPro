@@ -8,7 +8,7 @@ from functools import wraps
 from flask import render_template, redirect, url_for, flash, request, jsonify, send_file, session
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db
-from models import User, Job, LaborActivity, TimeEntry, WeeklyApprovalLock, ClockSession, Trade, job_workers
+from models import User, Job, LaborActivity, TimeEntry, WeeklyApprovalLock, ClockSession, Trade, job_workers, DeviceLog
 from sqlalchemy import func
 from forms import (LoginForm, RegistrationForm, TimeEntryForm, ApprovalForm,
                    JobForm, LaborActivityForm, UserManagementForm, ReportForm,
@@ -889,6 +889,33 @@ def worker_clock():
                                [s for s in today_sessions if not s.is_active]),
                            clock_in_form=clock_in_form,
                            clock_out_form=clock_out_form)
+
+
+@app.route('/api/device-log', methods=['POST'])
+@login_required
+def log_device_action():
+    """Silent device logging endpoint for audit trail"""
+    try:
+        data = request.get_json()
+        
+        device_log = DeviceLog(
+            user_id=current_user.id,
+            action=data.get('action'),  # 'IN' or 'OUT'
+            device_id=data.get('deviceId'),
+            ua=data.get('userAgent'),
+            lat=data.get('lat'),
+            lng=data.get('lng')
+        )
+        
+        db.session.add(device_log)
+        db.session.commit()
+        
+        return jsonify({'success': True}), 200
+        
+    except Exception as e:
+        # Log error but don't block the main action
+        app.logger.error(f"Device logging error for user {current_user.id}: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/worker/clock-in', methods=['POST'])
