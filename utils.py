@@ -205,9 +205,9 @@ def generate_pdf_report(data, columns, title="Report"):
             elif col == 'user_agent':
                 # Wrap User Agent text with line breaks for better PDF readability
                 if value:
-                    def wrap_text(text, width=50):
+                    def wrap_text(text, width=35):
                         return '\n'.join(text[i:i+width] for i in range(0, len(text), width))
-                    value = wrap_text(str(value), 50)
+                    value = wrap_text(str(value), 35)
             # Standard formatting for other report types
             elif col == 'date' and isinstance(value, (datetime, date)):
                 value = value.strftime('%m/%d/%Y')
