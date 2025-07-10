@@ -199,9 +199,11 @@ def generate_pdf_report(data, columns, title="Report"):
                 else:
                     value = ""
             elif col == 'device_id':
-                # Truncate Device ID to first 8 characters plus "…"
-                if value and len(str(value)) > 8:
-                    value = str(value)[:8] + "…"
+                # Wrap Device ID text with line breaks for better PDF readability
+                if value:
+                    def wrap_text(text, width=12):
+                        return '\n'.join(text[i:i+width] for i in range(0, len(text), width))
+                    value = wrap_text(str(value), 12)
             elif col == 'user_agent':
                 # Wrap User Agent text with line breaks for better PDF readability
                 if value:
@@ -315,22 +317,36 @@ def generate_pdf_report(data, columns, title="Report"):
         if col == 'hours' or col == 'id':
             style_list.append(('ALIGN', (i, 1), (i, -1), 'RIGHT'))
     
-    # Special handling for Device Audit Log reports with wrapped user agent text
-    if 'user_agent' in columns:
+    # Special handling for Device Audit Log reports with wrapped text
+    if 'user_agent' in columns or 'device_id' in columns:
         # Add vertical alignment for multi-line cells
         style_list.append(('VALIGN', (0, 0), (-1, -1), 'TOP'))
         
-        # Find the user agent column index
-        user_agent_col = columns.index('user_agent')
+        # Handle user agent column formatting
+        if 'user_agent' in columns:
+            user_agent_col = columns.index('user_agent')
+            
+            # Set font size smaller for user agent column to fit more text
+            style_list.append(('FONTSIZE', (user_agent_col, 1), (user_agent_col, -1), 8))
+            
+            # Reduce padding for user agent column to maximize text space
+            style_list.append(('TOPPADDING', (user_agent_col, 1), (user_agent_col, -1), 4))
+            style_list.append(('BOTTOMPADDING', (user_agent_col, 1), (user_agent_col, -1), 4))
+            style_list.append(('LEFTPADDING', (user_agent_col, 1), (user_agent_col, -1), 4))
+            style_list.append(('RIGHTPADDING', (user_agent_col, 1), (user_agent_col, -1), 4))
         
-        # Set font size smaller for user agent column to fit more text
-        style_list.append(('FONTSIZE', (user_agent_col, 1), (user_agent_col, -1), 8))
-        
-        # Reduce padding for user agent column to maximize text space
-        style_list.append(('TOPPADDING', (user_agent_col, 1), (user_agent_col, -1), 4))
-        style_list.append(('BOTTOMPADDING', (user_agent_col, 1), (user_agent_col, -1), 4))
-        style_list.append(('LEFTPADDING', (user_agent_col, 1), (user_agent_col, -1), 4))
-        style_list.append(('RIGHTPADDING', (user_agent_col, 1), (user_agent_col, -1), 4))
+        # Handle device ID column formatting
+        if 'device_id' in columns:
+            device_id_col = columns.index('device_id')
+            
+            # Set smaller font size for device ID column
+            style_list.append(('FONTSIZE', (device_id_col, 1), (device_id_col, -1), 8))
+            
+            # Reduce padding for device ID column
+            style_list.append(('TOPPADDING', (device_id_col, 1), (device_id_col, -1), 4))
+            style_list.append(('BOTTOMPADDING', (device_id_col, 1), (device_id_col, -1), 4))
+            style_list.append(('LEFTPADDING', (device_id_col, 1), (device_id_col, -1), 4))
+            style_list.append(('RIGHTPADDING', (device_id_col, 1), (device_id_col, -1), 4))
     
     # Add zebra striping - alternating light gray and white backgrounds
     for i in range(1, len(table_data)):
