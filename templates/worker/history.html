@@ -65,6 +65,7 @@
                             <tbody>
                                 {% for date, entries in entries_by_date.items() %}
                                     {% if entries %}
+                                        <!-- Debug comment: Date {{ date }} has {{ entries|length }} entries -->
                                         {% for entry in entries %}
                                             <tr>
                                                 {% if loop.first %}
