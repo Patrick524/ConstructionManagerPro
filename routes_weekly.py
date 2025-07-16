@@ -116,6 +116,34 @@ def worker_weekly_timesheet():
         
         entries_updated = 0
         
+        # First, validate daily hour limits BEFORE processing
+        for day_idx, (day_name, hours) in enumerate(days_data.items()):
+            if not hours or hours <= 0:
+                continue
+                
+            day_date = week_start + timedelta(days=day_idx)
+            
+            # Get existing hours for this day from ALL jobs/activities
+            existing_hours = db.session.query(db.func.sum(TimeEntry.hours)).filter(
+                TimeEntry.user_id == current_user.id,
+                TimeEntry.date == day_date
+            ).scalar() or 0
+            
+            # Subtract hours from current job/activity to avoid double-counting when editing
+            current_job_activity_hours = db.session.query(db.func.sum(TimeEntry.hours)).filter(
+                TimeEntry.user_id == current_user.id,
+                TimeEntry.date == day_date,
+                TimeEntry.job_id == job_id,
+                TimeEntry.labor_activity_id == labor_activity_id
+            ).scalar() or 0
+            existing_hours -= current_job_activity_hours
+            
+            total_hours = existing_hours + hours
+            
+            if total_hours > 12:
+                flash(f'Maximum 12 hours per day exceeded for {day_name.capitalize()}. You already have {existing_hours:.1f} hours recorded for this day with other jobs/activities. The total would be {total_hours:.1f} hours.', 'danger')
+                return redirect(url_for('worker_weekly_timesheet', start_date=week_start.strftime('%m/%d/%Y'), job_id=job_id))
+
         try:
             # Use a single transaction
             with db.session.begin():
@@ -130,8 +158,8 @@ def worker_weekly_timesheet():
                     stmt = db.text("""
                         INSERT INTO time_entry (user_id, job_id, labor_activity_id, date, hours, notes, created_at)
                         VALUES (:user_id, :job_id, :labor_activity_id, :date, :hours, :notes, :created_at)
-                        ON CONFLICT (user_id, job_id, date) DO UPDATE
-                        SET hours = :hours, notes = :notes, labor_activity_id = :labor_activity_id
+                        ON CONFLICT (user_id, job_id, labor_activity_id, date) DO UPDATE
+                        SET hours = :hours, notes = :notes
                         WHERE time_entry.approved = FALSE
                     """)
                     
@@ -140,7 +168,7 @@ def worker_weekly_timesheet():
                         'job_id': job_id,
                         'labor_activity_id': labor_activity_id,
                         'date': day_date,
-                        'hours': min(hours, 24.0),  # Cap at 24 hours per day
+                        'hours': min(hours, 12.0),  # Cap at 12 hours per day (updated from 24)
                         'notes': notes,
                         'created_at': datetime.utcnow()
                     })
