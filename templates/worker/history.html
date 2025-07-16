@@ -3,6 +3,14 @@
 {% block title %}Time History - Construction Timesheet{% endblock %}
 
 {% block content %}
+<style>
+    .table-hover tbody tr:not(:last-child) {
+        border-bottom: 1px solid #475569;
+    }
+    .table-hover tbody tr:hover {
+        background-color: rgba(55, 65, 81, 0.3);
+    }
+</style>
 <div class="row mb-4">
     <div class="col-md-8">
         <h1 class="page-title">
