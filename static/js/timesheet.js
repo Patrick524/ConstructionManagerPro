@@ -30,8 +30,10 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function isEditMode() {
     // Check if the page URL contains '/edit/' or if there's an entry_to_edit variable
-    return window.location.pathname.includes('/edit/') || 
+    const editMode = window.location.pathname.includes('/edit/') || 
            (typeof entry_to_edit !== 'undefined' && entry_to_edit !== null);
+    console.log(`Edit mode check: URL contains /edit/: ${window.location.pathname.includes('/edit/')}, entry_to_edit defined: ${typeof entry_to_edit !== 'undefined' && entry_to_edit !== null}, result: ${editMode}`);
+    return editMode;
 }
 
 /**
@@ -114,9 +116,17 @@ function setupDateSelection() {
  * Load existing time entries for a job and date
  */
 function loadExistingEntries(jobId, date) {
+    console.log(`loadExistingEntries called with jobId: ${jobId}, date: ${date}, isEditMode: ${isEditMode()}`);
+    
+    if (isEditMode()) {
+        console.log('Skipping loadExistingEntries because we are in edit mode');
+        return;
+    }
+    
     fetch(`/api/time_entries/${date}/${jobId}`)
         .then(response => response.json())
         .then(entries => {
+            console.log(`Loaded ${entries.length} entries from API:`, entries);
             if (entries && entries.length > 0) {
                 // Reset activity fields
                 resetActivityFields();
@@ -127,6 +137,7 @@ function loadExistingEntries(jobId, date) {
                         // Update the first activity field
                         document.getElementById('labor_activity_1').value = entry.labor_activity_id;
                         document.getElementById('hours_1').value = entry.hours;
+                        console.log(`Set hours_1 to ${entry.hours} from API entry`);
                     } else {
                         // Add new activity fields for additional entries
                         addActivityField(entry.labor_activity_id, entry.hours);
