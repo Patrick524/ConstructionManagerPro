@@ -79,13 +79,8 @@ function setupJobSelection() {
         });
         
         // Trigger change event if a job is already selected, but only if we're not in edit mode
-        const editMode = isEditMode();
-        console.log('DEBUG: Edit mode check:', editMode, 'URL:', window.location.pathname);
-        if (jobSelect.value && !editMode) {
-            console.log('DEBUG: Triggering job change event');
+        if (jobSelect.value && !isEditMode()) {
             jobSelect.dispatchEvent(new Event('change'));
-        } else if (editMode) {
-            console.log('DEBUG: In edit mode, skipping automatic job change event');
         }
     }
 }
@@ -345,7 +340,6 @@ function removeActivityField(button) {
  * Reset all activity fields to default state
  */
 function resetActivityFields() {
-    console.log('DEBUG: resetActivityFields called, edit mode:', isEditMode());
     const container = document.getElementById('labor-activities-container');
     if (!container) return;
     
@@ -364,10 +358,7 @@ function resetActivityFields() {
         laborActivitySelect.value = laborActivitySelect.options[0].value;
     }
     if (hoursInput && !isEditMode()) {
-        console.log('DEBUG: Setting hours field to 0, current value was:', hoursInput.value);
         hoursInput.value = '0'; // Set default value to 0 instead of empty string
-    } else if (hoursInput && isEditMode()) {
-        console.log('DEBUG: In edit mode, preserving hours field value:', hoursInput.value);
     }
     
     // Reset activity count
