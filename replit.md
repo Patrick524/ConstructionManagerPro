@@ -98,7 +98,7 @@ This is a comprehensive Flask-based web application designed for construction ti
 
 ## Changelog
 
-- July 28, 2025: Resolved temporary form glitch in worker timesheet edit functionality where hours field was briefly showing 0 instead of actual values. Enhanced UI with harmonious dark theme colors and improved table readability.
+- July 28, 2025: Fixed critical edit functionality bug where editing time entries showed incorrect hours values in the form. Root cause was JavaScript interference overriding server-populated form values. Solution involved primary key-based entry fetching, proper edit mode detection, and preventing API calls from overwriting form data during edits. Enhanced UI with harmonious dark theme colors and improved table readability.
 - June 30, 2025. Initial setup
 
 ## User Preferences
