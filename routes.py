@@ -687,12 +687,16 @@ def worker_timesheet(entry_id=None):
         # Get all activity IDs that will be submitted
         activity_ids = [act_id for act_id, _ in labor_activities]
 
-        # Delete all existing entries for this date and job with matching activities
-        # to avoid duplicates when resubmitting the form
-        TimeEntry.query.filter(TimeEntry.user_id == current_user.id,
-                               TimeEntry.job_id == form.job_id.data,
-                               TimeEntry.labor_activity_id.in_(activity_ids),
-                               TimeEntry.date == form.date.data).delete()
+        # If we're editing an existing entry, delete the original entry first
+        if editing and entry_to_edit:
+            TimeEntry.query.filter(TimeEntry.id == entry_to_edit.id).delete()
+        else:
+            # For new entries, delete all existing entries for this date and job with matching activities
+            # to avoid duplicates when resubmitting the form
+            TimeEntry.query.filter(TimeEntry.user_id == current_user.id,
+                                   TimeEntry.job_id == form.job_id.data,
+                                   TimeEntry.labor_activity_id.in_(activity_ids),
+                                   TimeEntry.date == form.date.data).delete()
 
         # Create new entries for each activity
         for activity_id, hours in labor_activities:
