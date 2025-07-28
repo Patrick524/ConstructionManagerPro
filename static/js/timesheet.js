@@ -363,9 +363,11 @@ function resetActivityFields() {
     if (laborActivitySelect && laborActivitySelect.options.length > 0) {
         laborActivitySelect.value = laborActivitySelect.options[0].value;
     }
-    if (hoursInput) {
+    if (hoursInput && !isEditMode()) {
         console.log('DEBUG: Setting hours field to 0, current value was:', hoursInput.value);
         hoursInput.value = '0'; // Set default value to 0 instead of empty string
+    } else if (hoursInput && isEditMode()) {
+        console.log('DEBUG: In edit mode, preserving hours field value:', hoursInput.value);
     }
     
     // Reset activity count
