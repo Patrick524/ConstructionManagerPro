@@ -571,11 +571,15 @@ def worker_timesheet(entry_id=None):
 
         # Pre-populate the form with the entry's data if this is a GET request
         if request.method == 'GET':
+            print(f"DEBUG: Loading edit form for entry {entry_to_edit.id}")
+            print(f"DEBUG: Original values - job_id: {entry_to_edit.job_id}, hours: {entry_to_edit.hours}, activity: {entry_to_edit.labor_activity_id}")
             form.job_id.data = entry_to_edit.job_id
             form.date.data = entry_to_edit.date
             form.labor_activity_1.data = entry_to_edit.labor_activity_id
             form.hours_1.data = entry_to_edit.hours
             form.notes.data = entry_to_edit.notes
+            print(f"DEBUG: Form after population - job_id: {form.job_id.data}, hours_1: {form.hours_1.data}, activity: {form.labor_activity_1.data}")
+            print(f"DEBUG: Form hours_1 field type: {type(form.hours_1.data)}, treat_empty_as_zero: {getattr(form.hours_1, 'treat_empty_as_zero', 'not set')}")
     # Default date for new entries - check if user is viewing a specific week
     elif not form.date.data:
         from datetime import timezone, timedelta
