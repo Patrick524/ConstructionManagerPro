@@ -106,5 +106,18 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+// Define edit mode for JavaScript
+{% if editing and entry_to_edit %}
+var entry_to_edit = {
+    id: {{ entry_to_edit.id }},
+    hours: {{ entry_to_edit.hours }},
+    job_id: {{ entry_to_edit.job_id }},
+    labor_activity_id: {{ entry_to_edit.labor_activity_id }}
+};
+{% else %}
+var entry_to_edit = null;
+{% endif %}
+</script>
 <script src="{{ url_for('static', filename='js/timesheet.js') }}"></script>
 {% endblock %}
