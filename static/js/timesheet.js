@@ -26,6 +26,15 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
+ * Check if we're in edit mode (editing an existing entry)
+ */
+function isEditMode() {
+    // Check if the page URL contains '/edit/' or if there's an entry_to_edit variable
+    return window.location.pathname.includes('/edit/') || 
+           (typeof entry_to_edit !== 'undefined' && entry_to_edit !== null);
+}
+
+/**
  * Initialize dynamic labor activity fields
  */
 function setupLaborActivityFields() {
@@ -69,8 +78,8 @@ function setupJobSelection() {
             }
         });
         
-        // Trigger change event if a job is already selected
-        if (jobSelect.value) {
+        // Trigger change event if a job is already selected, but only if we're not in edit mode
+        if (jobSelect.value && !isEditMode()) {
             jobSelect.dispatchEvent(new Event('change'));
         }
     }
