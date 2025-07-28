@@ -5,7 +5,7 @@ from io import BytesIO
 import base64
 from datetime import datetime, timedelta, date
 from functools import wraps
-from flask import render_template, redirect, url_for, flash, request, jsonify, send_file, session
+from flask import render_template, redirect, url_for, flash, request, jsonify, send_file, session, abort
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db
 from models import User, Job, LaborActivity, TimeEntry, WeeklyApprovalLock, ClockSession, Trade, job_workers, DeviceLog
@@ -561,11 +561,14 @@ def worker_timesheet(entry_id=None):
     # No need to manually set job choices as the form now handles this based on user role
 
     if entry_id:
-        # Load the existing time entry
-        entry_to_edit = TimeEntry.query.filter_by(
-            id=entry_id,
-            user_id=current_user.id  # Ensure users can only edit their own entries
-        ).first_or_404()
+        # Editing an existing entry - fetch strictly by primary key
+        entry_to_edit = db.session.get(TimeEntry, entry_id)
+        if not entry_to_edit:
+            abort(404)
+        
+        # Authorization check
+        if entry_to_edit.user_id != current_user.id:
+            abort(403)
 
         editing = True
 
@@ -689,48 +692,38 @@ def worker_timesheet(entry_id=None):
         # Get all activity IDs that will be submitted
         activity_ids = [act_id for act_id, _ in labor_activities]
 
-        # If we're editing an existing entry, handle conflicts properly
-        if editing and entry_to_edit:
-            print(f"DEBUG EDIT: Deleting original entry {entry_to_edit.id}")
-            
-            # First, find any conflicting entries for the new job/activity combination
-            conflicting_entries = TimeEntry.query.filter(
-                TimeEntry.user_id == current_user.id,
-                TimeEntry.job_id == form.job_id.data,
-                TimeEntry.labor_activity_id.in_(activity_ids),
-                TimeEntry.date == form.date.data,
-                TimeEntry.id != entry_to_edit.id  # Exclude the original entry
-            ).all()
-            
-            if conflicting_entries:
-                print(f"DEBUG EDIT: Found {len(conflicting_entries)} conflicting entries to delete")
-                for conflicting in conflicting_entries:
-                    print(f"DEBUG EDIT: Deleting conflicting entry {conflicting.id} - Job: {conflicting.job_id}, Activity: {conflicting.labor_activity_id}, Hours: {conflicting.hours}")
-                    db.session.delete(conflicting)
-            
-            # Now delete the original entry
-            db.session.delete(entry_to_edit)
-            
-            # Commit the deletions before inserting new entries
-            db.session.commit()
+        # Handle editing vs new entry creation differently
+        if editing and entry_to_edit and len(labor_activities) == 1:
+            # Simple edit case: update the existing entry in place
+            activity_id, hours = labor_activities[0]
+            entry_to_edit.job_id = form.job_id.data
+            entry_to_edit.labor_activity_id = activity_id
+            entry_to_edit.date = form.date.data
+            entry_to_edit.hours = hours
+            entry_to_edit.notes = form.notes.data
+            print(f"DEBUG EDIT: Updated entry {entry_to_edit.id} - Job: {entry_to_edit.job_id}, Hours: {entry_to_edit.hours}, Activity: {entry_to_edit.labor_activity_id}")
         else:
-            # For new entries, delete all existing entries for this date and job with matching activities
-            # to avoid duplicates when resubmitting the form
-            TimeEntry.query.filter(TimeEntry.user_id == current_user.id,
-                                   TimeEntry.job_id == form.job_id.data,
-                                   TimeEntry.labor_activity_id.in_(activity_ids),
-                                   TimeEntry.date == form.date.data).delete()
+            # Complex case: delete original and recreate (for multiple activities or new entries)
+            if editing and entry_to_edit:
+                # Delete the original entry when editing becomes complex
+                db.session.delete(entry_to_edit)
+                
+            # For new entries, delete existing entries to avoid duplicates
+            if not editing:
+                TimeEntry.query.filter(TimeEntry.user_id == current_user.id,
+                                       TimeEntry.job_id == form.job_id.data,
+                                       TimeEntry.labor_activity_id.in_(activity_ids),
+                                       TimeEntry.date == form.date.data).delete()
 
-        # Create new entries for each activity
-        for activity_id, hours in labor_activities:
-            # Create new entry
-            new_entry = TimeEntry(user_id=current_user.id,
-                                  job_id=form.job_id.data,
-                                  labor_activity_id=activity_id,
-                                  date=form.date.data,
-                                  hours=hours,
-                                  notes=form.notes.data)
-            db.session.add(new_entry)
+            # Create new entries for each activity
+            for activity_id, hours in labor_activities:
+                new_entry = TimeEntry(user_id=current_user.id,
+                                      job_id=form.job_id.data,
+                                      labor_activity_id=activity_id,
+                                      date=form.date.data,
+                                      hours=hours,
+                                      notes=form.notes.data)
+                db.session.add(new_entry)
 
         db.session.commit()
         flash('Time entry saved successfully!', 'success')
