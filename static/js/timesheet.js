@@ -97,13 +97,14 @@ function setupDateSelection() {
             const jobId = jobSelect.value;
             const date = this.value;
             
-            if (jobId && date) {
+            // Skip loading existing entries if we're in edit mode
+            if (jobId && date && !isEditMode()) {
                 loadExistingEntries(jobId, date);
             }
         });
         
-        // Trigger change event if a date is already selected
-        if (dateInput.value && jobSelect.value) {
+        // Trigger change event if a date is already selected, but only if we're not in edit mode
+        if (dateInput.value && jobSelect.value && !isEditMode()) {
             dateInput.dispatchEvent(new Event('change'));
         }
     }
