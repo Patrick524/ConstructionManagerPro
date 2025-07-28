@@ -689,18 +689,17 @@ def worker_timesheet(entry_id=None):
         # Get all activity IDs that will be submitted
         activity_ids = [act_id for act_id, _ in labor_activities]
 
-        # If we're editing an existing entry, delete the original entry first
+        # If we're editing an existing entry, handle conflicts properly
         if editing and entry_to_edit:
             print(f"DEBUG EDIT: Deleting original entry {entry_to_edit.id}")
-            TimeEntry.query.filter(TimeEntry.id == entry_to_edit.id).delete()
             
-            # Also delete any conflicting entries for the new job/activity combination
+            # First, find any conflicting entries for the new job/activity combination
             conflicting_entries = TimeEntry.query.filter(
                 TimeEntry.user_id == current_user.id,
                 TimeEntry.job_id == form.job_id.data,
                 TimeEntry.labor_activity_id.in_(activity_ids),
                 TimeEntry.date == form.date.data,
-                TimeEntry.id != entry_to_edit.id  # Exclude the original entry we just deleted
+                TimeEntry.id != entry_to_edit.id  # Exclude the original entry
             ).all()
             
             if conflicting_entries:
@@ -708,6 +707,12 @@ def worker_timesheet(entry_id=None):
                 for conflicting in conflicting_entries:
                     print(f"DEBUG EDIT: Deleting conflicting entry {conflicting.id} - Job: {conflicting.job_id}, Activity: {conflicting.labor_activity_id}, Hours: {conflicting.hours}")
                     db.session.delete(conflicting)
+            
+            # Now delete the original entry
+            db.session.delete(entry_to_edit)
+            
+            # Commit the deletions before inserting new entries
+            db.session.commit()
         else:
             # For new entries, delete all existing entries for this date and job with matching activities
             # to avoid duplicates when resubmitting the form
