@@ -2179,15 +2179,10 @@ def manage_job_workers():
     if form.validate_on_submit():
         job_id = form.job_id.data
         job = Job.query.get_or_404(job_id)
-        selected_worker_ids = form.workers.data
-
-        # Convert worker IDs to integers if they're not already
-        if selected_worker_ids:
-            selected_worker_ids = [
-                int(worker_id) for worker_id in selected_worker_ids
-            ]
-        else:
-            selected_worker_ids = []
+        
+        # Get worker IDs from checkbox array
+        selected_worker_ids = request.form.getlist('workers')
+        selected_worker_ids = [int(worker_id) for worker_id in selected_worker_ids if worker_id.isdigit()]
 
         # A different approach - work with the User objects directly
         # First, clear existing assignments using the SQLAlchemy relationship
