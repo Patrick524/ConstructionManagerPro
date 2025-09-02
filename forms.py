@@ -396,9 +396,9 @@ class JobWorkersForm(FlaskForm):
         # Populate job choices
         self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
                               for job in Job.query.filter(Job.status != 'complete').order_by(Job.job_code).all()]
-        # Populate worker choices
-        self.workers.choices = [(worker.id, worker.name) 
-                               for worker in User.query.filter_by(role='worker').order_by(User.name).all()]
+        # Populate worker choices - include ALL users, not just workers
+        self.workers.choices = [(user.id, f"{user.name} ({user.role.title()})") 
+                               for user in User.query.order_by(User.name).all()]
 
 class GPSComplianceReportForm(FlaskForm):
     """Form for generating GPS compliance reports"""
