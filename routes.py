@@ -2727,13 +2727,47 @@ def manage_users():
 
     # Get all users for display
     users = User.query.order_by(User.role, User.name).all()
+    
+    # Get all jobs for the assignment modal
+    jobs = Job.query.order_by(Job.job_code).all()
 
     return render_template('admin/users.html',
                            form=form,
                            users=users,
+                           jobs=jobs,
                            editing=editing,
                            editing_user=editing_user,
                            new_user=new_user)
+
+
+@app.route('/admin/users/<int:user_id>/jobs', methods=['POST'])
+@login_required
+@admin_required
+def update_user_job_assignments(user_id):
+    """Update job assignments for a specific user"""
+    user = User.query.get_or_404(user_id)
+    
+    # Get assigned jobs from checkbox array
+    selected_job_ids = request.form.getlist('assigned_jobs')
+    selected_job_ids = [int(job_id) for job_id in selected_job_ids if job_id.isdigit()]
+    
+    # Clear existing job assignments
+    user.assigned_jobs = []
+    
+    # Add new job assignments
+    if selected_job_ids:
+        selected_jobs = Job.query.filter(Job.id.in_(selected_job_ids)).all()
+        for job in selected_jobs:
+            user.assigned_jobs.append(job)
+    
+    try:
+        db.session.commit()
+        flash(f"Job assignments for {user.name} updated successfully!", 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error updating job assignments: {str(e)}", 'danger')
+    
+    return redirect(url_for('manage_users', edit=user_id))
 
 
 @app.route('/admin/reports', methods=['GET', 'POST'])
