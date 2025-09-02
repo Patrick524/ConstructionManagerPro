@@ -10,6 +10,20 @@ job_workers = db.Table('job_workers',
     db.Column('assigned_at', db.DateTime, default=datetime.utcnow)
 )
 
+# Association table for many-to-many relationship between Job and Trade
+job_trades = db.Table('job_trades',
+    db.Column('job_id', db.Integer, db.ForeignKey('job.id'), primary_key=True),
+    db.Column('trade_id', db.Integer, db.ForeignKey('trade.id'), primary_key=True),
+    db.Column('assigned_at', db.DateTime, default=datetime.utcnow)
+)
+
+# Association table for many-to-many relationship between User and Trade (qualified trades)
+user_trades = db.Table('user_trades',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('trade_id', db.Integer, db.ForeignKey('trade.id'), primary_key=True),
+    db.Column('qualified_at', db.DateTime, default=datetime.utcnow)
+)
+
 class User(UserMixin, db.Model):
     """User model representing workers, foremen, and administrators"""
     id = db.Column(db.Integer, primary_key=True)
@@ -29,6 +43,11 @@ class User(UserMixin, db.Model):
                                 secondary=job_workers,
                                 backref=db.backref('assigned_workers', lazy='dynamic'),
                                 lazy='dynamic')
+    # Qualified trades for this worker (many-to-many)
+    qualified_trades = db.relationship('Trade',
+                                     secondary=user_trades,
+                                     backref=db.backref('qualified_workers', lazy='dynamic'),
+                                     lazy='dynamic')
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -73,6 +92,11 @@ class Job(db.Model):
     time_entries = db.relationship('TimeEntry', backref='job', lazy='dynamic')
     weekly_approvals = db.relationship('WeeklyApprovalLock', backref='job', lazy='dynamic')
     foreman = db.relationship('User', foreign_keys=[foreman_id], backref='managed_jobs', lazy='joined')
+    # Many-to-many relationship with trades
+    trades = db.relationship('Trade',
+                           secondary=job_trades,
+                           backref=db.backref('jobs', lazy='dynamic'),
+                           lazy='dynamic')
     
     def __repr__(self):
         return f'<Job {self.job_code}>'

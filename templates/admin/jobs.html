@@ -61,6 +61,22 @@
                         </div>
 
                         <div class="mb-3">
+                            <label for="trades" class="form-label">Required Trades</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-tools"></i></span>
+                                {{ form.trades(class="form-select", multiple=True, size="5") }}
+                            </div>
+                            <small class="form-text text-muted">Hold Ctrl (or Cmd) to select multiple trades</small>
+                            {% if form.trades.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.trades.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
                             <label for="location" class="form-label">Location/Address</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
@@ -184,7 +200,8 @@
                                 <th data-sort="job_code">Job Code <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="description">Description <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="location">Location <i class="fas fa-sort text-muted"></i></th>
-                                <th data-sort="trade_type">Trade <i class="fas fa-sort text-muted"></i></th>
+                                <th data-sort="trade_type">Legacy Trade <i class="fas fa-sort text-muted"></i></th>
+                                <th>Required Trades</th>
                                 <th data-sort="foreman">Foreman <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="status">Status <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="created_at">Created <i class="fas fa-sort text-muted"></i></th>
@@ -206,6 +223,15 @@
                                         </td>
                                         <td data-trade_type="{{ job.trade_type }}">
                                             <span class="badge bg-{{ job.trade_type }}">{{ job.trade_type|capitalize }}</span>
+                                        </td>
+                                        <td>
+                                            {% if job.trades %}
+                                                {% for trade in job.trades %}
+                                                    <span class="badge bg-primary me-1">{{ trade.name }}</span>
+                                                {% endfor %}
+                                            {% else %}
+                                                <span class="text-muted">None</span>
+                                            {% endif %}
                                         </td>
                                         <td data-foreman="{{ job.foreman.name if job.foreman else '' }}">
                                             {% if job.foreman %}
@@ -242,7 +268,7 @@
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="8" class="text-center py-4">
+                                    <td colspan="9" class="text-center py-4">
                                         <i class="fas fa-briefcase fa-3x text-muted mb-3 d-block"></i>
                                         <h5>
                                             {% if status_filter == 'active' %}

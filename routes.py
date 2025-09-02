@@ -2296,6 +2296,15 @@ def manage_jobs():
             job.trade_type = form.trade_type.data
             # Handle foreman assignment
             job.foreman_id = form.foreman_id.data if form.foreman_id.data else None
+            
+            # Update job trades (many-to-many)
+            from models import Trade
+            job.trades.clear()  # Remove existing trades
+            for trade_id in form.trades.data:
+                trade = Trade.query.get(trade_id)
+                if trade:
+                    job.trades.append(trade)
+            
             flash('Job updated successfully!', 'success')
         else:
             # Create new job
@@ -2308,6 +2317,14 @@ def manage_jobs():
                       trade_type=form.trade_type.data,
                       foreman_id=form.foreman_id.data if form.foreman_id.data else None)
             db.session.add(job)
+            db.session.flush()  # Get the job ID
+
+            # Add job trades (many-to-many)
+            from models import Trade
+            for trade_id in form.trades.data:
+                trade = Trade.query.get(trade_id)
+                if trade:
+                    job.trades.append(trade)
 
             # Assign all workers to this new job
             workers = User.query.filter_by(role='worker').all()
@@ -2333,6 +2350,8 @@ def manage_jobs():
         form.status.data = job.status
         form.trade_type.data = job.trade_type
         form.foreman_id.data = job.foreman_id if job.foreman_id else ''
+        # Load current trades for editing
+        form.trades.data = [trade.id for trade in job.trades]
 
     # Get jobs filtered by status if specified
     status_filter = request.args.get('status_filter', 'active')
@@ -2587,6 +2606,14 @@ def manage_users():
             # Set the burden_rate field from the form
             user.burden_rate = form.burden_rate.data
 
+            # Update qualified trades (many-to-many)
+            from models import Trade
+            user.qualified_trades.clear()  # Remove existing trades
+            for trade_id in form.qualified_trades.data:
+                trade = Trade.query.get(trade_id)
+                if trade:
+                    user.qualified_trades.append(trade)
+
             # Log the change for debugging
             print(
                 f"DEBUG: Updated user {user.name} (ID: {user.id}), use_clock_in set to: {user.use_clock_in}, burden_rate set to: {user.burden_rate}"
@@ -2629,6 +2656,15 @@ def manage_users():
             # Try to add the new user
             try:
                 db.session.add(user)
+                db.session.flush()  # Get the user ID
+                
+                # Add qualified trades for new user
+                from models import Trade
+                for trade_id in form.qualified_trades.data:
+                    trade = Trade.query.get(trade_id)
+                    if trade:
+                        user.qualified_trades.append(trade)
+                
                 db.session.commit()
                 flash('New user added successfully!', 'success')
             except Exception as e:
@@ -2649,6 +2685,8 @@ def manage_users():
         form.role.data = user.role
         form.use_clock_in.data = user.use_clock_in  # Load the current use_clock_in setting
         form.burden_rate.data = user.burden_rate  # Load the current burden_rate setting
+        # Load current qualified trades for editing
+        form.qualified_trades.data = [trade.id for trade in user.qualified_trades]
         print(
             f"DEBUG: Editing user {user.name} (ID: {user.id}), current use_clock_in = {user.use_clock_in}, current burden_rate = {user.burden_rate}"
         )

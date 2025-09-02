@@ -148,7 +148,7 @@ class JobForm(FlaskForm):
         ('complete', 'Complete'),
         ('on_hold', 'On Hold')
     ], validators=[DataRequired()])
-    trade_type = SelectField('Primary Trade', choices=[
+    trade_type = SelectField('Legacy Trade', choices=[
         ('drywall', 'Drywall'),
         ('electrical', 'Electrical'),
         ('plumbing', 'Plumbing'),
@@ -156,17 +156,22 @@ class JobForm(FlaskForm):
         ('painting', 'Painting'),
         ('masonry', 'Masonry'),
         ('other', 'Other')
-    ], validators=[DataRequired()])
+    ], validators=[Optional()])
+    trades = SelectMultipleField('Required Trades', coerce=int, validators=[DataRequired()])
     foreman_id = SelectField('Assign Foreman', coerce=lambda x: int(x) if x else None, validators=[Optional()])
     submit = SubmitField('Save Job')
     
     def __init__(self, *args, **kwargs):
         super(JobForm, self).__init__(*args, **kwargs)
-        from models import User
+        from models import User, Trade
         
         # Populate foreman choices - include "Unassigned" option
         foremen = User.query.filter_by(role='foreman').all()
         self.foreman_id.choices = [('', 'Unassigned')] + [(f.id, f.name) for f in foremen]
+        
+        # Populate trades choices
+        trades = Trade.query.filter_by(is_active=True).all()
+        self.trades.choices = [(t.id, t.name) for t in trades]
 
 class TradeForm(FlaskForm):
     """Form for creating/editing trades"""
@@ -202,10 +207,19 @@ class UserManagementForm(FlaskForm):
     burden_rate = FloatField('Burden Rate ($/hour)', validators=[Optional(), NumberRange(min=0, max=999.99)], 
                             render_kw={'step': '0.01', 'placeholder': 'Enter hourly burden rate'})
     use_clock_in = BooleanField('Use Clock In/Out System', default=False)
+    qualified_trades = SelectMultipleField('Qualified Trades', coerce=int, validators=[Optional()])
     password = PasswordField('New Password (leave blank to keep current)')
     confirm_password = PasswordField('Confirm New Password', 
                                     validators=[EqualTo('password')])
     submit = SubmitField('Update User')
+    
+    def __init__(self, *args, **kwargs):
+        super(UserManagementForm, self).__init__(*args, **kwargs)
+        from models import Trade
+        
+        # Populate trades choices for qualified trades
+        trades = Trade.query.filter_by(is_active=True).all()
+        self.qualified_trades.choices = [(t.id, t.name) for t in trades]
     
     def validate_burden_rate(self, field):
         """Validate burden rate - required for field workers, optional for others"""

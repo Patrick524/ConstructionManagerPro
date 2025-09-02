@@ -104,6 +104,22 @@
                             </small>
                         </div>
                         
+                        <div class="mb-3" id="qualified_trades_container" style="display: none;">
+                            <label for="qualified_trades" class="form-label">Qualified Trades</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-tools"></i></span>
+                                {{ form.qualified_trades(class="form-select", multiple=True, size="5") }}
+                            </div>
+                            <small class="form-text text-muted">Hold Ctrl (or Cmd) to select multiple trades. Only relevant for Field Workers.</small>
+                            {% if form.qualified_trades.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.qualified_trades.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="password" class="form-label">
@@ -190,6 +206,7 @@
                                 <th data-sort="name">Name <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="email">Email <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="role">Role <i class="fas fa-sort text-muted"></i></th>
+                                <th>Qualified Trades</th>
                                 <th data-sort="burden_rate">Burden Rate <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="created_at">Created <i class="fas fa-sort text-muted"></i></th>
                                 <th>Actions</th>
@@ -205,6 +222,17 @@
                                             <span class="badge bg-{{ 'primary' if user.role == 'admin' else 'success' if user.role == 'foreman' else 'secondary' }}">
                                                 {{ user.role|capitalize }}
                                             </span>
+                                        </td>
+                                        <td>
+                                            {% if user.role == 'worker' and user.qualified_trades %}
+                                                {% for trade in user.qualified_trades %}
+                                                    <span class="badge bg-info me-1">{{ trade.name }}</span>
+                                                {% endfor %}
+                                            {% elif user.role == 'worker' %}
+                                                <span class="text-muted">None set</span>
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
                                         </td>
                                         <td data-burden_rate="{{ user.burden_rate or 0 }}">
                                             {% if user.role == 'worker' and user.burden_rate %}
@@ -234,7 +262,7 @@
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="5" class="text-center py-4">
+                                    <td colspan="7" class="text-center py-4">
                                         <i class="fas fa-users fa-3x text-muted mb-3 d-block"></i>
                                         <h5>No users found</h5>
                                         <p class="mb-3">Start by adding your first user using the button above</p>
@@ -321,16 +349,19 @@
         const roleSelect = document.querySelector('#role_select');
         const clockInContainer = document.querySelector('#clock_in_setting_container');
         const burdenRateContainer = document.querySelector('#burden_rate_container');
+        const qualifiedTradesContainer = document.querySelector('#qualified_trades_container');
         
-        if (roleSelect && clockInContainer && burdenRateContainer) {
+        if (roleSelect && clockInContainer && burdenRateContainer && qualifiedTradesContainer) {
             // Show/hide fields based on role
             function toggleRoleFields() {
                 if (roleSelect.value === 'worker') {
                     clockInContainer.style.display = 'block';
                     burdenRateContainer.style.display = 'block';
+                    qualifiedTradesContainer.style.display = 'block';
                 } else {
                     clockInContainer.style.display = 'none';
                     burdenRateContainer.style.display = 'none';
+                    qualifiedTradesContainer.style.display = 'none';
                     // Reset the checkbox if not a worker
                     const clockInCheckbox = document.querySelector('#use_clock_in');
                     if (clockInCheckbox) {
@@ -340,6 +371,11 @@
                     const burdenRateField = document.querySelector('#burden_rate');
                     if (burdenRateField) {
                         burdenRateField.value = '';
+                    }
+                    // Reset qualified trades if not a worker
+                    const qualifiedTradesField = document.querySelector('#qualified_trades');
+                    if (qualifiedTradesField) {
+                        Array.from(qualifiedTradesField.options).forEach(option => option.selected = false);
                     }
                 }
             }
