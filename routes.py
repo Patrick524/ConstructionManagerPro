@@ -2742,6 +2742,63 @@ def manage_users():
 
 
 
+@app.route('/admin/api/job-users/<int:job_id>', methods=['GET'])
+@login_required
+@admin_required
+def get_job_users_api(job_id):
+    """API endpoint to get all users and assigned users for a job"""
+    job = Job.query.get_or_404(job_id)
+    
+    # Get all users
+    all_users = User.query.order_by(User.name).all()
+    
+    # Get assigned user IDs
+    assigned_user_ids = [user.id for user in job.assigned_workers.all()]
+    
+    return jsonify({
+        'all_users': [
+            {
+                'id': user.id,
+                'name': user.name,
+                'email': user.email,
+                'role': user.role.title()
+            }
+            for user in all_users
+        ],
+        'assigned_user_ids': assigned_user_ids
+    })
+
+
+@app.route('/admin/jobs/<int:job_id>/users', methods=['POST'])
+@login_required
+@admin_required
+def update_job_user_assignments(job_id):
+    """Update user assignments for a specific job"""
+    job = Job.query.get_or_404(job_id)
+    
+    # Get assigned user IDs from checkbox array
+    selected_user_ids = request.form.getlist('assigned_users')
+    selected_user_ids = [int(user_id) for user_id in selected_user_ids if user_id.isdigit()]
+    
+    # Clear existing user assignments for this job
+    job.assigned_workers = []
+    
+    # Add new user assignments
+    if selected_user_ids:
+        selected_users = User.query.filter(User.id.in_(selected_user_ids)).all()
+        for user in selected_users:
+            job.assigned_workers.append(user)
+    
+    try:
+        db.session.commit()
+        flash(f"User assignments for job '{job.job_code}' updated successfully!", 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error updating user assignments: {str(e)}", 'danger')
+    
+    return redirect(url_for('manage_jobs'))
+
+
 @app.route('/admin/reports', methods=['GET', 'POST'])
 @login_required
 @admin_required
