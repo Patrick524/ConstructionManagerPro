@@ -2277,7 +2277,12 @@ def get_job_assigned_users(job_id):
 def manage_jobs():
     form = JobForm()
 
-    if form.validate_on_submit():
+    # Custom validation for checkbox trades
+    selected_trade_ids = request.form.getlist('trades')
+    if request.method == 'POST' and not selected_trade_ids:
+        form.trades.errors.append("At least one trade must be selected")
+    
+    if form.validate_on_submit() and selected_trade_ids:
         # Check if we're editing an existing job
         job_id = request.args.get('edit')
 
@@ -2301,10 +2306,17 @@ def manage_jobs():
             from models import Trade
             # Clear existing trades properly
             job.trades = []
-            for trade_id in form.trades.data:
-                trade = Trade.query.get(trade_id)
-                if trade:
-                    job.trades.append(trade)
+            
+            # Get trades from checkbox array
+            selected_trade_ids = request.form.getlist('trades')
+            for trade_id_str in selected_trade_ids:
+                try:
+                    trade_id = int(trade_id_str)
+                    trade = Trade.query.filter_by(id=trade_id, is_active=True).first()
+                    if trade:
+                        job.trades.append(trade)
+                except (ValueError, TypeError):
+                    continue  # Skip invalid trade IDs
             
             flash('Job updated successfully!', 'success')
         else:
@@ -2322,10 +2334,16 @@ def manage_jobs():
 
             # Add job trades (many-to-many)
             from models import Trade
-            for trade_id in form.trades.data:
-                trade = Trade.query.get(trade_id)
-                if trade:
-                    job.trades.append(trade)
+            # Get trades from checkbox array
+            selected_trade_ids = request.form.getlist('trades')
+            for trade_id_str in selected_trade_ids:
+                try:
+                    trade_id = int(trade_id_str)
+                    trade = Trade.query.filter_by(id=trade_id, is_active=True).first()
+                    if trade:
+                        job.trades.append(trade)
+                except (ValueError, TypeError):
+                    continue  # Skip invalid trade IDs
 
             # Assign all workers to this new job
             workers = User.query.filter_by(role='worker').all()
