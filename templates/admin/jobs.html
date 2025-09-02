@@ -168,11 +168,7 @@
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-save me-2"></i>{{ 'Update Job' if editing else 'Save Job' }}
                                 </button>
-                                {% if editing %}
-                                <button type="button" class="btn btn-info" onclick="showAssignedUsers({{ edit_job.id }}, '{{ edit_job.job_code }}')">
-                                    <i class="fas fa-users me-2"></i>Assigned Users
-                                </button>
-                                {% endif %}
+
                             </div>
                             <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#jobFormContainer">
                                 Cancel
