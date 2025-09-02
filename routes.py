@@ -2611,6 +2611,13 @@ def toggle_activity(id):
 def manage_users():
     form = UserManagementForm()
 
+    # Debug form validation
+    if request.method == 'POST':
+        print(f"DEBUG: Form data received: {request.form}")
+        print(f"DEBUG: Form validation result: {form.validate()}")
+        if form.errors:
+            print(f"DEBUG: Form errors: {form.errors}")
+
     if form.validate_on_submit():
         # Check if we're editing an existing user
         user_id = request.args.get('edit')
