@@ -2225,11 +2225,11 @@ def manage_job_workers():
         job = Job.query.get_or_404(selected_job_id)
         form.job_id.data = selected_job_id
 
-        # Default to ALL users assigned to new jobs (if no existing assignments)
+        # Default to ALL workers and foremen assigned to new jobs (if no existing assignments)
         if job.assigned_workers.count() == 0:
-            # Default to all users
-            all_users = User.query.all()
-            form.workers.data = [user.id for user in all_users]
+            # Default to all workers and foremen
+            eligible_users = User.query.filter(User.role.in_(['worker', 'foreman'])).all()
+            form.workers.data = [user.id for user in eligible_users]
         else:
             # Use existing assignments
             form.workers.data = [worker.id for worker in job.assigned_workers]
@@ -2749,8 +2749,8 @@ def get_job_users_api(job_id):
     """API endpoint to get all users and assigned users for a job"""
     job = Job.query.get_or_404(job_id)
     
-    # Get all users
-    all_users = User.query.order_by(User.name).all()
+    # Get only workers and foremen
+    all_users = User.query.filter(User.role.in_(['worker', 'foreman'])).order_by(User.name).all()
     
     # Get assigned user IDs
     assigned_user_ids = [user.id for user in job.assigned_workers.all()]

@@ -611,18 +611,27 @@
     }
 
     function loadJobUsers(jobId, jobCode) {
-        document.getElementById('jobCodeDisplay').textContent = jobCode;
-        document.getElementById('modalJobId').value = jobId;
+        const jobCodeElement = document.getElementById('jobCodeDisplay');
+        const modalJobIdElement = document.getElementById('modalJobId');
+        const formElement = document.getElementById('jobUserAssignmentForm');
+        const containerElement = document.getElementById('job-users-checkbox-container');
+        
+        if (!jobCodeElement || !modalJobIdElement || !formElement || !containerElement) {
+            console.error('Required modal elements not found');
+            return;
+        }
+        
+        jobCodeElement.textContent = jobCode;
+        modalJobIdElement.value = jobId;
         
         // Set form action
-        document.getElementById('jobUserAssignmentForm').action = '/admin/jobs/' + jobId + '/users';
+        formElement.action = '/admin/jobs/' + jobId + '/users';
         
         // Load users via AJAX
         fetch('/admin/api/job-users/' + jobId)
             .then(response => response.json())
             .then(data => {
-                const container = document.getElementById('job-users-checkbox-container');
-                container.innerHTML = '';
+                containerElement.innerHTML = '';
                 
                 data.all_users.forEach(user => {
                     const isAssigned = data.assigned_user_ids.includes(user.id);
@@ -638,13 +647,15 @@
                             </label>
                         </div>
                     `;
-                    container.appendChild(userDiv);
+                    containerElement.appendChild(userDiv);
                 });
             })
             .catch(error => {
                 console.error('Error loading job users:', error);
-                document.getElementById('job-users-checkbox-container').innerHTML = 
-                    '<div class="col-12"><div class="alert alert-danger">Failed to load users</div></div>';
+                if (containerElement) {
+                    containerElement.innerHTML = 
+                        '<div class="col-12"><div class="alert alert-danger">Failed to load users</div></div>';
+                }
             });
     }
 </script>
