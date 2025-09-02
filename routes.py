@@ -2299,7 +2299,8 @@ def manage_jobs():
             
             # Update job trades (many-to-many)
             from models import Trade
-            job.trades.clear()  # Remove existing trades
+            # Clear existing trades properly
+            job.trades = []
             for trade_id in form.trades.data:
                 trade = Trade.query.get(trade_id)
                 if trade:
@@ -2608,7 +2609,8 @@ def manage_users():
 
             # Update qualified trades (many-to-many)
             from models import Trade
-            user.qualified_trades.clear()  # Remove existing trades
+            # Clear existing trades properly
+            user.qualified_trades = []
             for trade_id in form.qualified_trades.data:
                 trade = Trade.query.get(trade_id)
                 if trade:
