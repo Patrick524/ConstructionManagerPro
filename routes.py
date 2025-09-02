@@ -2629,10 +2629,17 @@ def manage_users():
             from models import Trade
             # Clear existing trades properly
             user.qualified_trades = []
-            for trade_id in form.qualified_trades.data:
-                trade = Trade.query.get(trade_id)
-                if trade:
-                    user.qualified_trades.append(trade)
+            
+            # Get qualified trades from checkbox array
+            selected_trade_ids = request.form.getlist('qualified_trades')
+            for trade_id_str in selected_trade_ids:
+                try:
+                    trade_id = int(trade_id_str)
+                    trade = Trade.query.filter_by(id=trade_id, is_active=True).first()
+                    if trade:
+                        user.qualified_trades.append(trade)
+                except (ValueError, TypeError):
+                    continue  # Skip invalid trade IDs
 
             # Log the change for debugging
             print(
@@ -2680,10 +2687,16 @@ def manage_users():
                 
                 # Add qualified trades for new user
                 from models import Trade
-                for trade_id in form.qualified_trades.data:
-                    trade = Trade.query.get(trade_id)
-                    if trade:
-                        user.qualified_trades.append(trade)
+                # Get qualified trades from checkbox array
+                selected_trade_ids = request.form.getlist('qualified_trades')
+                for trade_id_str in selected_trade_ids:
+                    try:
+                        trade_id = int(trade_id_str)
+                        trade = Trade.query.filter_by(id=trade_id, is_active=True).first()
+                        if trade:
+                            user.qualified_trades.append(trade)
+                    except (ValueError, TypeError):
+                        continue  # Skip invalid trade IDs
                 
                 db.session.commit()
                 flash('New user added successfully!', 'success')

@@ -216,7 +216,7 @@ class UserManagementForm(FlaskForm):
     burden_rate = FloatField('Burden Rate ($/hour)', validators=[Optional(), NumberRange(min=0, max=999.99)], 
                             render_kw={'step': '0.01', 'placeholder': 'Enter hourly burden rate'})
     use_clock_in = BooleanField('Use Clock In/Out System', default=False)
-    qualified_trades = SelectMultipleField('Qualified Trades', coerce=int, validators=[Optional()])
+    qualified_trades = SelectMultipleField('Trades', coerce=int, validators=[Optional()])
     password = PasswordField('New Password (leave blank to keep current)')
     confirm_password = PasswordField('Confirm New Password', 
                                     validators=[EqualTo('password')])

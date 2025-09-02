@@ -105,19 +105,41 @@
                         </div>
                         
                         <div class="mb-3" id="qualified_trades_container" style="display: none;">
-                            <label for="qualified_trades" class="form-label">Qualified Trades</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-tools"></i></span>
-                                {{ form.qualified_trades(class="form-select", multiple=True, size="5") }}
-                            </div>
-                            <small class="form-text text-muted">Hold Ctrl (or Cmd) to select multiple trades. Only relevant for Field Workers.</small>
+                            <label for="qualified_trades" class="form-label"><i class="fas fa-tools me-2"></i>Trades</label>
+                            <small class="form-text text-muted mb-3 d-block">Select trades this worker is qualified to work on. Only relevant for Field Workers.</small>
+                            
                             {% if form.qualified_trades.errors %}
-                                <div class="text-danger">
+                                <div class="alert alert-danger py-2">
                                     {% for error in form.qualified_trades.errors %}
                                         <small>{{ error }}</small>
                                     {% endfor %}
                                 </div>
                             {% endif %}
+                            
+                            <!-- Select All / Clear All Controls -->
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="selectAllUserTrades()">
+                                    <i class="fas fa-check-square me-1"></i>Select All
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearAllUserTrades()">
+                                    <i class="fas fa-square me-1"></i>Clear All
+                                </button>
+                            </div>
+                            
+                            <!-- Checkbox Grid -->
+                            <div class="row" id="user-trades-checkbox-container">
+                                {% for value, label in form.qualified_trades.choices %}
+                                    <div class="col-md-6 col-12 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="qualified_trades" value="{{ value }}" id="user_trade_{{ value }}"
+                                                   {% if form.qualified_trades.data and value in form.qualified_trades.data %}checked{% endif %}>
+                                            <label class="form-check-label" for="user_trade_{{ value }}">
+                                                {{ label }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
                         </div>
                         
                         <div class="row">
@@ -206,7 +228,7 @@
                                 <th data-sort="name">Name <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="email">Email <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="role">Role <i class="fas fa-sort text-muted"></i></th>
-                                <th>Qualified Trades</th>
+                                <th>Trades</th>
                                 <th data-sort="burden_rate">Burden Rate <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="created_at">Created <i class="fas fa-sort text-muted"></i></th>
                                 <th>Actions</th>
@@ -373,10 +395,8 @@
                         burdenRateField.value = '';
                     }
                     // Reset qualified trades if not a worker
-                    const qualifiedTradesField = document.querySelector('#qualified_trades');
-                    if (qualifiedTradesField) {
-                        Array.from(qualifiedTradesField.options).forEach(option => option.selected = false);
-                    }
+                    const qualifiedTradesCheckboxes = document.querySelectorAll('input[name="qualified_trades"]');
+                    qualifiedTradesCheckboxes.forEach(checkbox => checkbox.checked = false);
                 }
             }
             
@@ -442,5 +462,16 @@
             });
         });
     });
+    
+    // User trades checkbox functions
+    function selectAllUserTrades() {
+        const checkboxes = document.querySelectorAll('input[name="qualified_trades"]');
+        checkboxes.forEach(checkbox => checkbox.checked = true);
+    }
+    
+    function clearAllUserTrades() {
+        const checkboxes = document.querySelectorAll('input[name="qualified_trades"]');
+        checkboxes.forEach(checkbox => checkbox.checked = false);
+    }
 </script>
 {% endblock %}
