@@ -293,7 +293,7 @@
                                                             {{ 'Active' if activity.is_active else 'Disabled' }}
                                                         </span>
                                                     </td>
-                                                    <td>{{ activity.created_at.strftime('%Y-%m-%d') }}</td>
+                                                    <td>{{ activity.created_at.strftime('%Y-%m-%d') if activity.created_at else 'N/A' }}</td>
                                                     <td>
                                                         <div class="btn-group">
                                                             <a href="{{ url_for('manage_activities', edit=activity.id) }}" class="btn btn-sm btn-outline-primary">
