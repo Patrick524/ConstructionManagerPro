@@ -3291,15 +3291,48 @@ def admin_gps_compliance():
 @login_required
 def get_labor_activities(job_id):
     job = Job.query.get_or_404(job_id)
-    # Only get active labor activities for the job's trade type
-    activities = LaborActivity.query.filter_by(trade_category=job.trade_type,
-                                               is_active=True).all()
-
-    # Return JSON response with labor activities for the job's trade type
-    return jsonify([{
-        'id': activity.id,
-        'name': activity.name
-    } for activity in activities])
+    
+    # Get job's required trades
+    job_trade_ids = [trade.id for trade in job.trades]
+    
+    if not job_trade_ids:
+        # No trades assigned to job, return empty list with clear message
+        return jsonify({
+            'activities': [],
+            'error': 'This job has no trades assigned. Please contact your administrator.'
+        })
+    
+    # Get enabled activities where activity.trade_id is in job.trades
+    activities_query = LaborActivity.query.filter(
+        LaborActivity.trade_id.in_(job_trade_ids),
+        LaborActivity.is_active == True
+    )
+    
+    # If worker has qualified trades, intersect with those
+    if current_user.role == 'worker' and current_user.qualified_trades:
+        worker_trade_ids = [trade.id for trade in current_user.qualified_trades]
+        # Find intersection: trades that are both required by job AND worker is qualified for
+        allowed_trade_ids = list(set(job_trade_ids) & set(worker_trade_ids))
+        
+        if not allowed_trade_ids:
+            # Worker not qualified for any of the job's trades
+            return jsonify({
+                'activities': [],
+                'error': 'You are not qualified for any trades required by this job. Please contact your administrator.'
+            })
+        
+        # Filter activities to only those for trades worker is qualified for
+        activities_query = activities_query.filter(LaborActivity.trade_id.in_(allowed_trade_ids))
+    
+    activities = activities_query.all()
+    
+    # Return JSON response with filtered labor activities
+    return jsonify({
+        'activities': [{
+            'id': activity.id,
+            'name': activity.name
+        } for activity in activities]
+    })
 
 
 @app.route('/admin/geocode')

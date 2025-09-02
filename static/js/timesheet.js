@@ -64,14 +64,21 @@ function setupJobSelection() {
                 // Fetch labor activities for this job
                 fetch(`/api/labor_activities/${jobId}`)
                     .then(response => response.json())
-                    .then(activities => {
-                        // Update all labor activity select fields
-                        updateLaborActivityOptions(activities);
-                        
-                        // Check if there are existing entries for this job/date
-                        const dateInput = document.getElementById('date');
-                        if (dateInput && dateInput.value) {
-                            loadExistingEntries(jobId, dateInput.value);
+                    .then(data => {
+                        if (data.error) {
+                            // Show error message to user
+                            alert(data.error);
+                            // Clear activity options
+                            updateLaborActivityOptions([]);
+                        } else {
+                            // Update all labor activity select fields
+                            updateLaborActivityOptions(data.activities || data);
+                            
+                            // Check if there are existing entries for this job/date
+                            const dateInput = document.getElementById('date');
+                            if (dateInput && dateInput.value) {
+                                loadExistingEntries(jobId, dateInput.value);
+                            }
                         }
                     })
                     .catch(error => {

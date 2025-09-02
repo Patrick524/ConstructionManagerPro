@@ -157,9 +157,18 @@ class JobForm(FlaskForm):
         ('masonry', 'Masonry'),
         ('other', 'Other')
     ], validators=[Optional()])
-    trades = SelectMultipleField('Required Trades', coerce=int, validators=[DataRequired()])
+    trades = SelectMultipleField('Required Trades', coerce=int, validators=[DataRequired(message="At least one trade must be selected")])
     foreman_id = SelectField('Assign Foreman', coerce=lambda x: int(x) if x else None, validators=[Optional()])
     submit = SubmitField('Save Job')
+    
+    def validate_trades(self, field):
+        """Ensure only enabled trades are selected"""
+        from models import Trade
+        if field.data:
+            enabled_trade_ids = [t.id for t in Trade.query.filter_by(is_active=True).all()]
+            for trade_id in field.data:
+                if trade_id not in enabled_trade_ids:
+                    raise ValidationError('Only enabled trades can be selected.')
     
     def __init__(self, *args, **kwargs):
         super(JobForm, self).__init__(*args, **kwargs)
@@ -169,7 +178,7 @@ class JobForm(FlaskForm):
         foremen = User.query.filter_by(role='foreman').all()
         self.foreman_id.choices = [('', 'Unassigned')] + [(f.id, f.name) for f in foremen]
         
-        # Populate trades choices
+        # Populate trades choices - only enabled trades
         trades = Trade.query.filter_by(is_active=True).all()
         self.trades.choices = [(t.id, t.name) for t in trades]
 

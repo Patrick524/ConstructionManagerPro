@@ -3,8 +3,23 @@
 {% block title %}Manage Jobs - Construction Timesheet{% endblock %}
 
 {% block extra_head %}
+<link href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" rel="stylesheet" />
 <style>
     /* Job management styles */
+    .choices__list--multiple .choices__item {
+        background-color: #0d6efd;
+        border: 1px solid #0d6efd;
+        border-radius: 0.375rem;
+        color: white;
+        margin-right: 0.25rem;
+        margin-bottom: 0.25rem;
+    }
+    .choices__list--multiple .choices__item.choices__item--selectable {
+        background-color: #6c757d;
+    }
+    .choices {
+        margin-bottom: 0;
+    }
 </style>
 {% endblock %}
 
@@ -51,22 +66,15 @@
                                 {% endif %}
                             </div>
                             
-                            <div class="col-md-6 mb-3">
-                                <label for="trade_type" class="form-label">Primary Trade</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-hard-hat"></i></span>
-                                    {{ form.trade_type(class="form-select") }}
-                                </div>
-                            </div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="trades" class="form-label">Required Trades</label>
+                            <label for="trades" class="form-label">Trades <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-tools"></i></span>
-                                {{ form.trades(class="form-select", multiple=True, size="5") }}
+                                {{ form.trades(class="form-select", multiple=True, id="trades-select") }}
                             </div>
-                            <small class="form-text text-muted">Hold Ctrl (or Cmd) to select multiple trades</small>
+                            <small class="form-text text-muted">Select one or more trades for this job</small>
                             {% if form.trades.errors %}
                                 <div class="text-danger">
                                     {% for error in form.trades.errors %}
@@ -200,8 +208,7 @@
                                 <th data-sort="job_code">Job Code <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="description">Description <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="location">Location <i class="fas fa-sort text-muted"></i></th>
-                                <th data-sort="trade_type">Legacy Trade <i class="fas fa-sort text-muted"></i></th>
-                                <th>Required Trades</th>
+                                <th>Trades</th>
                                 <th data-sort="foreman">Foreman <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="status">Status <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="created_at">Created <i class="fas fa-sort text-muted"></i></th>
@@ -221,16 +228,13 @@
                                                 <span class="text-muted">No location</span>
                                             {% endif %}
                                         </td>
-                                        <td data-trade_type="{{ job.trade_type }}">
-                                            <span class="badge bg-{{ job.trade_type }}">{{ job.trade_type|capitalize }}</span>
-                                        </td>
                                         <td>
                                             {% if job.trades %}
                                                 {% for trade in job.trades %}
                                                     <span class="badge bg-primary me-1">{{ trade.name }}</span>
                                                 {% endfor %}
                                             {% else %}
-                                                <span class="text-muted">None</span>
+                                                <span class="text-warning">No trades assigned</span>
                                             {% endif %}
                                         </td>
                                         <td data-foreman="{{ job.foreman.name if job.foreman else '' }}">
@@ -268,7 +272,7 @@
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="9" class="text-center py-4">
+                                    <td colspan="8" class="text-center py-4">
                                         <i class="fas fa-briefcase fa-3x text-muted mb-3 d-block"></i>
                                         <h5>
                                             {% if status_filter == 'active' %}
@@ -353,8 +357,37 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Choices.js for trades multiselect
+        const tradesSelect = document.getElementById('trades-select');
+        if (tradesSelect) {
+            const choices = new Choices(tradesSelect, {
+                removeItemButton: true,
+                searchEnabled: false,
+                placeholder: true,
+                placeholderValue: 'Select trades for this job',
+                classNames: {
+                    containerOuter: 'choices',
+                    containerInner: 'choices__inner',
+                    input: 'choices__input',
+                    inputCloned: 'choices__input--cloned',
+                    list: 'choices__list',
+                    listItems: 'choices__list--multiple',
+                    listSingle: 'choices__list--single',
+                    listDropdown: 'choices__list--dropdown',
+                    item: 'choices__item',
+                    itemSelectable: 'choices__item--selectable',
+                    itemDisabled: 'choices__item--disabled',
+                    itemChoice: 'choices__item--choice',
+                    placeholder: 'choices__placeholder choices__item',
+                    group: 'choices__group',
+                    groupHeading: 'choices__heading',
+                    button: 'choices__button',
+                }
+            });
+        }
         // Setup search functionality
         const searchInput = document.getElementById('jobSearch');
         const table = document.getElementById('jobsTable');
