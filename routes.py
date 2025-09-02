@@ -2706,9 +2706,9 @@ def manage_users():
 
         return redirect(url_for('manage_users'))
 
-    # Check if we're editing a user
+    # Check if we're editing a user or if form validation failed
     user_id = request.args.get('edit')
-    new_user = request.args.get('new') == 'true'
+    new_user = request.args.get('new') == 'true' or (request.method == 'POST' and form.errors)
 
     if user_id:
         # Editing existing user
