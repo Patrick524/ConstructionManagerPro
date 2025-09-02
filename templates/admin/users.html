@@ -315,7 +315,7 @@
             </div>
             <div class="modal-body">
                 <form id="userJobAssignmentForm" method="POST" action="{{ url_for('update_user_job_assignments', user_id=editing_user.id) }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    {{ form.hidden_tag() }}
                     
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
