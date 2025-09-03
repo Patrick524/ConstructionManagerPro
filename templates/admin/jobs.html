@@ -270,7 +270,7 @@
                                                 </a>
                                                 <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#assignUsersModal" 
                                                         onclick="loadJobUsers({{ job.id }}, '{{ job.job_code }}')">
-                                                    <i class="fas fa-users"></i> Assign Users
+                                                    <i class="fas fa-users"></i> Assign Workers
                                                 </button>
                                                 <a href="{{ url_for('generate_reports') }}?report_type=job_labor&job_id={{ job.id }}" class="btn btn-outline-info">
                                                     <i class="fas fa-chart-bar"></i> Report
@@ -327,7 +327,7 @@
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title" id="assignUsersModalLabel">
-                    <i class="fas fa-users me-2"></i>Assign Users to Job: <span id="jobCodeDisplay"></span>
+                    <i class="fas fa-users me-2"></i>Assign Workers to Job: <span id="jobCodeDisplay"></span>
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -338,7 +338,7 @@
                     
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="mb-0">Select Users to Assign</h6>
+                            <h6 class="mb-0">Select Workers to Assign</h6>
                             <div>
                                 <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="selectAllJobUsers()">Select All</button>
                                 <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearAllJobUsers()">Clear All</button>
