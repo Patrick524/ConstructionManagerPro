@@ -3415,12 +3415,32 @@ def get_labor_activities(job_id):
     
     activities = activities_query.all()
     
-    # Return JSON response with filtered labor activities
-    return jsonify({
-        'activities': [{
+    # Group activities by trade and sort both trades and activities alphabetically
+    trades_dict = {}
+    for activity in activities:
+        trade_name = activity.trade.name if activity.trade else 'General'
+        if trade_name not in trades_dict:
+            trades_dict[trade_name] = []
+        trades_dict[trade_name].append({
             'id': activity.id,
             'name': activity.name
-        } for activity in activities]
+        })
+    
+    # Sort activities alphabetically within each trade
+    for trade_name in trades_dict:
+        trades_dict[trade_name].sort(key=lambda x: x['name'])
+    
+    # Convert to ordered list of trade groups, sorted alphabetically by trade name
+    trade_groups = []
+    for trade_name in sorted(trades_dict.keys()):
+        trade_groups.append({
+            'trade_name': trade_name,
+            'activities': trades_dict[trade_name]
+        })
+    
+    # Return JSON response with activities grouped by trade
+    return jsonify({
+        'trade_groups': trade_groups
     })
 
 

@@ -71,8 +71,8 @@ function setupJobSelection() {
                             // Clear activity options
                             updateLaborActivityOptions([]);
                         } else {
-                            // Update all labor activity select fields
-                            updateLaborActivityOptions(data.activities || data);
+                            // Update all labor activity select fields with trade groups
+                            updateLaborActivityOptions(data.trade_groups || data.activities || data);
                             
                             // Check if there are existing entries for this job/date
                             const dateInput = document.getElementById('date');
@@ -172,9 +172,9 @@ function loadExistingEntries(jobId, date) {
 }
 
 /**
- * Update all labor activity select fields with new options using smart sorting
+ * Update all labor activity select fields with new options using smart sorting and trade grouping
  */
-function updateLaborActivityOptions(activities) {
+function updateLaborActivityOptions(tradeGroupsOrActivities) {
     const activitySelects = document.querySelectorAll('[id^="labor_activity_"]');
     const jobSelect = document.getElementById('job_id');
     const currentJobId = jobSelect ? jobSelect.value : null;
@@ -186,29 +186,62 @@ function updateLaborActivityOptions(activities) {
         // Clear existing options
         select.innerHTML = '';
         
-        // Smart sort activities by usage frequency for this job
-        const sortedActivities = smartSortActivities(activities, currentJobId);
+        let firstActivityId = null;
         
-        // Add sorted options (no blank option)
-        sortedActivities.forEach(activity => {
-            const option = document.createElement('option');
-            option.value = activity.id;
-            option.textContent = activity.name;
-            select.appendChild(option);
-        });
+        // Check if we have trade groups (new format) or just activities (fallback)
+        if (Array.isArray(tradeGroupsOrActivities) && tradeGroupsOrActivities.length > 0 && tradeGroupsOrActivities[0].trade_name) {
+            // New grouped format - create optgroups
+            tradeGroupsOrActivities.forEach(tradeGroup => {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = tradeGroup.trade_name;
+                
+                // Activities within each trade are already sorted alphabetically by the API
+                // Apply smart sorting by usage frequency within each trade
+                const sortedActivities = smartSortActivities(tradeGroup.activities, currentJobId);
+                
+                sortedActivities.forEach(activity => {
+                    const option = document.createElement('option');
+                    option.value = activity.id;
+                    option.textContent = activity.name;
+                    optgroup.appendChild(option);
+                    
+                    // Store first activity for auto-selection
+                    if (!firstActivityId) {
+                        firstActivityId = activity.id;
+                    }
+                });
+                
+                select.appendChild(optgroup);
+            });
+        } else {
+            // Fallback for old format or error cases - treat as flat list
+            const activities = Array.isArray(tradeGroupsOrActivities) ? tradeGroupsOrActivities : [];
+            const sortedActivities = smartSortActivities(activities, currentJobId);
+            
+            sortedActivities.forEach(activity => {
+                const option = document.createElement('option');
+                option.value = activity.id;
+                option.textContent = activity.name;
+                select.appendChild(option);
+                
+                // Store first activity for auto-selection
+                if (!firstActivityId) {
+                    firstActivityId = activity.id;
+                }
+            });
+        }
         
         // Auto-select the first activity (most frequently used or first alphabetically)
-        if (!currentValue && sortedActivities.length > 0) {
-            // Always auto-select the first activity in the sorted list
-            select.value = sortedActivities[0].id;
+        if (!currentValue && firstActivityId) {
+            select.value = firstActivityId;
         } else if (currentValue) {
             // Restore previous selection if it still exists
             const exists = Array.from(select.options).some(option => option.value === currentValue);
             if (exists) {
                 select.value = currentValue;
-            } else if (sortedActivities.length > 0) {
+            } else if (firstActivityId) {
                 // If previous selection doesn't exist, fall back to first activity
-                select.value = sortedActivities[0].id;
+                select.value = firstActivityId;
             }
         }
     });
@@ -303,11 +336,24 @@ function addActivityField(activityId = '', hours = '0') {
     
     let optionsHtml = '';
     if (laborActivityOptions) {
-        Array.from(laborActivityOptions.options).forEach(option => {
-            // Skip blank/placeholder options
-            if (option.value && option.value !== '') {
-                const selected = option.value === activityId ? 'selected' : '';
-                optionsHtml += `<option value="${option.value}" ${selected}>${option.textContent}</option>`;
+        // Handle both optgroups and regular options
+        Array.from(laborActivityOptions.children).forEach(child => {
+            if (child.tagName === 'OPTGROUP') {
+                // Copy optgroup structure
+                optionsHtml += `<optgroup label="${child.label}">`;
+                Array.from(child.options).forEach(option => {
+                    if (option.value && option.value !== '') {
+                        const selected = option.value === activityId ? 'selected' : '';
+                        optionsHtml += `<option value="${option.value}" ${selected}>${option.textContent}</option>`;
+                    }
+                });
+                optionsHtml += `</optgroup>`;
+            } else if (child.tagName === 'OPTION') {
+                // Handle regular options (fallback)
+                if (child.value && child.value !== '') {
+                    const selected = child.value === activityId ? 'selected' : '';
+                    optionsHtml += `<option value="${child.value}" ${selected}>${child.textContent}</option>`;
+                }
             }
         });
     }
