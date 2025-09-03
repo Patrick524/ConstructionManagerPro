@@ -2172,71 +2172,9 @@ def admin_dashboard():
 @login_required
 @admin_required
 def manage_job_workers():
-    """Manage worker assignments to jobs"""
-    form = JobWorkersForm()
-
-    # If form is submitted and valid, update worker assignments
-    if form.validate_on_submit():
-        job_id = form.job_id.data
-        job = Job.query.get_or_404(job_id)
-        
-        # Get worker IDs from checkbox array
-        selected_worker_ids = request.form.getlist('workers')
-        selected_worker_ids = [int(worker_id) for worker_id in selected_worker_ids if worker_id.isdigit()]
-
-        # A different approach - work with the User objects directly
-        # First, clear existing assignments using the SQLAlchemy relationship
-        # The relationship has a lazy='dynamic' setting, so we need to use all() to get the actual workers
-        current_workers = job.assigned_workers.all()
-        for worker in current_workers:
-            # Remove the job from the worker's assigned_jobs
-            worker.assigned_jobs.remove(job)
-        
-        # Now add the new assignments
-        selected_workers = User.query.filter(User.id.in_(selected_worker_ids)).all()
-        print(f"DEBUG: Selected worker IDs: {selected_worker_ids}")
-        print(f"DEBUG: Found {len(selected_workers)} workers")
-        
-        for worker in selected_workers:
-            # Add the job to the worker's assigned_jobs
-            worker.assigned_jobs.append(job)
-            print(f"DEBUG: Assigning worker {worker.id} to job {job.id}")
-
-        try:
-            db.session.commit()
-            
-            # Verify assignments after commit
-            job = Job.query.get(job_id)  # Refresh job from database
-            print(f"DEBUG: After commit - job has {job.assigned_workers.count()} workers")
-            
-            flash(
-                f"Worker assignments for job '{job.job_code}' updated successfully!",
-                'success')
-        except Exception as e:
-            db.session.rollback()
-            print(f"DEBUG: Database error: {str(e)}")
-            flash(f"Error updating worker assignments: {str(e)}", 'danger')
-
-        return redirect(url_for('manage_job_workers', job_id=job_id))
-
-    # If job_id is provided in query params, pre-populate the form
-    selected_job_id = request.args.get('job_id', type=int)
-    if selected_job_id:
-        job = Job.query.get_or_404(selected_job_id)
-        form.job_id.data = selected_job_id
-
-        # Default to ALL workers and foremen assigned to new jobs (if no existing assignments)
-        if job.assigned_workers.count() == 0:
-            # Default to all workers and foremen
-            eligible_users = User.query.filter(User.role.in_(['worker', 'foreman'])).all()
-            form.workers.data = [user.id for user in eligible_users]
-        else:
-            # Use existing assignments
-            form.workers.data = [worker.id for worker in job.assigned_workers]
-
-    return render_template('admin/job_workers.html',
-                           form=form,
-                           title="Manage Worker Assignments")
+    """DEPRECATED: Redirect to the new job management interface"""
+    flash('This page has been deprecated. Worker assignments are now managed directly from the Jobs page.', 'info')
+    return redirect(url_for('manage_jobs'))
 
 
 @app.route('/api/job/<int:job_id>/assigned-users')
