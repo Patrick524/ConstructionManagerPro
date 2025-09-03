@@ -2283,10 +2283,8 @@ def manage_jobs():
                 except (ValueError, TypeError):
                     continue  # Skip invalid trade IDs
 
-            # Assign all workers to this new job
-            workers = User.query.filter_by(role='worker').all()
-            for worker in workers:
-                job.assigned_workers.append(worker)
+            # New jobs start with no workers assigned
+            # Workers must be explicitly assigned using the "Assign Workers" button
 
             flash('New job created successfully!', 'success')
 
