@@ -196,8 +196,8 @@ function updateLaborActivityOptions(tradeGroupsOrActivities) {
                 optgroup.label = tradeGroup.trade_name;
                 
                 // Activities within each trade are already sorted alphabetically by the API
-                // Apply smart sorting by usage frequency within each trade
-                const sortedActivities = smartSortActivities(tradeGroup.activities, currentJobId);
+                // Keep alphabetical order - don't apply usage-based smart sorting within trade groups
+                const sortedActivities = tradeGroup.activities.sort((a, b) => a.name.localeCompare(b.name));
                 
                 sortedActivities.forEach(activity => {
                     const option = document.createElement('option');
