@@ -33,6 +33,7 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(20), nullable=False, default='worker')  # worker, foreman, admin
     use_clock_in = db.Column(db.Boolean, default=False)  # Whether the worker uses clock in/out
     burden_rate = db.Column(db.Numeric(10, 2), nullable=True)  # Hourly burden rate for job costing ($/hour)
+    active = db.Column(db.Boolean, default=True)  # Whether the employee is active/inactive
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships

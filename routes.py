@@ -125,6 +125,12 @@ def foreman_or_admin_required(f):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
+        # Check if current user is still active
+        if not current_user.active:
+            logout_user()
+            flash('Your account has been deactivated. Please contact your administrator.', 'danger')
+            return render_template('login.html', form=LoginForm())
+        
         # Add debug logging for use_clock_in state
         if current_user.is_worker():
             print(
@@ -146,6 +152,10 @@ def login():
         email = form.email.data.lower() if form.email.data else ''
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(form.password.data):
+            # Check if user is active
+            if not user.active:
+                flash('Your account has been deactivated. Please contact your administrator.', 'danger')
+                return render_template('login.html', form=form)
             login_user(user)
             next_page = request.args.get('next')
 
@@ -2560,6 +2570,8 @@ def manage_users():
             user.use_clock_in = form.use_clock_in.data
             # Set the burden_rate field from the form
             user.burden_rate = form.burden_rate.data
+            # Set the active status from the form
+            user.active = form.active.data
 
             # Update qualified trades (many-to-many)
             from models import Trade
@@ -2595,7 +2607,8 @@ def manage_users():
                 email=form.email.data,
                 role=form.role.data,
                 use_clock_in=form.use_clock_in.data,  # Add the use_clock_in field
-                burden_rate=form.burden_rate.data  # Add the burden_rate field
+                burden_rate=form.burden_rate.data,  # Add the burden_rate field
+                active=form.active.data  # Add the active field
             )
 
             # Log the creation for debugging
@@ -2654,6 +2667,7 @@ def manage_users():
         form.role.data = user.role
         form.use_clock_in.data = user.use_clock_in  # Load the current use_clock_in setting
         form.burden_rate.data = user.burden_rate  # Load the current burden_rate setting
+        form.active.data = user.active  # Load the current active status
         # Load current qualified trades for editing
         form.qualified_trades.data = [trade.id for trade in user.qualified_trades]
         print(
@@ -2666,15 +2680,20 @@ def manage_users():
         editing = False
         editing_user = None
 
-    # Get all users for display
-    users = User.query.order_by(User.role, User.name).all()
+    # Get users for display with optional filtering
+    show_inactive = request.args.get('show_inactive') == 'true'
+    if show_inactive:
+        users = User.query.order_by(User.role, User.name).all()
+    else:
+        users = User.query.filter_by(active=True).order_by(User.role, User.name).all()
 
     return render_template('admin/users.html',
                            form=form,
                            users=users,
                            editing=editing,
                            editing_user=editing_user,
-                           new_user=new_user)
+                           new_user=new_user,
+                           show_inactive=show_inactive)
 
 
 
@@ -2685,8 +2704,8 @@ def get_job_users_api(job_id):
     """API endpoint to get all users and assigned users for a job"""
     job = Job.query.get_or_404(job_id)
     
-    # Get only workers and foremen
-    all_users = User.query.filter(User.role.in_(['worker', 'foreman'])).order_by(User.name).all()
+    # Get only active workers and foremen
+    all_users = User.query.filter(User.role.in_(['worker', 'foreman']), User.active == True).order_by(User.name).all()
     
     # Get assigned user IDs
     assigned_user_ids = [user.id for user in job.assigned_workers.all()]

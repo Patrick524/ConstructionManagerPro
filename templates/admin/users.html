@@ -104,6 +104,18 @@
                             </small>
                         </div>
                         
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.active(class="form-check-input") }}
+                                <label class="form-check-label" for="active">
+                                    <i class="fas fa-user-check me-1"></i> Active Employee
+                                </label>
+                            </div>
+                            <small class="text-muted">
+                                Inactive employees cannot log new time or be assigned to jobs, but historical data is preserved
+                            </small>
+                        </div>
+                        
                         <div class="mb-3" id="qualified_trades_container" style="display: none;">
                             <label for="qualified_trades" class="form-label"><i class="fas fa-tools me-2"></i>Trades</label>
                             <small class="form-text text-muted mb-3 d-block">Select trades this worker is qualified to work on. Only relevant for Field Workers.</small>
@@ -213,9 +225,19 @@
         <div class="card">
             <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">User List</h5>
-                <div class="input-group input-group-sm" style="width: 250px;">
-                    <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" class="form-control" id="userSearch" placeholder="Search users...">
+                <div class="d-flex gap-3 align-items-center">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="showInactiveToggle" 
+                               {% if show_inactive %}checked{% endif %}
+                               onchange="toggleInactiveUsers(this.checked)">
+                        <label class="form-check-label text-white" for="showInactiveToggle">
+                            Show Inactive
+                        </label>
+                    </div>
+                    <div class="input-group input-group-sm" style="width: 250px;">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="userSearch" placeholder="Search users...">
+                    </div>
                 </div>
             </div>
             <div class="card-body p-0">
@@ -226,6 +248,7 @@
                                 <th data-sort="name">Name <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="email">Email <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="role">Role <i class="fas fa-sort text-muted"></i></th>
+                                <th data-sort="active">Status <i class="fas fa-sort text-muted"></i></th>
                                 <th>Trades</th>
                                 <th data-sort="burden_rate">Burden Rate <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="created_at">Created <i class="fas fa-sort text-muted"></i></th>
@@ -241,6 +264,12 @@
                                         <td data-role="{{ user.role }}">
                                             <span class="badge bg-{{ 'primary' if user.role == 'admin' else 'success' if user.role == 'foreman' else 'secondary' }}">
                                                 {{ user.role|capitalize }}
+                                            </span>
+                                        </td>
+                                        <td data-active="{{ user.active }}">
+                                            <span class="badge bg-{{ 'success' if user.active else 'danger' }}">
+                                                <i class="fas fa-{{ 'check' if user.active else 'times' }} me-1"></i>
+                                                {{ 'Active' if user.active else 'Inactive' }}
                                             </span>
                                         </td>
                                         <td>
@@ -282,7 +311,7 @@
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="7" class="text-center py-4">
+                                    <td colspan="8" class="text-center py-4">
                                         <i class="fas fa-users fa-3x text-muted mb-3 d-block"></i>
                                         <h5>No users found</h5>
                                         <p class="mb-3">Start by adding your first user using the button above</p>
@@ -413,6 +442,15 @@
         checkboxes.forEach(checkbox => checkbox.checked = false);
     }
     
+    function toggleInactiveUsers(showInactive) {
+        const currentUrl = new URL(window.location);
+        if (showInactive) {
+            currentUrl.searchParams.set('show_inactive', 'true');
+        } else {
+            currentUrl.searchParams.delete('show_inactive');
+        }
+        window.location.href = currentUrl.toString();
+    }
 
 </script>
 {% endblock %}

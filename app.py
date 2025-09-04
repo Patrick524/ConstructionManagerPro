@@ -55,4 +55,8 @@ with app.app_context():
     # Setup user loader for Flask-Login
     @login_manager.user_loader
     def load_user(user_id):
-        return models.User.query.get(int(user_id))
+        user = models.User.query.get(int(user_id))
+        # Return None for inactive users to automatically log them out
+        if user and not user.active:
+            return None
+        return user

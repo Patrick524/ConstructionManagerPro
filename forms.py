@@ -101,15 +101,18 @@ class TimeEntryForm(FlaskForm):
         
         super(TimeEntryForm, self).__init__(*args, **kwargs)
         
-        # Populate job choices based on user role
-        if current_user and current_user.role == 'worker':
+        # Populate job choices based on user role (only for active users)
+        if current_user and current_user.role == 'worker' and current_user.active:
             # For workers, only show jobs they're assigned to
             self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
                                   for job in current_user.assigned_jobs.filter_by(status='active').all()]
-        else:
+        elif current_user and current_user.active:
             # For foremen and admins, show all active jobs
             self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
                                   for job in Job.query.filter_by(status='active').all()]
+        else:
+            # Inactive users should not have job choices
+            self.job_id.choices = []
         
         # Set the first labor activity field with all activities
         self.labor_activity_1.choices = [(activity.id, activity.name) 
@@ -174,8 +177,8 @@ class JobForm(FlaskForm):
         super(JobForm, self).__init__(*args, **kwargs)
         from models import User, Trade
         
-        # Populate foreman choices - include "Unassigned" option
-        foremen = User.query.filter_by(role='foreman').all()
+        # Populate foreman choices - include "Unassigned" option (only active users)
+        foremen = User.query.filter_by(role='foreman', active=True).all()
         self.foreman_id.choices = [('', 'Unassigned')] + [(f.id, f.name) for f in foremen]
         
         # Populate trades choices - only enabled trades
@@ -216,6 +219,7 @@ class UserManagementForm(FlaskForm):
     burden_rate = FloatField('Burden Rate ($/hour)', validators=[Optional(), NumberRange(min=0, max=999.99)], 
                             render_kw={'step': '0.01', 'placeholder': 'Enter hourly burden rate'})
     use_clock_in = BooleanField('Use Clock In/Out System', default=False)
+    active = BooleanField('Active Employee', default=True)
     qualified_trades = SelectMultipleField('Trades', coerce=int, validators=[Optional()])
     password = PasswordField('New Password (leave blank to keep current)')
     confirm_password = PasswordField('Confirm New Password', 
@@ -270,15 +274,18 @@ class WeeklyTimesheetForm(FlaskForm):
         
         super(WeeklyTimesheetForm, self).__init__(*args, **kwargs)
         
-        # Populate job choices based on user role
-        if current_user and current_user.role == 'worker':
+        # Populate job choices based on user role (only for active users)
+        if current_user and current_user.role == 'worker' and current_user.active:
             # For workers, only show jobs they're assigned to
             self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
                                   for job in current_user.assigned_jobs.filter_by(status='active').all()]
-        else:
+        elif current_user and current_user.active:
             # For foremen and admins, show all active jobs
             self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
                                   for job in Job.query.filter_by(status='active').all()]
+        else:
+            # Inactive users should not have job choices
+            self.job_id.choices = []
         
         # Default to current week's Monday if no date is provided
         if not self.week_start.data:
@@ -325,15 +332,18 @@ class ClockInForm(FlaskForm):
         
         super(ClockInForm, self).__init__(*args, **kwargs)
         
-        # Populate job choices based on user role
-        if current_user and current_user.role == 'worker':
+        # Populate job choices based on user role (only for active users)
+        if current_user and current_user.role == 'worker' and current_user.active:
             # For workers, only show jobs they're assigned to
             self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
                                   for job in current_user.assigned_jobs.filter_by(status='active').all()]
-        else:
+        elif current_user and current_user.active:
             # For foremen and admins, show all active jobs
             self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
                                   for job in Job.query.filter_by(status='active').all()]
+        else:
+            # Inactive users should not have job choices
+            self.job_id.choices = []
         
         # Default to the first labor activity, but this will be dynamically updated via JavaScript
         # Only show active labor activities
@@ -377,8 +387,12 @@ class ReportForm(FlaskForm):
         # Add a blank option for optional filters
         self.job_id.choices = [(0, 'All Jobs')] + [(job.id, f"{job.job_code} - {job.description}") 
                                for job in Job.query.all()]
-        self.user_id.choices = [(0, 'All Employees')] + [(user.id, user.name) 
-                                for user in User.query.filter_by(role='worker').all()]
+        # Include both active and inactive workers for historical report data
+        workers = User.query.filter_by(role='worker').order_by(User.name).all()
+        self.user_id.choices = [(0, 'All Employees')] + [
+            (user.id, f"{user.name}{'(inactive)' if not user.active else ''}") 
+            for user in workers
+        ]
                                 
     def validate_recipient_email(self, field):
         """Validate recipient email when email delivery is selected"""
