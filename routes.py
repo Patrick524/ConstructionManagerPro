@@ -2893,6 +2893,10 @@ def generate_reports():
                 csv_data = utils.generate_job_cost_csv(data_dicts, report_title)
             elif report_type == 'device_audit':
                 csv_data = utils.generate_device_audit_csv(data_dicts, report_title)
+            elif report_type == 'employee_hours':
+                csv_data = utils.generate_employee_hours_csv(data_dicts, report_title)
+            elif report_type == 'job_labor':
+                csv_data = utils.generate_job_labor_csv(data_dicts, report_title)
             else:
                 csv_data = utils.generate_csv_report(data_dicts, columns)
 

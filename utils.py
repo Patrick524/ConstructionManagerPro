@@ -105,6 +105,82 @@ def generate_csv_report(data, columns):
     output.seek(0)
     return output.getvalue()
 
+def generate_employee_hours_csv(data, title="Employee Hours Report"):
+    """Generate a CSV report for employee hours."""
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write CSV header row
+    writer.writerow(['Date', 'Employee', 'Job_Code', 'Job_Description', 'Activity', 'Trade_Category', 'Hours', 'Approved'])
+    
+    # Sort entries by employee name then date
+    sorted_entries = sorted(data, key=lambda x: (x['worker_name'], x['date']))
+    
+    for entry in sorted_entries:
+        # Format date as MM/DD/YYYY
+        if hasattr(entry['date'], 'strftime'):
+            formatted_date = entry['date'].strftime('%m/%d/%Y')
+        else:
+            # Parse string date
+            from datetime import datetime
+            entry_date = datetime.strptime(str(entry['date']), '%Y-%m-%d')
+            formatted_date = entry_date.strftime('%m/%d/%Y')
+        
+        # Format approved status
+        approved_status = 'Yes' if entry.get('approved') else 'No'
+        
+        writer.writerow([
+            formatted_date,
+            entry['worker_name'],
+            entry['job_code'],
+            entry['job_description'],
+            entry['activity'],
+            entry.get('trade_category', ''),
+            f"{float(entry['hours']):.2f}",
+            approved_status
+        ])
+    
+    output.seek(0)
+    return output.getvalue()
+
+def generate_job_labor_csv(data, title="Job Labor Report"):
+    """Generate a CSV report for job labor by job."""
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write CSV header row
+    writer.writerow(['Job_Code', 'Job_Description', 'Date', 'Employee', 'Activity', 'Trade_Category', 'Hours', 'Approved'])
+    
+    # Sort entries by job code then date
+    sorted_entries = sorted(data, key=lambda x: (x['job_code'], x['date']))
+    
+    for entry in sorted_entries:
+        # Format date as MM/DD/YYYY
+        if hasattr(entry['date'], 'strftime'):
+            formatted_date = entry['date'].strftime('%m/%d/%Y')
+        else:
+            # Parse string date
+            from datetime import datetime
+            entry_date = datetime.strptime(str(entry['date']), '%Y-%m-%d')
+            formatted_date = entry_date.strftime('%m/%d/%Y')
+        
+        # Format approved status
+        approved_status = 'Yes' if entry.get('approved') else 'No'
+        
+        writer.writerow([
+            entry['job_code'],
+            entry['job_description'],
+            formatted_date,
+            entry['worker_name'],
+            entry['activity'],
+            entry.get('trade_category', ''),
+            f"{float(entry['hours']):.2f}",
+            approved_status
+        ])
+    
+    output.seek(0)
+    return output.getvalue()
+
 def generate_pdf_report(data, columns, title="Report"):
     """Generate a PDF report from a list of dictionaries."""
     from reportlab.lib import colors
