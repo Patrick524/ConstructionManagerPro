@@ -126,8 +126,14 @@ def generate_employee_hours_csv(data, title="Employee Hours Report"):
             entry_date = datetime.strptime(str(entry['date']), '%Y-%m-%d')
             formatted_date = entry_date.strftime('%m/%d/%Y')
         
-        # Format approved status
-        approved_status = 'Yes' if entry.get('approved') else 'No'
+        # Format approved status (handle NULL values)
+        approved = entry.get('approved')
+        if approved is True:
+            approved_status = 'Yes'
+        elif approved is False:
+            approved_status = 'No'
+        else:
+            approved_status = 'Pending'
         
         writer.writerow([
             formatted_date,
@@ -164,8 +170,14 @@ def generate_job_labor_csv(data, title="Job Labor Report"):
             entry_date = datetime.strptime(str(entry['date']), '%Y-%m-%d')
             formatted_date = entry_date.strftime('%m/%d/%Y')
         
-        # Format approved status
-        approved_status = 'Yes' if entry.get('approved') else 'No'
+        # Format approved status (handle NULL values)
+        approved = entry.get('approved')
+        if approved is True:
+            approved_status = 'Yes'
+        elif approved is False:
+            approved_status = 'No'
+        else:
+            approved_status = 'Pending'
         
         writer.writerow([
             entry['job_code'],
