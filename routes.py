@@ -2902,10 +2902,75 @@ def generate_reports():
             else:
                 filename = f"{report_type}_{start_date.strftime('%m%d%Y')}_{end_date.strftime('%m%d%Y')}.csv"
             
-            # If this is a preview request, return the CSV data directly
+            # If this is a preview request, return formatted HTML
             if is_preview:
                 from flask import Response
-                return Response(csv_data, mimetype='text/plain')
+                import csv
+                from io import StringIO
+                
+                # Parse CSV data into rows
+                csv_reader = csv.reader(StringIO(csv_data))
+                rows = list(csv_reader)
+                
+                # Create HTML table with proper formatting
+                html_content = f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Report Preview</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <style>
+                        body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #f8f9fa; }}
+                        .header {{ text-align: center; margin-bottom: 30px; }}
+                        .header h1 {{ color: #333; margin-bottom: 10px; }}
+                        .header p {{ color: #666; margin: 5px 0; }}
+                        .table-container {{ background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
+                        table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
+                        th {{ background-color: #007bff; color: white; padding: 12px; text-align: left; border: 1px solid #dee2e6; }}
+                        td {{ padding: 8px 12px; border: 1px solid #dee2e6; }}
+                        tr:nth-child(even) {{ background-color: #f8f9fa; }}
+                        tr:hover {{ background-color: #e9ecef; }}
+                        .summary {{ margin-top: 20px; text-align: center; color: #666; }}
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>{report_title}</h1>
+                        <p>Preview - {len(rows)-1 if rows else 0} records found</p>
+                    </div>
+                    <div class="table-container">
+                """
+                
+                if rows:
+                    html_content += "<table>"
+                    # Add header row
+                    if len(rows) > 0:
+                        html_content += "<thead><tr>"
+                        for cell in rows[0]:
+                            html_content += f"<th>{cell}</th>"
+                        html_content += "</tr></thead>"
+                    
+                    # Add data rows
+                    html_content += "<tbody>"
+                    for row in rows[1:]:  # Skip header row
+                        html_content += "<tr>"
+                        for cell in row:
+                            html_content += f"<td>{cell}</td>"
+                        html_content += "</tr>"
+                    html_content += "</tbody></table>"
+                else:
+                    html_content += "<p>No data found for the selected criteria.</p>"
+                
+                html_content += """
+                    </div>
+                    <div class="summary">
+                        <p>This is a preview of your report. Use the download or email options to get the full report.</p>
+                    </div>
+                </body>
+                </html>
+                """
+                
+                return Response(html_content, mimetype='text/html')
 
             # Check if we should email the report
             if delivery_method == 'email':
