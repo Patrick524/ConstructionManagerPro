@@ -3188,10 +3188,15 @@ def admin_gps_compliance():
         start_date = form.start_date.data
         end_date = form.end_date.data
         
+        # Convert dates to datetime objects for proper comparison
+        from datetime import datetime, time
+        start_datetime = datetime.combine(start_date, time.min)
+        end_datetime = datetime.combine(end_date, time.max)
+        
         # Query clock sessions with GPS data within date range
         clock_sessions = ClockSession.query.filter(
-            ClockSession.clock_in >= start_date,
-            ClockSession.clock_in <= end_date + timedelta(days=1),
+            ClockSession.clock_in >= start_datetime,
+            ClockSession.clock_in <= end_datetime,
             ClockSession.clock_in_distance_mi.isnot(None),
             ClockSession.clock_in_distance_mi > 0.5  # Only violations > 0.5 miles
         ).options(
@@ -3206,8 +3211,8 @@ def admin_gps_compliance():
         worker_counts = {}
         
         total_clock_ins = ClockSession.query.filter(
-            ClockSession.clock_in >= start_date,
-            ClockSession.clock_in <= end_date + timedelta(days=1)
+            ClockSession.clock_in >= start_datetime,
+            ClockSession.clock_in <= end_datetime
         ).count()
         
         for session in clock_sessions:
