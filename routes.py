@@ -331,6 +331,37 @@ def worker_weekly_timesheet():
                     'danger')
                 return redirect(url_for('worker_weekly_timesheet'))
 
+        # Check maximum 60 hours per week limit
+        week_start_date = week_start
+        week_end_date = week_start + timedelta(days=6)
+        
+        # Get existing weekly hours across all jobs
+        existing_weekly_hours = db.session.query(db.func.sum(TimeEntry.hours)).filter(
+            TimeEntry.user_id == current_user.id,
+            TimeEntry.date >= week_start_date,
+            TimeEntry.date <= week_end_date
+        ).scalar() or 0
+        
+        # Subtract current job/activity hours to avoid double-counting when editing
+        current_job_weekly_hours = db.session.query(db.func.sum(TimeEntry.hours)).filter(
+            TimeEntry.user_id == current_user.id,
+            TimeEntry.date >= week_start_date,
+            TimeEntry.date <= week_end_date,
+            TimeEntry.job_id == form.job_id.data,
+            TimeEntry.labor_activity_id == form.labor_activity_id.data
+        ).scalar() or 0
+        existing_weekly_hours -= current_job_weekly_hours
+        
+        # Calculate new weekly total from form
+        new_weekly_hours = form.get_total_hours()
+        total_weekly_hours = existing_weekly_hours + new_weekly_hours
+        
+        if total_weekly_hours > 60:
+            flash(
+                f'Maximum 60 hours per week exceeded. You already have {existing_weekly_hours:.1f} hours recorded this week. The total would be {total_weekly_hours:.1f} hours.',
+                'danger')
+            return redirect(url_for('worker_weekly_timesheet'))
+
         # First, delete any existing entries for this week with the same activity
         # This ensures we don't get duplicate entries if the user submits multiple times
         TimeEntry.query.filter(
@@ -1587,6 +1618,41 @@ def foreman_enter_time(job_id, user_id):
                                          week_end=week_end,
                                          existing_entries=existing_entries,
                                          all_existing_entries=all_existing_entries)
+
+        # Check maximum 60 hours per week limit
+        # Get existing weekly hours across all jobs for this worker
+        existing_weekly_hours = db.session.query(db.func.sum(TimeEntry.hours)).filter(
+            TimeEntry.user_id == user_id,
+            TimeEntry.date >= week_start,
+            TimeEntry.date <= week_start + timedelta(days=6)
+        ).scalar() or 0
+        
+        # Subtract current job/activity to avoid double-counting when editing
+        current_job_weekly_hours = db.session.query(db.func.sum(TimeEntry.hours)).filter(
+            TimeEntry.user_id == user_id,
+            TimeEntry.date >= week_start,
+            TimeEntry.date <= week_start + timedelta(days=6),
+            TimeEntry.job_id == job_id,
+            TimeEntry.labor_activity_id == form.labor_activity_id.data
+        ).scalar() or 0
+        existing_weekly_hours -= current_job_weekly_hours
+        
+        # Calculate new weekly total from form
+        new_weekly_total = sum(float(h) for h in hours_values if h not in [None, ''])
+        total_weekly_hours = existing_weekly_hours + new_weekly_total
+        
+        if total_weekly_hours > 60:
+            flash(
+                f'Maximum 60 hours per week exceeded for {worker.name}. They already have {existing_weekly_hours:.1f} hours recorded this week. The total would be {total_weekly_hours:.1f} hours.',
+                'danger')
+            return render_template('foreman/enter_time.html',
+                                 form=form,
+                                 worker=worker,
+                                 job=job,
+                                 week_start=week_start,
+                                 week_end=week_end,
+                                 existing_entries=existing_entries,
+                                 all_existing_entries=all_existing_entries)
 
         # After validation passes, delete any existing entries for this week with the same activity
         # This ensures we don't get duplicate entries if the foreman submits multiple times

@@ -1,0 +1,62 @@
+Here's a comprehensive testing approach that demonstrates the complete workflow from time entry to approval with admin verification at each step:
+
+End-to-End Approval Workflow Test Plan
+Phase 1: Setup & Worker Time Entry
+Login as Worker (e.g., john@example.com)
+Enter time for current week on an active job:
+Navigate to timesheet page
+Select a job (e.g., "SPRING-002")
+Enter hours for today: 8 hours, Acoustical work
+Submit the timesheet
+Verify time entry created (should show as saved)
+Phase 2: Admin Check - Before Approval
+Login as Admin (admin@example.com)
+Run Employee Hours Report:
+Date range: Current week (Monday to Sunday)
+Format: CSV Preview
+Expected Result: Should show John's 8 hours with "Pending" approval status
+Run Payroll Report:
+Same date range
+Format: CSV Preview
+Expected Result: Should show NO entries (payroll only shows approved time)
+Phase 3: Foreman Approval
+Login as Foreman (if job has assigned foreman, or admin can approve)
+Navigate to approval workflow:
+Go to foreman dashboard
+Find John's time for SPRING-002 job
+Click "Approve" for current week
+Review and approve timesheet:
+Verify 8 hours shows correctly
+Submit approval
+Expected: Success message, week becomes locked
+Phase 4: Admin Check - After Approval
+Login as Admin again
+Run Employee Hours Report:
+Same date range as before
+Expected Result: John's 8 hours now shows "Yes" approval status
+Run Payroll Report:
+Same date range
+Expected Result: Now shows John's 8 hours (approved entries appear)
+Run Job Labor Report:
+Expected Result: Shows 8 hours under SPRING-002 job with proper totals
+Phase 5: Verification & Validation
+Verify totals are consistent across reports:
+Employee Hours: 8 hours for John
+Payroll: 8 hours for John (approved only)
+Job Labor: 8 hours allocated to SPRING-002
+Test approval lock:
+Try to edit John's time entry for that week
+Expected: Should be prevented (week is locked)
+Expected Status Transitions
+Stage	Employee Hours Report	Payroll Report	Status
+After Time Entry	8 hours - "Pending"	0 hours (empty)	❌ Not approved
+After Approval	8 hours - "Yes"	8 hours	✅ Approved
+Key Validation Points
+Approval Status Changes: "Pending" → "Yes"
+Payroll Integration: Approved entries appear in payroll reports
+Total Consistency: Same hours across all report types
+Weekly Lock: Prevents further edits after approval
+Role Permissions: Each user can only access appropriate functions
+This test demonstrates the complete construction timesheet business workflow and validates that your approval system works correctly with proper reporting status throughout the process!
+
+Would you like me to run this comprehensive test to verify the end-to-end workflow?
