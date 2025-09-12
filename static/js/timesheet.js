@@ -59,9 +59,15 @@ function setupJobSelection() {
     if (jobSelect) {
         jobSelect.addEventListener('change', function() {
             const jobId = this.value;
+            console.log('Job selection changed:', { 
+                jobId: jobId, 
+                jobIdType: typeof jobId, 
+                selectedText: this.options[this.selectedIndex].text 
+            });
             
             if (jobId) {
                 // Fetch labor activities for this job
+                console.log(`Fetching activities from: /api/labor_activities/${jobId}`);
                 fetch(`/api/labor_activities/${jobId}`)
                     .then(response => response.json())
                     .then(data => {
@@ -175,7 +181,7 @@ function loadExistingEntries(jobId, date) {
  * Update all labor activity select fields with new options using smart sorting and trade grouping
  */
 function updateLaborActivityOptions(tradeGroupsOrActivities) {
-    const activitySelects = document.querySelectorAll('[id^="labor_activity_"]');
+    const activitySelects = document.querySelectorAll('[id^="labor_activity_"], #labor_activity_id');
     const jobSelect = document.getElementById('job_id');
     const currentJobId = jobSelect ? jobSelect.value : null;
     
@@ -561,7 +567,8 @@ function setupHourButtons() {
     document.addEventListener('input', function(e) {
         if (e.target && e.target.type === 'number' && e.target.name && e.target.name.startsWith('hours_')) {
             const value = parseFloat(e.target.value);
-            const buttonGroup = e.target.closest('.col-md-4').querySelector('.btn-group');
+            const parentCol = e.target.closest('.col-md-4');
+            const buttonGroup = parentCol ? parentCol.querySelector('.btn-group') : null;
             
             if (buttonGroup) {
                 // Reset all buttons to outline state
