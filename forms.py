@@ -39,7 +39,7 @@ class FloatField(BaseFloatField):
         super().pre_validate(form)
     
     # Override validate method to properly handle None values
-    def validate(self, form, extra_validators=None):
+    def validate(self, form, extra_validators=()):
         if self.data is None:
             # Skip validation entirely for None values
             return True
@@ -51,9 +51,11 @@ class FlaskForm(BaseFlaskForm):
     """Custom base form class that adds automatic handling of empty values"""
     def __init__(self, *args, **kwargs):
         # If data is provided, process it before validation
-        if len(args) > 0 and args[0] is not None and hasattr(self, 'process_data'):
+        if len(args) > 0 and args[0] is not None:
             args = list(args)
-            args[0] = self.process_data(args[0])
+            # Only call process_data if it exists on the subclass
+            if hasattr(self.__class__, 'process_data') and callable(getattr(self.__class__, 'process_data')):
+                args[0] = self.process_data(args[0])
             args = tuple(args)
         super(FlaskForm, self).__init__(*args, **kwargs)
 

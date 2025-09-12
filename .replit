@@ -51,5 +51,9 @@ externalPort = 3001
 localPort = 38971
 externalPort = 3002
 
+[[ports]]
+localPort = 40337
+externalPort = 3003
+
 [agent]
 integrations = ["flask_authentication==1.0.0", "python_sendgrid==1.0.0", "styling_replit==1.0.0"]
