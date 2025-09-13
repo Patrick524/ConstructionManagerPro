@@ -47,8 +47,9 @@ This is a comprehensive Flask-based web application designed for construction ti
 
 ### Reporting System
 - **Multiple formats**: CSV and PDF report generation
-- **Report types**: Payroll, billing, GPS compliance, and summary reports
-- **Date range filtering**: Flexible reporting periods
+- **Report types**: Payroll, billing, GPS compliance, job assignment, and summary reports
+- **Job Assignment Reports**: Job-focused workforce reporting optimized for small construction companies
+- **Date range filtering**: Flexible reporting periods (except job assignment which shows current state)
 
 ## Data Flow
 
@@ -98,6 +99,7 @@ This is a comprehensive Flask-based web application designed for construction ti
 
 ## Changelog
 
+- September 13, 2025: Major refactor of Job Assignment Report to job-summary format for small construction companies. Changed from individual worker rows to job-focused table showing "who's working where right now." New format groups by job with comma-separated worker lists and worker counts. Implemented database-compatible aggregation (PostgreSQL string_agg vs SQLite group_concat) and rewrote CSV/PDF generation. Added current-state filtering (active jobs + active users only). Report now answers "current assignments" without date complexity.
 - July 28, 2025: Fixed critical edit functionality bug where editing time entries showed incorrect hours values in the form. Root cause was JavaScript interference overriding server-populated form values. Solution involved primary key-based entry fetching, proper edit mode detection, and preventing API calls from overwriting form data during edits. Enhanced UI with harmonious dark theme colors and improved table readability.
 - June 30, 2025. Initial setup
 
