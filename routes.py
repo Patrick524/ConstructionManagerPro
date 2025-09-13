@@ -2837,6 +2837,11 @@ def generate_reports():
         job_id = form.job_id.data if form.job_id.data != 0 else None
         user_id = form.user_id.data if form.user_id.data != 0 else None
         report_format = form.format.data
+        
+        # Server-side validation for Job Assignment Report
+        if report_type == 'job_assignment' and not job_id:
+            flash('Please select a job to view current team assignments.', 'error')
+            return redirect(url_for('generate_reports'))
 
         # Build the base query - different for device audit logs and job assignment
         if report_type == 'device_audit':
@@ -2855,7 +2860,7 @@ def generate_reports():
             )
         elif report_type == 'job_assignment':
             from models import job_workers, Job, User, Trade
-            # Query for job assignments with user details
+            # Query for CURRENT job assignments: active jobs + active users
             query = db.session.query(
                 Job.job_code,
                 Job.description.label('job_description'),
@@ -2871,6 +2876,9 @@ def generate_reports():
                 job_workers, Job.id == job_workers.c.job_id
             ).join(
                 User, User.id == job_workers.c.user_id
+            ).filter(
+                Job.status == 'active',  # Only active jobs
+                User.active == True      # Only active users
             )
         elif report_type == 'job_cost':
             query = db.session.query(
@@ -2903,17 +2911,10 @@ def generate_reports():
             if user_id:
                 query = query.filter(DeviceLog.user_id == user_id)
         elif report_type == 'job_assignment':
-            # For job assignment, apply filters to Job and User
+            # For job assignment, only apply job filter - show current assignments
             if job_id:
                 query = query.filter(Job.id == job_id)
-            if user_id:
-                query = query.filter(User.id == user_id)
-            # Apply date range filter to assignment dates
-            if start_date and end_date:
-                query = query.filter(
-                    job_workers.c.assigned_at >= start_date,
-                    job_workers.c.assigned_at <= end_date + timedelta(days=1)
-                )
+            # No date or user filtering - show all current assignments
         else:
             # For other reports, apply standard TimeEntry filters
             if job_id:
