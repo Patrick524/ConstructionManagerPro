@@ -2908,6 +2908,12 @@ def generate_reports():
                 query = query.filter(Job.id == job_id)
             if user_id:
                 query = query.filter(User.id == user_id)
+            # Apply date range filter to assignment dates
+            if start_date and end_date:
+                query = query.filter(
+                    job_workers.c.assigned_at >= start_date,
+                    job_workers.c.assigned_at <= end_date + timedelta(days=1)
+                )
         else:
             # For other reports, apply standard TimeEntry filters
             if job_id:

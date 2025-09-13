@@ -1,0 +1,41 @@
+Job_Code,Job_Description,Job_Location,Job_Status,Worker_Name,Worker_Email,Worker_Role,Worker_Active,Worker_Burden_Rate,Assigned_Date
+ TAC-2025-038,Pierce County Justice Center Renovation - Phase 2,"930 Tacoma Avenue S, Tacoma, WA 98402",active,Brad Bradley,worker@example.com,worker,Active,$61.50,05/25/2025
+ TAC-2025-038,Pierce County Justice Center Renovation - Phase 2,"930 Tacoma Avenue S, Tacoma, WA 98402",active,John Smith,worker2@example.com,worker,Active,$59.00,05/25/2025
+ TAC-2025-038,Pierce County Justice Center Renovation - Phase 2,"930 Tacoma Avenue S, Tacoma, WA 98402",active,Robert Johnson,worker1@example.com,worker,Active,$65.00,05/25/2025
+1047,Broadway Apartment 101 Building ,"757 Broadway, Seattle ",active,Brad Bradley,worker@example.com,worker,Active,$61.50,05/22/2025
+1047,Broadway Apartment 101 Building ,"757 Broadway, Seattle ",active,John Smith,worker2@example.com,worker,Active,$59.00,05/22/2025
+1047,Broadway Apartment 101 Building ,"757 Broadway, Seattle ",active,Memoree Cushing,columbiaalum91@gmail.com,worker,Active,$30.00,05/22/2025
+4321,Amazon Drywall ,"2021 7th Avenue, Seattle WA",active,Brad Bradley,worker@example.com,worker,Active,$61.50,05/22/2025
+4321,Amazon Drywall ,"2021 7th Avenue, Seattle WA",active,John Smith,worker2@example.com,worker,Active,$59.00,05/22/2025
+4321,Amazon Drywall ,"2021 7th Avenue, Seattle WA",active,Memoree Cushing,columbiaalum91@gmail.com,worker,Active,$30.00,05/22/2025
+4423,Seattle Public Library,"1000 4th Ave, seattle, wa",active,Brad Bradley,worker@example.com,worker,Active,$61.50,05/22/2025
+4423,Seattle Public Library,"1000 4th Ave, seattle, wa",active,John Smith,worker2@example.com,worker,Active,$59.00,05/22/2025
+4423,Seattle Public Library,"1000 4th Ave, seattle, wa",active,Memoree Cushing,columbiaalum91@gmail.com,worker,Active,$30.00,05/22/2025
+8001,Umpqua Bank Renovation,"1498 Pacific Ave, Tacoma, WA",active,Memoree Cushing,columbiaalum91@gmail.com,worker,Active,$30.00,05/22/2025
+8002,Marriott Bellevue TI,"200 110th Ave NE, Bellevue, WA",active,Brad Bradley,worker@example.com,worker,Active,$61.50,05/22/2025
+8002,Marriott Bellevue TI,"200 110th Ave NE, Bellevue, WA",active,John Smith,worker2@example.com,worker,Active,$59.00,05/22/2025
+8002,Marriott Bellevue TI,"200 110th Ave NE, Bellevue, WA",active,Robert Johnson,worker1@example.com,worker,Active,$65.00,05/22/2025
+8004,Columbia Bank HQ Reno,"1301 A St, Tacoma, WA",active,Brad Bradley,worker@example.com,worker,Active,$61.50,05/21/2025
+8004,Columbia Bank HQ Reno,"1301 A St, Tacoma, WA",active,John Smith,worker2@example.com,worker,Active,$59.00,05/21/2025
+8004,Columbia Bank HQ Reno,"1301 A St, Tacoma, WA",active,Memoree Cushing,columbiaalum91@gmail.com,worker,Active,$30.00,05/21/2025
+8004,Columbia Bank HQ Reno,"1301 A St, Tacoma, WA",active,Robert Johnson,worker1@example.com,worker,Active,$65.00,05/21/2025
+8005,Expedia Offices TI,"500 108th Ave NE, Bellevue, WA",active,Brad Bradley,worker@example.com,worker,Active,$61.50,05/21/2025
+8005,Expedia Offices TI,"500 108th Ave NE, Bellevue, WA",active,John Smith,worker2@example.com,worker,Active,$59.00,05/21/2025
+8005,Expedia Offices TI,"500 108th Ave NE, Bellevue, WA",active,Memoree Cushing,columbiaalum91@gmail.com,worker,Active,$30.00,05/21/2025
+8005,Expedia Offices TI,"500 108th Ave NE, Bellevue, WA",active,Robert Johnson,worker1@example.com,worker,Active,$65.00,05/21/2025
+8012,Embassy Suites by Hilton,"255 S King St, Seattle, WA 98104",active,Brad Bradley,worker@example.com,worker,Active,$61.50,06/17/2025
+8012,Embassy Suites by Hilton,"255 S King St, Seattle, WA 98104",active,John Smith,worker2@example.com,worker,Active,$59.00,06/17/2025
+8012,Embassy Suites by Hilton,"255 S King St, Seattle, WA 98104",active,Memoree Cushing,columbiaalum91@gmail.com,worker,Active,$30.00,06/17/2025
+8012,Embassy Suites by Hilton,"255 S King St, Seattle, WA 98104",active,Robert Johnson,worker1@example.com,worker,Active,$65.00,06/17/2025
+DRY-001,Commercial Office Drywall,"9 Yesler way, Seattle ",active,Brad Bradley,worker@example.com,worker,Active,$61.50,05/22/2025
+DRY-001,Commercial Office Drywall,"9 Yesler way, Seattle ",active,John Smith,worker2@example.com,worker,Active,$59.00,05/22/2025
+DRY-001,Commercial Office Drywall,"9 Yesler way, Seattle ",active,Memoree Cushing,columbiaalum91@gmail.com,worker,Active,$30.00,05/22/2025
+RES-6-11-25,Tacoma Apartment,1819 S 82ND ST TACOMA WA 98408-1029 USA,active,Brad Bradley,worker@example.com,worker,Active,$61.50,09/02/2025
+RES-6-11-25,Tacoma Apartment,1819 S 82ND ST TACOMA WA 98408-1029 USA,active,John Smith,worker2@example.com,worker,Active,$59.00,09/02/2025
+RES-6-11-25,Tacoma Apartment,1819 S 82ND ST TACOMA WA 98408-1029 USA,active,Memoree Cushing,columbiaalum91@gmail.com,worker,Active,$30.00,09/02/2025
+RES-6-11-25,Tacoma Apartment,1819 S 82ND ST TACOMA WA 98408-1029 USA,active,Robert Johnson,worker1@example.com,worker,Active,$65.00,09/02/2025
+SPRING-002,SPRINGHILL HOTEL DW JOB,"314 Williams Ave S, Renton, WA 98057",active,Brad Bradley,worker@example.com,worker,Active,$61.50,09/02/2025
+SPRING-002,SPRINGHILL HOTEL DW JOB,"314 Williams Ave S, Renton, WA 98057",active,Jack Quick,quick@me.com,worker,Active,$80.00,09/02/2025
+SPRING-002,SPRINGHILL HOTEL DW JOB,"314 Williams Ave S, Renton, WA 98057",active,John Smith,worker2@example.com,worker,Active,$59.00,09/02/2025
+SPRING-002,SPRINGHILL HOTEL DW JOB,"314 Williams Ave S, Renton, WA 98057",active,Memoree Cushing,columbiaalum91@gmail.com,worker,Active,$30.00,09/02/2025
+SPRING-002,SPRINGHILL HOTEL DW JOB,"314 Williams Ave S, Renton, WA 98057",active,Robert Johnson,worker1@example.com,worker,Active,$65.00,09/02/2025
