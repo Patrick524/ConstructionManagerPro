@@ -2857,19 +2857,25 @@ def generate_reports():
                 DeviceLog.ts <= end_date + timedelta(days=1)  # Include full end date
             )
         elif report_type == 'job_assignment':
+            from sqlalchemy import func
             from models import job_workers, Job, User, Trade
-            # Query for CURRENT job assignments: active jobs + active users
+            # Query for CURRENT job assignments: GROUP BY job with worker summary
+            
+            # Database-compatible aggregation function
+            engine_name = db.engine.name
+            if engine_name == 'postgresql':
+                # PostgreSQL: use string_agg with DISTINCT but without ORDER BY to avoid syntax issues
+                worker_agg = func.string_agg(func.distinct(User.name), ', ')
+            else:
+                # SQLite and others: use group_concat
+                worker_agg = func.group_concat(func.distinct(User.name))
+            
             query = db.session.query(
                 Job.job_code,
-                Job.description.label('job_description'),
-                Job.location.label('job_location'),
-                Job.status.label('job_status'),
-                User.name.label('worker_name'),
-                User.email.label('worker_email'),
-                User.role.label('worker_role'),
-                User.active.label('worker_active'),
-                User.burden_rate.label('worker_burden_rate'),
-                job_workers.c.assigned_at.label('assigned_date')
+                Job.description.label('job_name'),
+                Job.location,
+                worker_agg.label('assigned_workers'),
+                func.count(func.distinct(User.id)).label('worker_count')
             ).select_from(Job).join(
                 job_workers, Job.id == job_workers.c.job_id
             ).join(
@@ -2877,6 +2883,8 @@ def generate_reports():
             ).filter(
                 Job.status == 'active',  # Only active jobs
                 User.active == True      # Only active users
+            ).group_by(
+                Job.id, Job.job_code, Job.description, Job.location
             )
         elif report_type == 'job_cost':
             query = db.session.query(
@@ -2925,7 +2933,7 @@ def generate_reports():
         if report_type == 'device_audit':
             query = query.order_by(DeviceLog.ts.desc())  # Most recent first
         elif report_type == 'job_assignment':
-            query = query.order_by(Job.job_code, User.name)  # Order by job code, then worker name
+            query = query.order_by(Job.job_code)  # Order by job code
         elif report_type == 'payroll':
             query = query.order_by(User.name, TimeEntry.date)
         elif report_type == 'job_labor':
@@ -2946,9 +2954,7 @@ def generate_reports():
             ]
         elif report_type == 'job_assignment':
             columns = [
-                'job_code', 'job_description', 'job_location', 'job_status',
-                'worker_name', 'worker_email', 'worker_role', 'worker_active',
-                'worker_burden_rate', 'assigned_date'
+                'job_code', 'job_name', 'location', 'assigned_workers', 'worker_count'
             ]
         elif report_type == 'job_cost':
             columns = [
@@ -2984,7 +2990,11 @@ def generate_reports():
             'device_audit': 'Device Audit Log',
             'job_assignment': 'Job Assignment Report'
         }
-        report_title = f"{report_titles.get(report_type, 'Report')} ({start_date.strftime('%m/%d/%Y')} to {end_date.strftime('%m/%d/%Y')})"
+        # Create appropriate report title based on report type
+        if report_type == 'job_assignment':
+            report_title = f"{report_titles.get(report_type, 'Report')} - Current Assignments"
+        else:
+            report_title = f"{report_titles.get(report_type, 'Report')} ({start_date.strftime('%m/%d/%Y')} to {end_date.strftime('%m/%d/%Y')})"
 
         # Determine file delivery method (download or email)
         delivery_method = form.delivery_method.data

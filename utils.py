@@ -1151,64 +1151,33 @@ def generate_device_audit_csv(data, title="Device Audit Log"):
 # Job Assignment Report utilities
 
 def generate_job_assignment_csv(data, title="Job Assignment Report"):
-    """Generate a CSV report for job assignments."""
+    """Generate a CSV report for job assignments - job summary format."""
     import io
     import csv
-    from datetime import datetime
     
     output = io.StringIO()
     writer = csv.writer(output)
     
-    # Write CSV header row
-    writer.writerow(['Job_Code', 'Job_Description', 'Job_Location', 'Job_Status', 
-                     'Worker_Name', 'Worker_Email', 'Worker_Role', 'Worker_Active', 
-                     'Worker_Burden_Rate', 'Assigned_Date'])
+    # Write CSV header row - new job summary format
+    writer.writerow(['Job #', 'Job Name', 'Location', 'Assigned Workers', '# Workers'])
     
-    # Sort entries by job code, then worker name
-    sorted_entries = sorted(data, key=lambda x: (x['job_code'], x['worker_name']))
+    # Sort entries by job code
+    sorted_entries = sorted(data, key=lambda x: x['job_code'])
     
     for entry in sorted_entries:
-        # Format assigned date
-        assigned_date = entry.get('assigned_date', '')
-        if assigned_date:
-            if hasattr(assigned_date, 'strftime'):
-                formatted_date = assigned_date.strftime('%m/%d/%Y')
-            else:
-                # Parse string date
-                try:
-                    entry_date = datetime.fromisoformat(str(assigned_date).replace('Z', '+00:00'))
-                    formatted_date = entry_date.strftime('%m/%d/%Y')
-                except:
-                    formatted_date = str(assigned_date)
-        else:
-            formatted_date = 'N/A'
-        
-        # Format worker active status
-        worker_active = entry.get('worker_active', True)
-        active_status = 'Active' if worker_active else 'Inactive'
-        
-        # Format burden rate
-        burden_rate = entry.get('worker_burden_rate', 0)
-        burden_rate_formatted = f"${float(burden_rate):.2f}" if burden_rate else "N/A"
-        
         writer.writerow([
             entry.get('job_code', ''),
-            entry.get('job_description', ''),
-            entry.get('job_location', ''),
-            entry.get('job_status', ''),
-            entry.get('worker_name', ''),
-            entry.get('worker_email', ''),
-            entry.get('worker_role', ''),
-            active_status,
-            burden_rate_formatted,
-            formatted_date
+            entry.get('job_name', ''),
+            entry.get('location', '') or 'N/A',
+            entry.get('assigned_workers', '') or 'No workers assigned',
+            entry.get('worker_count', 0)
         ])
     
     output.seek(0)
     return output.getvalue()
 
 def generate_job_assignment_pdf(data, title="Job Assignment Report"):
-    """Generate a specialized PDF report for job assignments."""
+    """Generate a specialized PDF report for job assignments - job summary format."""
     import io
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import letter, landscape
@@ -1238,121 +1207,95 @@ def generate_job_assignment_pdf(data, title="Job Assignment Report"):
     title_style.spaceAfter = 12
     title_style.textColor = colors.Color(0.2, 0.2, 0.6)  # Dark blue
     
-    subtitle_style = styles['Heading2'].clone('Subtitle')
-    subtitle_style.fontSize = 12
-    subtitle_style.spaceAfter = 6
-    
-    # Group data by job
-    jobs = {}
-    total_assignments = len(data)
-    
-    for row in data:
-        job_code = row['job_code']
-        if job_code not in jobs:
-            jobs[job_code] = {
-                'description': row['job_description'],
-                'location': row.get('job_location', ''),
-                'status': row.get('job_status', ''),
-                'workers': []
-            }
-        
-        jobs[job_code]['workers'].append(row)
-    
     # Build PDF elements
     elements = []
     
     # Add title
     elements.append(Paragraph(title, title_style))
     elements.append(Paragraph(f"Generated: {datetime.now().strftime('%m/%d/%Y %H:%M:%S')}", styles['Normal']))
-    elements.append(Spacer(1, 12))
+    elements.append(Spacer(1, 20))
     
-    # Add summary metrics
-    elements.append(Paragraph("Summary", subtitle_style))
-    summary_data = [
-        ['Total Job Assignments', str(total_assignments)],
-        ['Number of Jobs', str(len(jobs))],
-        ['Report Date', datetime.now().strftime('%m/%d/%Y %H:%M:%S')]
-    ]
+    # Create main job assignments table
+    table_data = [['Job #', 'Job Name', 'Location', 'Assigned Workers', '# Workers']]
     
-    summary_table = Table(summary_data, colWidths=[2*inch, 2*inch])
-    summary_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+    # Sort entries by job code
+    sorted_entries = sorted(data, key=lambda x: x['job_code'])
+    
+    for entry in sorted_entries:
+        # Wrap long worker lists to fit in table
+        workers_text = entry.get('assigned_workers', '') or 'No workers assigned'
+        if len(workers_text) > 40:
+            # Break long worker lists into multiple lines
+            words = workers_text.split(', ')
+            lines = []
+            current_line = []
+            current_length = 0
+            
+            for word in words:
+                if current_length + len(word) + 2 > 40:  # +2 for ", "
+                    if current_line:
+                        lines.append(', '.join(current_line))
+                        current_line = [word]
+                        current_length = len(word)
+                    else:
+                        lines.append(word)
+                        current_length = 0
+                else:
+                    current_line.append(word)
+                    current_length += len(word) + 2
+            
+            if current_line:
+                lines.append(', '.join(current_line))
+            
+            workers_text = '\n'.join(lines)
+        
+        table_data.append([
+            entry.get('job_code', ''),
+            entry.get('job_name', ''),
+            entry.get('location', '') or 'N/A',
+            workers_text,
+            str(entry.get('worker_count', 0))
+        ])
+    
+    # Create the table with appropriate column widths
+    table = Table(table_data, colWidths=[1.2*inch, 2.5*inch, 2*inch, 3*inch, 0.8*inch])
+    table.setStyle(TableStyle([
+        # Header row styling
+        ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.2, 0.2, 0.6)),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('FONTSIZE', (0, 0), (-1, 0), 10),
         ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        
+        # Data rows styling
+        ('BACKGROUND', (0, 1), (-1, -1), colors.Color(0.95, 0.95, 0.95)),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        
+        # Center align worker count column
+        ('ALIGN', (4, 0), (4, -1), 'CENTER'),
+        
+        # Add padding for readability
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
     ]))
     
-    elements.append(summary_table)
+    elements.append(table)
     elements.append(Spacer(1, 20))
     
-    # Add detailed job assignments
-    elements.append(Paragraph("Job Assignments", subtitle_style))
+    # Add summary
+    total_jobs = len(data)
+    total_workers = sum(entry.get('worker_count', 0) for entry in data)
     
-    for job_code in sorted(jobs.keys()):
-        job_info = jobs[job_code]
-        
-        # Job header
-        job_header = f"Job: {job_code} - {job_info['description']}"
-        if job_info['location']:
-            job_header += f" ({job_info['location']})"
-        
-        elements.append(Paragraph(job_header, styles['Heading3']))
-        
-        # Workers table for this job
-        worker_data = [['Worker Name', 'Email', 'Role', 'Status', 'Burden Rate', 'Assigned Date']]
-        
-        for worker in sorted(job_info['workers'], key=lambda x: x['worker_name']):
-            # Format assigned date
-            assigned_date = worker.get('assigned_date', '')
-            if assigned_date:
-                if hasattr(assigned_date, 'strftime'):
-                    formatted_date = assigned_date.strftime('%m/%d/%Y')
-                else:
-                    try:
-                        entry_date = datetime.fromisoformat(str(assigned_date).replace('Z', '+00:00'))
-                        formatted_date = entry_date.strftime('%m/%d/%Y')
-                    except:
-                        formatted_date = str(assigned_date)
-            else:
-                formatted_date = 'N/A'
-            
-            # Format worker active status
-            worker_active = worker.get('worker_active', True)
-            active_status = 'Active' if worker_active else 'Inactive'
-            
-            # Format burden rate
-            burden_rate = worker.get('worker_burden_rate', 0)
-            burden_rate_formatted = f"${float(burden_rate):.2f}" if burden_rate else "N/A"
-            
-            worker_data.append([
-                worker.get('worker_name', ''),
-                worker.get('worker_email', ''),
-                worker.get('worker_role', ''),
-                active_status,
-                burden_rate_formatted,
-                formatted_date
-            ])
-        
-        # Create worker table
-        worker_table = Table(worker_data, colWidths=[1.5*inch, 2*inch, 0.8*inch, 0.8*inch, 1*inch, 1*inch])
-        worker_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 8),
-            ('FONTSIZE', (0, 1), (-1, -1), 7),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black)
-        ]))
-        
-        elements.append(worker_table)
-        elements.append(Spacer(1, 15))
+    summary_paragraph = Paragraph(
+        f"<b>Summary:</b> {total_jobs} active job(s) with {total_workers} total worker assignment(s)",
+        styles['Normal']
+    )
+    elements.append(summary_paragraph)
     
     # Build PDF
     doc.build(elements)
