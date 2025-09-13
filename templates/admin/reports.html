@@ -452,15 +452,9 @@
         window.currentReportFilename = null;
     });
     
-    // Validate job assignment report requirements
+    // No validation needed for Job Assignment Report
+    // "All Jobs" and specific jobs are both valid options
     function validateJobAssignmentReport() {
-        const reportType = document.getElementById('report_type').value;
-        const jobId = document.getElementById('job_id').value;
-        
-        if (reportType === 'job_assignment' && (!jobId || jobId === '0')) {
-            alert('Please select a job to see current team assignments.');
-            return false;
-        }
         return true;
     }
     
@@ -608,7 +602,7 @@
             jobField.style.display = 'block';
             userField.style.display = 'none';
             if (dateRowFields) dateRowFields.style.display = 'none';
-            if (jobLabel) jobLabel.textContent = 'Select Job to See Team (Required)';
+            if (jobLabel) jobLabel.textContent = 'Select Job (All Jobs = Everyone)';
         } else {
             // employee_hours report and others
             jobField.style.display = 'none';

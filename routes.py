@@ -2838,10 +2838,8 @@ def generate_reports():
         user_id = form.user_id.data if form.user_id.data != 0 else None
         report_format = form.format.data
         
-        # Server-side validation for Job Assignment Report
-        if report_type == 'job_assignment' and not job_id:
-            flash('Please select a job to view current team assignments.', 'error')
-            return redirect(url_for('generate_reports'))
+        # No special validation needed for Job Assignment Report
+        # "All Jobs" (job_id = 0 or None) shows all current assignments
 
         # Build the base query - different for device audit logs and job assignment
         if report_type == 'device_audit':
