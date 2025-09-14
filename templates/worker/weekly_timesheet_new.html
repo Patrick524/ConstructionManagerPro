@@ -47,7 +47,7 @@
                         <h5 class="mb-0">All Time Entries This Week</h5>
                         <div class="text-end text-light">
                             Total Week Hours: <span class="badge bg-light text-dark fw-bold" id="totalHours">
-                                {{ all_week_entries|sum(attribute='hours')|round(1) }}
+                                {{ all_week_entries|sum(attribute='hours')|round(2) }}
                             </span>
                         </div>
                     </div>
@@ -175,7 +175,7 @@
                                         <td id="fridayTotal">{{ daily_totals[week_dates[4]]|default(0) }}</td>
                                         <td id="saturdayTotal">{{ daily_totals[week_dates[5]]|default(0) }}</td>
                                         <td id="sundayTotal">{{ daily_totals[week_dates[6]]|default(0) }}</td>
-                                        <td id="weekTotal">{{ all_week_entries|sum(attribute='hours')|round(1) }}</td>
+                                        <td id="weekTotal">{{ all_week_entries|sum(attribute='hours')|round(2) }}</td>
                                     </tr>
                                 </tfoot>
                             </table>

@@ -67,7 +67,7 @@
                                     </p>
                                     <p class="mb-1">
                                         <strong>Started:</strong> <span id="localTimeDisplay" data-utc-time="{{ active_session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}Z">Loading local time...</span>
-                                        ({{ ((now - active_session.clock_in).total_seconds() / 3600)|round(1) }} hours) • <strong>Current time:</strong> <span id="currentTime" class="text-success fw-bold">Loading...</span>
+                                        ({{ ((now - active_session.clock_in).total_seconds() / 3600)|round(2) }} hours) • <strong>Current time:</strong> <span id="currentTime" class="text-success fw-bold">Loading...</span>
                                     </p>
                                     {% if active_session.notes %}
                                         <p class="mb-1">
@@ -194,7 +194,7 @@
                     </h5>
                 </div>
                 <div class="card-body text-center">
-                    <div class="display-4 mb-2">{{ today_hours|round(1) }}</div>
+                    <div class="display-4 mb-2">{{ today_hours|round(2) }}</div>
                     <p class="text-muted">Hours Today</p>
 
                     <div class="row mt-4">
@@ -257,9 +257,9 @@
                                             </td>
                                             <td>
                                                 {% if session.is_active %}
-                                                    {{ ((now - session.clock_in).total_seconds() / 3600)|round(1) }}
+                                                    {{ ((now - session.clock_in).total_seconds() / 3600)|round(2) }}
                                                 {% else %}
-                                                    {{ session.get_duration_hours()|round(1) }}
+                                                    {{ session.get_duration_hours()|round(2) }}
                                                 {% endif %}
                                             </td>
                                             <td>{{ session.notes or '' }}</td>
@@ -269,7 +269,7 @@
                                 <tfoot>
                                     <tr class="table-secondary">
                                         <td colspan="4" class="text-end"><strong>Total Hours:</strong></td>
-                                        <td><strong>{{ today_hours|round(1) }}</strong></td>
+                                        <td><strong>{{ today_hours|round(2) }}</strong></td>
                                         <td></td>
                                     </tr>
                                 </tfoot>
@@ -305,7 +305,7 @@
                                     <small class="time-range" 
                                          data-start-time="{{ session.clock_in.strftime('%Y-%m-%dT%H:%M:%S') }}Z"
                                          data-end-time="{{ session.clock_out.strftime('%Y-%m-%dT%H:%M:%S') }}Z"
-                                         data-duration="{{ session.get_duration_hours()|round(1) }}">
+                                         data-duration="{{ session.get_duration_hours()|round(2) }}">
                                         Loading local time...
                                     </small>
                                 </div>
