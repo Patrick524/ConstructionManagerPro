@@ -1305,3 +1305,44 @@ def generate_job_assignment_pdf(data, title="Job Assignment Report"):
     buffer.close()
     
     return pdf_data
+
+
+# Trade Validation Utilities
+def get_user_trade_ids(user):
+    """Get set of trade IDs that a user is qualified for"""
+    return set(trade.id for trade in user.qualified_trades.filter_by(is_active=True))
+
+
+def get_job_trade_ids(job):
+    """Get set of trade IDs that a job requires"""
+    return set(trade.id for trade in job.trades.filter_by(is_active=True))
+
+
+def get_compatible_trade_ids(user, job):
+    """Get intersection of user qualified trades and job required trades"""
+    user_trades = get_user_trade_ids(user)
+    job_trades = get_job_trade_ids(job)
+    return user_trades.intersection(job_trades)
+
+
+def get_compatible_activities(user, job):
+    """Get list of active labor activities available for user on job"""
+    from models import LaborActivity, Trade
+    
+    compatible_trade_ids = get_compatible_trade_ids(user, job)
+    if not compatible_trade_ids:
+        return []
+    
+    # Get active activities for compatible trades
+    activities = LaborActivity.query.filter(
+        LaborActivity.is_active == True,
+        LaborActivity.trade_id.in_(compatible_trade_ids)
+    ).order_by(LaborActivity.name).all()
+    
+    return activities
+
+
+def is_job_compatible(user, job):
+    """Check if user can work on job (has compatible trade + available activities)"""
+    compatible_activities = get_compatible_activities(user, job)
+    return len(compatible_activities) > 0

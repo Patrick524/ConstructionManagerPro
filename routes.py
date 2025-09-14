@@ -2782,7 +2782,10 @@ def get_job_users_api(job_id):
                 'id': user.id,
                 'name': user.name,
                 'email': user.email,
-                'role': user.role.title()
+                'role': user.role.title(),
+                'is_compatible': utils.is_job_compatible(user, job),
+                'user_trades': list(utils.get_user_trade_ids(user)),
+                'job_trades': list(utils.get_job_trade_ids(job))
             }
             for user in all_users
         ],
@@ -2804,15 +2807,42 @@ def update_job_user_assignments(job_id):
     # Clear existing user assignments for this job
     job.assigned_workers = []
     
-    # Add new user assignments
+    # Add new user assignments with trade validation
+    compatible_users = []
+    blocked_users = []
+    
     if selected_user_ids:
         selected_users = User.query.filter(User.id.in_(selected_user_ids)).all()
         for user in selected_users:
-            job.assigned_workers.append(user)
+            if utils.is_job_compatible(user, job):
+                job.assigned_workers.append(user)
+                compatible_users.append(user.name)
+            else:
+                # Get trade compatibility info for error message
+                user_trades = utils.get_user_trade_ids(user)
+                job_trades = utils.get_job_trade_ids(job)
+                common_trades = user_trades.intersection(job_trades)
+                
+                if not common_trades:
+                    reason = "No matching trades"
+                else:
+                    reason = "No available work activities for qualified trades"
+                
+                blocked_users.append(f"{user.name} ({reason})")
     
     try:
         db.session.commit()
-        flash(f"User assignments for job '{job.job_code}' updated successfully!", 'success')
+        
+        # Provide detailed feedback about assignments
+        if compatible_users and blocked_users:
+            flash(f"Assigned {len(compatible_users)} workers to job '{job.job_code}'. Blocked {len(blocked_users)} incompatible workers: {', '.join(blocked_users)}", 'warning')
+        elif compatible_users:
+            flash(f"User assignments for job '{job.job_code}' updated successfully! Assigned: {', '.join(compatible_users)}", 'success')
+        elif blocked_users:
+            flash(f"No workers assigned to job '{job.job_code}'. All selected workers are incompatible: {', '.join(blocked_users)}", 'danger')
+        else:
+            flash(f"All workers removed from job '{job.job_code}'.", 'info')
+            
     except Exception as e:
         db.session.rollback()
         flash(f"Error updating user assignments: {str(e)}", 'danger')

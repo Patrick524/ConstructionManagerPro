@@ -105,9 +105,12 @@ class TimeEntryForm(FlaskForm):
         
         # Populate job choices based on user role (only for active users)
         if current_user and current_user.role == 'worker' and current_user.active:
-            # For workers, only show jobs they're assigned to
+            # For workers, only show jobs they're assigned to AND are trade compatible
+            from utils import is_job_compatible
+            assigned_jobs = current_user.assigned_jobs.filter_by(status='active').all()
+            compatible_jobs = [job for job in assigned_jobs if is_job_compatible(current_user, job)]
             self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
-                                  for job in current_user.assigned_jobs.filter_by(status='active').all()]
+                                  for job in compatible_jobs]
         elif current_user and current_user.active:
             # For foremen and admins, show all active jobs
             self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
@@ -278,9 +281,12 @@ class WeeklyTimesheetForm(FlaskForm):
         
         # Populate job choices based on user role (only for active users)
         if current_user and current_user.role == 'worker' and current_user.active:
-            # For workers, only show jobs they're assigned to
+            # For workers, only show jobs they're assigned to AND are trade compatible
+            from utils import is_job_compatible
+            assigned_jobs = current_user.assigned_jobs.filter_by(status='active').all()
+            compatible_jobs = [job for job in assigned_jobs if is_job_compatible(current_user, job)]
             self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
-                                  for job in current_user.assigned_jobs.filter_by(status='active').all()]
+                                  for job in compatible_jobs]
         elif current_user and current_user.active:
             # For foremen and admins, show all active jobs
             self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
@@ -336,9 +342,12 @@ class ClockInForm(FlaskForm):
         
         # Populate job choices based on user role (only for active users)
         if current_user and current_user.role == 'worker' and current_user.active:
-            # For workers, only show jobs they're assigned to
+            # For workers, only show jobs they're assigned to AND are trade compatible
+            from utils import is_job_compatible
+            assigned_jobs = current_user.assigned_jobs.filter_by(status='active').all()
+            compatible_jobs = [job for job in assigned_jobs if is_job_compatible(current_user, job)]
             self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
-                                  for job in current_user.assigned_jobs.filter_by(status='active').all()]
+                                  for job in compatible_jobs]
         elif current_user and current_user.active:
             # For foremen and admins, show all active jobs
             self.job_id.choices = [(job.id, f"{job.job_code} - {job.description}") 
