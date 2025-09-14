@@ -700,8 +700,8 @@
                     }
                 }
 
-                // Get the duration from the data attribute
-                const hours = el.getAttribute('data-duration');
+                // Get the duration from the data attribute and ensure proper formatting
+                const hours = parseFloat(el.getAttribute('data-duration')).toFixed(2);
 
                 // Update the time range display with the properly formatted times
                 el.textContent = `${startTimeLocal} - ${endTimeLocal} (${hours} hours)`;
