@@ -40,16 +40,8 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 33017
+localPort = 43007
 externalPort = 3000
-
-[[ports]]
-localPort = 36433
-externalPort = 3001
-
-[[ports]]
-localPort = 38971
-externalPort = 3002
 
 [agent]
 integrations = ["flask_authentication==1.0.0", "python_sendgrid==1.0.0", "styling_replit==1.0.0"]

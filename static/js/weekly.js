@@ -95,7 +95,7 @@ function calculateDayTotal(day) {
 function updateDayTotal(day, total) {
     const dayTotalElement = document.getElementById(`${day}Total`);
     if (dayTotalElement) {
-        dayTotalElement.textContent = total.toFixed(1);
+        dayTotalElement.textContent = total.toFixed(2);
         
         // Highlight if over 24 hours
         if (total > 24) {
@@ -118,7 +118,7 @@ function calculateJobRowTotal(row) {
     // Update row total
     const totalCell = row.querySelector('.row-total');
     if (totalCell) {
-        totalCell.textContent = rowTotal.toFixed(1);
+        totalCell.textContent = rowTotal.toFixed(2);
     }
     
     return rowTotal;
@@ -127,7 +127,7 @@ function calculateJobRowTotal(row) {
 function updateWeekTotal(total) {
     const weekTotalElement = document.getElementById('totalHours');
     if (weekTotalElement) {
-        weekTotalElement.textContent = total.toFixed(1);
+        weekTotalElement.textContent = total.toFixed(2);
         
         // Highlight if over 168 hours (7 days * 24 hours)
         if (total > 168) {
