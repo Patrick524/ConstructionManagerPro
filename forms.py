@@ -119,9 +119,23 @@ class TimeEntryForm(FlaskForm):
             # Inactive users should not have job choices
             self.job_id.choices = []
         
-        # Set the first labor activity field with all activities
-        self.labor_activity_1.choices = [(activity.id, activity.name) 
-                                        for activity in LaborActivity.query.all()]
+        # Set the first labor activity field - filter by user's qualified trades for workers
+        if current_user and current_user.role == 'worker' and current_user.active:
+            # For workers, only show activities for their qualified trades
+            from utils import get_user_trade_ids
+            user_trade_ids = get_user_trade_ids(current_user)
+            if user_trade_ids:
+                activities = LaborActivity.query.filter(
+                    LaborActivity.is_active == True,
+                    LaborActivity.trade_id.in_(user_trade_ids)
+                ).order_by(LaborActivity.name).all()
+            else:
+                activities = []
+        else:
+            # For foremen and admins, show all active activities
+            activities = LaborActivity.query.filter_by(is_active=True).all()
+        
+        self.labor_activity_1.choices = [(activity.id, activity.name) for activity in activities]
                                         
     def process_data(self, data):
         """Process form data before validation - convert empty strings to None for hours fields"""
@@ -356,13 +370,23 @@ class ClockInForm(FlaskForm):
             # Inactive users should not have job choices
             self.job_id.choices = []
         
-        # Default to the first labor activity, but this will be dynamically updated via JavaScript
-        # Only show active labor activities
-        activities = LaborActivity.query.filter_by(is_active=True).all()
-        if activities:
-            self.labor_activity_id.choices = [(activity.id, activity.name) for activity in activities]
+        # Filter labor activities by user's qualified trades for workers
+        if current_user and current_user.role == 'worker' and current_user.active:
+            # For workers, only show activities for their qualified trades
+            from utils import get_user_trade_ids
+            user_trade_ids = get_user_trade_ids(current_user)
+            if user_trade_ids:
+                activities = LaborActivity.query.filter(
+                    LaborActivity.is_active == True,
+                    LaborActivity.trade_id.in_(user_trade_ids)
+                ).order_by(LaborActivity.name).all()
+            else:
+                activities = []
         else:
-            self.labor_activity_id.choices = []
+            # For foremen and admins, show all active activities
+            activities = LaborActivity.query.filter_by(is_active=True).all()
+        
+        self.labor_activity_id.choices = [(activity.id, activity.name) for activity in activities]
 
 class ClockOutForm(FlaskForm):
     """Form for clock out"""
