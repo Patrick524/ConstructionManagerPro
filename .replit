@@ -39,5 +39,13 @@ waitForPort = 5000
 localPort = 5000
 externalPort = 80
 
+[[ports]]
+localPort = 39051
+externalPort = 3000
+
+[[ports]]
+localPort = 40543
+externalPort = 3001
+
 [agent]
 integrations = ["flask_authentication==1.0.0", "python_sendgrid==1.0.0", "styling_replit==1.0.0"]
