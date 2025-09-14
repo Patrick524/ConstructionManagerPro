@@ -286,6 +286,36 @@ def worker_weekly_timesheet():
 
     if form.validate_on_submit():
         print("DEBUG: Form validated successfully, proceeding with submission")
+        
+        # Get job for validation
+        job = Job.query.get(form.job_id.data)
+        if not job:
+            flash('Selected job not found.', 'danger')
+            return redirect(url_for('worker_weekly_timesheet'))
+        
+        # Server-side validation: Check if user is assigned to this job
+        if not current_user.assigned_jobs.filter_by(id=job.id, status='active').first():
+            flash('You are not assigned to this job. Please contact your foreman.', 'danger')
+            return redirect(url_for('worker_weekly_timesheet'))
+        
+        # Server-side validation: Check if user is compatible with selected job
+        if not utils.is_job_compatible(current_user, job):
+            flash('You are not qualified to work on this job. Please contact your foreman.', 'danger')
+            return redirect(url_for('worker_weekly_timesheet'))
+        
+        # Server-side validation: Check if labor activity is valid for user's trades and job's trades
+        if form.labor_activity_id.data:
+            labor_activity = LaborActivity.query.get(form.labor_activity_id.data)
+            if not labor_activity or not labor_activity.is_active:
+                flash('Selected work activity is not available.', 'danger')
+                return redirect(url_for('worker_weekly_timesheet'))
+            
+            compatible_activities = utils.get_compatible_activities(current_user, job)
+            compatible_activity_ids = set(activity.id for activity in compatible_activities)
+            if labor_activity.id not in compatible_activity_ids:
+                flash('Selected work activity is not available for this job and your qualifications.', 'danger')
+                return redirect(url_for('worker_weekly_timesheet'))
+        
         # Check if any timesheet for this week is already approved/locked
         is_locked = WeeklyApprovalLock.query.filter_by(
             user_id=current_user.id,
@@ -645,6 +675,52 @@ def worker_timesheet(entry_id=None):
             form.date.data = pacific_now.date()
 
     if form.validate_on_submit():
+        # Get job for validation
+        job = Job.query.get(form.job_id.data)
+        if not job:
+            flash('Selected job not found.', 'danger')
+            return redirect(url_for('worker_timesheet'))
+        
+        # Server-side validation: Check if user is assigned to this job
+        if job not in current_user.assigned_jobs.filter_by(status='active').all():
+            flash('You are not assigned to this job. Please contact your foreman.', 'danger')
+            return redirect(url_for('worker_timesheet'))
+        
+        # Server-side validation: Check if user is compatible with selected job
+        if not utils.is_job_compatible(current_user, job):
+            flash('You are not qualified to work on this job. Please contact your foreman.', 'danger')
+            return redirect(url_for('worker_timesheet'))
+        
+        # Server-side validation: Get compatible activities for validation
+        compatible_activities = utils.get_compatible_activities(current_user, job)
+        compatible_activity_ids = set(activity.id for activity in compatible_activities)
+        
+        # Validate ALL labor activities (including dynamic ones)
+        all_activity_fields = []
+        
+        # Check the primary activity field
+        if form.labor_activity_1.data:
+            all_activity_fields.append(form.labor_activity_1.data)
+        
+        # Check all dynamic labor_activity_* fields in the form
+        for key in request.form.keys():
+            if key.startswith('labor_activity_') and key != 'labor_activity_1':
+                activity_id = request.form.get(key)
+                if activity_id and activity_id.strip() and activity_id.isdigit():
+                    all_activity_fields.append(int(activity_id))
+        
+        # Validate each activity
+        for activity_id in all_activity_fields:
+            if activity_id:
+                labor_activity = LaborActivity.query.get(activity_id)
+                if not labor_activity or not labor_activity.is_active:
+                    flash('One or more selected work activities are not available.', 'danger')
+                    return redirect(url_for('worker_timesheet'))
+                
+                if labor_activity.id not in compatible_activity_ids:
+                    flash('One or more selected work activities are not available for this job and your qualifications.', 'danger')
+                    return redirect(url_for('worker_timesheet'))
+        
         # Check if timesheet for this date is already approved/locked
         week_start = get_week_start(form.date.data)
         is_locked = WeeklyApprovalLock.query.filter_by(
@@ -1012,13 +1088,37 @@ def clock_in():
     form = ClockInForm(current_user=current_user)
 
     if form.validate_on_submit():
+        # Get job information for validation and distance calculation
+        job = Job.query.get(form.job_id.data)
+        if not job:
+            flash('Selected job not found.', 'danger')
+            return redirect(url_for('worker_clock'))
+        
+        # Server-side validation: Check if user is assigned to this job  
+        if job not in current_user.assigned_jobs.filter_by(status='active').all():
+            flash('You are not assigned to this job. Please contact your foreman.', 'danger')
+            return redirect(url_for('worker_clock'))
+        
+        # Server-side validation: Check if user is compatible with selected job
+        if not utils.is_job_compatible(current_user, job):
+            flash('You are not qualified to work on this job. Please contact your foreman.', 'danger')
+            return redirect(url_for('worker_clock'))
+        
+        # Server-side validation: Check if labor activity is valid for user's trades and job's trades
+        labor_activity = LaborActivity.query.get(form.labor_activity_id.data)
+        if not labor_activity or not labor_activity.is_active:
+            flash('Selected work activity is not available.', 'danger')
+            return redirect(url_for('worker_clock'))
+        
+        compatible_activities = utils.get_compatible_activities(current_user, job)
+        if labor_activity not in compatible_activities:
+            flash('Selected work activity is not available for this job and your qualifications.', 'danger')
+            return redirect(url_for('worker_clock'))
+        
         # Get location data from form
         latitude = request.form.get('latitude')
         longitude = request.form.get('longitude')
         accuracy = request.form.get('accuracy')
-
-        # Get job information for distance calculation
-        job = Job.query.get(form.job_id.data)
         distance_m = None
         distance_miles = None
 
