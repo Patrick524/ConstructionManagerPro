@@ -539,33 +539,64 @@
 
     // Display local time in the clock-in status
     function displayLocalTime() {
-        // Get the time display element
-        const timeDisplay = document.getElementById('localTimeDisplay');
+        console.log("🕒 displayLocalTime() function called");
+        
+        try {
+            // Get the time display element
+            const timeDisplay = document.getElementById('localTimeDisplay');
+            console.log("🎯 timeDisplay element:", timeDisplay);
 
-        if (timeDisplay) {
-            // Get the UTC timestamp from the data attribute
-            const utcTimeStr = timeDisplay.getAttribute('data-utc-time');
+            if (timeDisplay) {
+                // Get the UTC timestamp from the data attribute
+                const utcTimeStr = timeDisplay.getAttribute('data-utc-time');
+                console.log("📅 UTC time string:", utcTimeStr);
 
-            if (utcTimeStr) {
-                try {
+                if (utcTimeStr) {
                     // Parse the UTC time string to a Date object
                     const utcDate = new Date(utcTimeStr);
+                    console.log("⏰ Parsed UTC date:", utcDate);
 
-                    // Format the time in PST/PDT timezone specifically
-                    const localTimeStr = utcDate.toLocaleTimeString('en-US', {
+                    // Simple PST conversion (UTC - 8 hours, adjust for DST)
+                    const pstDate = new Date(utcDate.getTime() - (8 * 60 * 60 * 1000));
+                    const pstTimeStr = pstDate.toLocaleTimeString('en-US', {
                         hour: 'numeric',
                         minute: '2-digit',
-                        hour12: true,
-                        timeZone: 'America/Los_Angeles'  // PST/PDT timezone
+                        hour12: true
                     });
+                    console.log("🌲 Converted PST time:", pstTimeStr);
 
                     // Update the display with the PST time
-                    timeDisplay.textContent = localTimeStr;
-                } catch (error) {
-                    console.error("Error converting time:", error);
-                    timeDisplay.textContent = "Time format error";
+                    timeDisplay.textContent = pstTimeStr;
+                    console.log("✅ Updated display element");
+                } else {
+                    console.log("❌ No UTC time string found");
+                    timeDisplay.textContent = "No time data";
                 }
+            } else {
+                console.log("❌ localTimeDisplay element not found");
             }
+
+            // Handle table times
+            const localTimeElements = document.querySelectorAll('.local-time');
+            console.log("📋 Found", localTimeElements.length, "local-time elements");
+            
+            localTimeElements.forEach((el, index) => {
+                const utcTimeStr = el.getAttribute('data-utc-time');
+                if (utcTimeStr) {
+                    const utcDate = new Date(utcTimeStr);
+                    const pstDate = new Date(utcDate.getTime() - (8 * 60 * 60 * 1000));
+                    const pstTimeStr = pstDate.toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                    el.textContent = pstTimeStr;
+                    console.log("✅ Updated table time", index, "to", pstTimeStr);
+                }
+            });
+
+        } catch (error) {
+            console.error("💥 Error in displayLocalTime:", error);
         }
 
         // Convert all times with class "local-time" to PST timezone
@@ -719,17 +750,29 @@
 
     // Function to update the current time display in PST
     function updateCurrentTime() {
-        const currentTimeElement = document.getElementById('currentTime');
-        if (currentTimeElement) {
+        console.log("⏰ updateCurrentTime() called");
+        
+        const currentTimeElements = document.querySelectorAll('#currentTime');
+        console.log("🎯 Found", currentTimeElements.length, "currentTime elements");
+        
+        if (currentTimeElements.length > 0) {
             const now = new Date();
-            const formattedTime = now.toLocaleTimeString('en-US', {
+            // Simple PST calculation (UTC - 8 hours)  
+            const pstTime = new Date(now.getTime() - (8 * 60 * 60 * 1000));
+            const formattedTime = pstTime.toLocaleTimeString('en-US', {
                 hour: 'numeric',
                 minute: '2-digit',
                 second: '2-digit',
-                hour12: true,
-                timeZone: 'America/Los_Angeles'  // PST/PDT timezone
+                hour12: true
             });
-            currentTimeElement.textContent = formattedTime;
+            
+            currentTimeElements.forEach(el => {
+                el.textContent = formattedTime;
+            });
+            
+            console.log("⏰ Updated current time to PST:", formattedTime);
+        } else {
+            console.log("❌ No currentTime elements found");
         }
     }
 
@@ -1057,8 +1100,26 @@
         };
     }
 
-    // Add event listeners
+    // Add event listeners - TIMEZONE FUNCTIONS FIRST (to prevent map errors from blocking them)
     document.addEventListener('DOMContentLoaded', function() {
+        console.log("🚀 Starting timezone conversion...");
+        
+        // CRITICAL: Run timezone functions first before any map initialization
+        try {
+            displayLocalTime();
+            updateCurrentTime();
+            // Set up interval to update the current time every second
+            setInterval(updateCurrentTime, 1000);
+            console.log("✅ Timezone functions initialized successfully");
+        } catch (error) {
+            console.error("💥 Error initializing timezone functions:", error);
+        }
+    });
+
+    // Separate event listener for other functionality (maps, etc.)
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("🗺️ Starting map and form initialization...");
+        
         // Initialize job select and labor activities
         const jobSelect = document.querySelector('#job_id');
         if (jobSelect) {
@@ -1067,23 +1128,40 @@
             updateLaborActivities();
         }
 
-        // Initialize active session map if available
-        const activeMapContainer = document.getElementById('activeSessionMap');
-        if (activeMapContainer) {
-            // Check for location data
-            const location = activeMapContainer.getAttribute('data-location');
+        // Initialize active session map if available (with error handling)
+        try {
+            const activeMapContainer = document.getElementById('activeSessionMap');
+            if (activeMapContainer) {
+                // Check for location data
+                const location = activeMapContainer.getAttribute('data-location');
 
-            // Check if we have latitude and longitude data-attributes
-            const latitude = activeMapContainer.getAttribute('data-latitude');
-            const longitude = activeMapContainer.getAttribute('data-longitude');
+                // Check if we have latitude and longitude data-attributes
+                const latitude = activeMapContainer.getAttribute('data-latitude');
+                const longitude = activeMapContainer.getAttribute('data-longitude');
 
-            if (latitude && longitude) {
-                // Use direct coordinates if available
-                initMapWithCoordinates('activeSessionMap', parseFloat(latitude), parseFloat(longitude), location);
-            } else if (location) {
-                // Fall back to geocoding the location string
-                initMap('activeSessionMap', location);
+                console.log("🗺️ Map data:", { location, latitude, longitude });
+
+                if (latitude && longitude && latitude !== 'None' && longitude !== 'None') {
+                    // Validate coordinates before using
+                    const lat = parseFloat(latitude);
+                    const lng = parseFloat(longitude);
+                    
+                    if (!isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng)) {
+                        console.log("✅ Valid coordinates, initializing map");
+                        initMapWithCoordinates('activeSessionMap', lat, lng, location);
+                    } else {
+                        console.warn("⚠️ Invalid coordinates, skipping map");
+                    }
+                } else if (location) {
+                    console.log("📍 Using geocoding for location:", location);
+                    // Fall back to geocoding the location string
+                    initMap('activeSessionMap', location);
+                } else {
+                    console.log("ℹ️ No location data for map");
+                }
             }
+        } catch (error) {
+            console.error("💥 Error initializing active session map:", error);
         }
 
         // Initialize forms with location handling
