@@ -551,14 +551,15 @@
                     // Parse the UTC time string to a Date object
                     const utcDate = new Date(utcTimeStr);
 
-                    // Format the time in the user's local timezone - just use time for clean display
-                    const localTimeStr = utcDate.toLocaleTimeString(undefined, {
+                    // Format the time in PST/PDT timezone specifically
+                    const localTimeStr = utcDate.toLocaleTimeString('en-US', {
                         hour: 'numeric',
                         minute: '2-digit',
-                        hour12: true
+                        hour12: true,
+                        timeZone: 'America/Los_Angeles'  // PST/PDT timezone
                     });
 
-                    // Update the display with the local time only
+                    // Update the display with the PST time
                     timeDisplay.textContent = localTimeStr;
                 } catch (error) {
                     console.error("Error converting time:", error);
@@ -567,7 +568,7 @@
             }
         }
 
-        // Convert all times with class "local-time" to the browser's local time
+        // Convert all times with class "local-time" to PST timezone
         document.querySelectorAll('.local-time').forEach(el => {
             const utcTimeStr = el.getAttribute('data-utc-time');
             if (!utcTimeStr) return;
@@ -577,29 +578,34 @@
                 const utcDate = new Date(utcTimeStr);
                 const now = new Date();
 
-                // Check if this is from today
-                const isToday = utcDate.getDate() === now.getDate() && 
-                                utcDate.getMonth() === now.getMonth() && 
-                                utcDate.getFullYear() === now.getFullYear();
+                // Check if this is from today (in PST timezone)
+                const nowPST = new Date(now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+                const utcDatePST = new Date(utcDate.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+                
+                const isToday = utcDatePST.getDate() === nowPST.getDate() && 
+                                utcDatePST.getMonth() === nowPST.getMonth() && 
+                                utcDatePST.getFullYear() === nowPST.getFullYear();
 
-                // Format the local time - with date if not today
+                // Format the PST time - with date if not today
                 let localTimeStr;
 
                 if (isToday) {
-                    // Today - just show time
-                    localTimeStr = utcDate.toLocaleTimeString(undefined, {
+                    // Today - just show time in PST
+                    localTimeStr = utcDate.toLocaleTimeString('en-US', {
                         hour: 'numeric',
                         minute: '2-digit',
-                        hour12: true
+                        hour12: true,
+                        timeZone: 'America/Los_Angeles'  // PST/PDT timezone
                     });
                 } else {
-                    // Not today - show date and time
-                    localTimeStr = utcDate.toLocaleString(undefined, {
+                    // Not today - show date and time in PST
+                    localTimeStr = utcDate.toLocaleString('en-US', {
                         month: '2-digit',
                         day: '2-digit',
                         hour: 'numeric',
                         minute: '2-digit',
-                        hour12: true
+                        hour12: true,
+                        timeZone: 'America/Los_Angeles'  // PST/PDT timezone
                     });
                 }
 
@@ -711,16 +717,17 @@
         });
     }
 
-    // Function to update the current time display
+    // Function to update the current time display in PST
     function updateCurrentTime() {
         const currentTimeElement = document.getElementById('currentTime');
         if (currentTimeElement) {
             const now = new Date();
-            const formattedTime = now.toLocaleTimeString(undefined, {
+            const formattedTime = now.toLocaleTimeString('en-US', {
                 hour: 'numeric',
                 minute: '2-digit',
                 second: '2-digit',
-                hour12: true
+                hour12: true,
+                timeZone: 'America/Los_Angeles'  // PST/PDT timezone
             });
             currentTimeElement.textContent = formattedTime;
         }
