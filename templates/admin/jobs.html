@@ -234,7 +234,15 @@
                                         <td data-description="{{ job.description }}">{{ job.description }}</td>
                                         <td data-location="{{ job.location }}">
                                             {% if job.location %}
-                                                <i class="fas fa-map-marker-alt text-danger me-1"></i>{{ job.location }}
+                                                {% set location_parts = job.location.split(', ') %}
+                                                {% if location_parts|length >= 2 %}
+                                                    {% set short_location = location_parts[-2:] | join(', ') %}
+                                                {% else %}
+                                                    {% set short_location = job.location %}
+                                                {% endif %}
+                                                <span data-bs-toggle="tooltip" data-bs-placement="top" title="{{ job.location }}">
+                                                    <i class="fas fa-map-marker-alt text-danger me-1"></i>{{ short_location }}
+                                                </span>
                                             {% else %}
                                                 <span class="text-muted">No location</span>
                                             {% endif %}
@@ -582,5 +590,13 @@
                 }
             });
     }
+
+    // Initialize Bootstrap tooltips for location cells
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
 </script>
 {% endblock %}
