@@ -264,23 +264,37 @@
                                             {{ job.created_at.strftime('%Y-%m-%d') }}
                                         </td>
                                         <td>
-                                            <div class="btn-group btn-group-sm" role="group">
-                                                <a href="{{ url_for('manage_jobs', edit=job.id, status_filter=status_filter) }}" class="btn btn-outline-primary">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </a>
-                                                <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#assignUsersModal" 
-                                                        onclick="loadJobUsers({{ job.id }}, '{{ job.job_code }}')">
-                                                    <i class="fas fa-users"></i> Assign Workers
+                                            <div class="dropdown">
+                                                <button class="btn btn-link text-secondary p-1" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Actions">
+                                                    <i class="fas fa-ellipsis-v fa-lg"></i>
                                                 </button>
-                                                <a href="{{ url_for('generate_reports') }}?report_type=job_labor&job_id={{ job.id }}" class="btn btn-outline-info">
-                                                    <i class="fas fa-chart-bar"></i> Report
-                                                </a>
-                                                <form action="{{ url_for('delete_job', job_id=job.id, status_filter=status_filter) }}" method="POST" style="display:inline-block;">
-                                                    <button type="submit" class="btn btn-outline-danger" 
-                                                            onclick="return confirm('Are you sure you want to delete {{ job.job_code }}? This cannot be undone.');">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li>
+                                                        <a class="dropdown-item" href="{{ url_for('manage_jobs', edit=job.id, status_filter=status_filter) }}">
+                                                            <i class="fas fa-edit text-primary me-2"></i> Edit
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#assignUsersModal" 
+                                                                onclick="loadJobUsers({{ job.id }}, '{{ job.job_code }}')">
+                                                            <i class="fas fa-users text-success me-2"></i> Assign Workers
+                                                        </button>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="{{ url_for('generate_reports') }}?report_type=job_labor&job_id={{ job.id }}">
+                                                            <i class="fas fa-chart-bar text-info me-2"></i> Report
+                                                        </a>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <form action="{{ url_for('delete_job', job_id=job.id, status_filter=status_filter) }}" method="POST" class="m-0">
+                                                            <button type="submit" class="dropdown-item text-danger" 
+                                                                    onclick="return confirm('Are you sure you want to delete {{ job.job_code }}? This cannot be undone.');">
+                                                                <i class="fas fa-trash me-2"></i> Delete
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                </ul>
                                             </div>
                                         </td>
                                     </tr>
