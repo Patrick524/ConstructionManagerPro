@@ -236,7 +236,11 @@
                                             {% if job.location %}
                                                 {% set location_parts = job.location.split(', ') %}
                                                 {% if location_parts|length >= 2 %}
-                                                    {% set short_location = location_parts[-2:] | join(', ') %}
+                                                    {% set city = location_parts[-2] %}
+                                                    {% set state_zip = location_parts[-1] %}
+                                                    {% set state_parts = state_zip.split(' ') %}
+                                                    {% set state = state_parts[0] %}
+                                                    {% set short_location = city ~ ', ' ~ state %}
                                                 {% else %}
                                                     {% set short_location = job.location %}
                                                 {% endif %}
