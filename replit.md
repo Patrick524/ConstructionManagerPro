@@ -25,7 +25,7 @@ This is a comprehensive Flask-based web application designed for construction ti
 
 ### Data Storage Solutions
 - **Primary Database**: SQLAlchemy with support for multiple database backends
-- **Models**: User, Job, LaborActivity, TimeEntry, ClockSession, Trade, WeeklyApprovalLock
+- **Models**: User, Job, LaborActivity, TimeEntry, ClockSession, Trade, WeeklyApprovalLock, PasswordResetToken, DeviceLog
 - **Relationships**: Many-to-many job-worker assignments, trade-specific labor activities
 
 ## Key Components
@@ -34,6 +34,7 @@ This is a comprehensive Flask-based web application designed for construction ti
 - **Three-tier role system**: Worker, Foreman, Admin
 - **Session management**: Secure session handling with configurable timeouts
 - **Password security**: Werkzeug password hashing
+- **Password reset**: Email-based password reset with secure hashed tokens (1-hour expiry)
 
 ### Time Tracking System
 - **Dual input methods**: Manual timesheet entry and GPS-enabled clock in/out
@@ -98,6 +99,8 @@ This is a comprehensive Flask-based web application designed for construction ti
 - Data integrity validation scripts
 
 ## Changelog
+
+- December 15, 2025: **Added Forgot Password flow with secure email-based password reset**. Features: "Forgot password?" link on login page, secure token generation with hashing (tokens stored hashed, not plain), 1-hour expiration on reset links, tokens invalidated after use, user-friendly messages that don't reveal whether an email is registered. New model: PasswordResetToken. Email sent via Flask-Mail with SMTP2GO. Routes: /forgot-password and /reset-password/<token>.
 
 - September 15, 2025: **Fixed PST timezone display issue and completed comprehensive trade validation system**. Root cause: JavaScript timezone functions were not executing due to unhandled Leaflet map errors ("Invalid LatLng object: NaN, NaN") that crashed the entire DOMContentLoaded handler. **Solution**: Separated timezone functions into isolated event handler with proper error handling, added coordinate validation for maps. **Result**: All clock-in/out times now display correctly in PST format instead of confusing UTC times. Trade validation system prevents workers from seeing jobs they're not qualified for through multi-layer security: UI filtering, server-side validation, and admin controls. **Testing**: Comprehensive Playwright tests confirm both systems work together properly.
 
