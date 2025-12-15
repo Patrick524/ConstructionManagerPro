@@ -468,3 +468,17 @@ class GPSComplianceReportForm(FlaskForm):
             self.start_date.data = date.today() - timedelta(days=30)
         if not self.end_date.data:
             self.end_date.data = date.today()
+
+
+class ForgotPasswordForm(FlaskForm):
+    """Form for requesting a password reset"""
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    submit = SubmitField('Send Reset Link')
+
+
+class ResetPasswordForm(FlaskForm):
+    """Form for resetting password with token"""
+    password = PasswordField('New Password', validators=[DataRequired(), Length(min=6)])
+    confirm_password = PasswordField('Confirm New Password', 
+                                    validators=[DataRequired(), EqualTo('password', message='Passwords must match')])
+    submit = SubmitField('Reset Password')

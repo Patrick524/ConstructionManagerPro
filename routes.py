@@ -8,12 +8,16 @@ from functools import wraps
 from flask import render_template, redirect, url_for, flash, request, jsonify, send_file, session, abort
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db
-from models import User, Job, LaborActivity, TimeEntry, WeeklyApprovalLock, ClockSession, Trade, job_workers, DeviceLog
+from models import User, Job, LaborActivity, TimeEntry, WeeklyApprovalLock, ClockSession, Trade, job_workers, DeviceLog, PasswordResetToken
 from sqlalchemy import func
 from forms import (LoginForm, RegistrationForm, TimeEntryForm, ApprovalForm,
                    JobForm, LaborActivityForm, UserManagementForm, ReportForm,
                    WeeklyTimesheetForm, ClockInForm, ClockOutForm, TradeForm,
-                   JobWorkersForm, GPSComplianceReportForm)
+                   JobWorkersForm, GPSComplianceReportForm, ForgotPasswordForm, ResetPasswordForm)
+from werkzeug.security import generate_password_hash
+from flask_mail import Message
+from app import mail
+import secrets
 import pandas as pd
 import utils
 
@@ -211,6 +215,116 @@ def register():
         return redirect(url_for('login'))
 
     return render_template('register.html', form=form)
+
+
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    """Handle forgot password requests"""
+    if current_user.is_authenticated:
+        return redirect(url_for('login'))
+    
+    form = ForgotPasswordForm()
+    if form.validate_on_submit():
+        email = form.email.data.lower() if form.email.data else ''
+        user = User.query.filter_by(email=email).first()
+        
+        # Always show success message (don't reveal if email exists)
+        flash('If that email address is registered, we have sent a password reset link.', 'info')
+        
+        if user:
+            # Generate a secure random token
+            token = secrets.token_urlsafe(32)
+            token_hash = generate_password_hash(token)
+            
+            # Delete any existing unused tokens for this user
+            PasswordResetToken.query.filter_by(user_id=user.id, used_at=None).delete()
+            
+            # Create new token record
+            reset_token = PasswordResetToken(
+                user_id=user.id,
+                token_hash=token_hash
+            )
+            db.session.add(reset_token)
+            db.session.commit()
+            
+            # Generate reset URL
+            reset_url = url_for('reset_password', token=token, _external=True)
+            
+            # Send email
+            try:
+                msg = Message(
+                    'Password Reset Request',
+                    recipients=[user.email]
+                )
+                msg.body = f'''Hello {user.name},
+
+You requested a password reset for your Construction Timesheet account.
+
+Click the link below to reset your password (valid for 1 hour):
+{reset_url}
+
+If you did not request this reset, please ignore this email.
+
+Best regards,
+Construction Timesheet System
+'''
+                msg.html = f'''
+<p>Hello {user.name},</p>
+<p>You requested a password reset for your Construction Timesheet account.</p>
+<p>Click the link below to reset your password (valid for 1 hour):</p>
+<p><a href="{reset_url}" style="background-color: #0d6efd; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a></p>
+<p>Or copy and paste this URL into your browser:</p>
+<p>{reset_url}</p>
+<p>If you did not request this reset, please ignore this email.</p>
+<p>Best regards,<br>Construction Timesheet System</p>
+'''
+                mail.send(msg)
+                print(f"DEBUG: Password reset email sent to {user.email}")
+            except Exception as e:
+                print(f"ERROR: Failed to send password reset email: {e}")
+                # Don't expose email errors to user
+        
+        return redirect(url_for('login'))
+    
+    return render_template('forgot_password.html', form=form)
+
+
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    """Handle password reset with token"""
+    if current_user.is_authenticated:
+        return redirect(url_for('login'))
+    
+    # Find valid token by checking all tokens (we need to verify the hash)
+    from werkzeug.security import check_password_hash
+    
+    # Get all unused tokens and check each one
+    valid_token_record = None
+    all_tokens = PasswordResetToken.query.filter_by(used_at=None).all()
+    
+    for token_record in all_tokens:
+        if check_password_hash(token_record.token_hash, token):
+            if token_record.is_valid():
+                valid_token_record = token_record
+                break
+    
+    if not valid_token_record:
+        flash('This password reset link is invalid or has expired.', 'danger')
+        return redirect(url_for('forgot_password'))
+    
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        user = valid_token_record.user
+        user.set_password(form.password.data)
+        
+        # Mark token as used
+        valid_token_record.used_at = datetime.utcnow()
+        db.session.commit()
+        
+        flash('Your password has been reset! You can now log in.', 'success')
+        return redirect(url_for('login'))
+    
+    return render_template('reset_password.html', form=form)
 
 
 @app.route('/logout')

@@ -3,6 +3,7 @@ import logging
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+from flask_mail import Mail
 from sqlalchemy.orm import DeclarativeBase
 
 # Configure logging
@@ -15,6 +16,7 @@ class Base(DeclarativeBase):
 # Initialize extensions
 db = SQLAlchemy(model_class=Base)
 login_manager = LoginManager()
+mail = Mail()
 
 # Create the app
 app = Flask(__name__)
@@ -34,9 +36,18 @@ app.config["SESSION_COOKIE_SECURE"] = False  # Set to True in production
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["PERMANENT_SESSION_LIFETIME"] = 3600  # Session expires after 1 hour
 
+# Mail configuration
+app.config["MAIL_SERVER"] = os.environ.get("MAIL_SERVER", "mail.smtp2go.com")
+app.config["MAIL_PORT"] = int(os.environ.get("MAIL_PORT", 587))
+app.config["MAIL_USE_TLS"] = os.environ.get("MAIL_USE_TLS", "True").lower() == "true"
+app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USERNAME")
+app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
+app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_DEFAULT_SENDER", "noreply@tvcconsulting.com")
+
 # Initialize extensions with the app
 db.init_app(app)
 login_manager.init_app(app)
+mail.init_app(app)
 
 # Initialize Flask-Migrate
 from flask_migrate import Migrate

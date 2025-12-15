@@ -247,3 +247,27 @@ class DeviceLog(db.Model):
     
     def __repr__(self):
         return f'<DeviceLog {self.user_id} - {self.action} - {self.ts}>'
+
+
+class PasswordResetToken(db.Model):
+    """Password reset tokens for forgot password functionality"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    token_hash = db.Column(db.String(256), nullable=False)  # Hashed token for security
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    used_at = db.Column(db.DateTime, nullable=True)  # Set when token is used
+    
+    # Relationships
+    user = db.relationship('User', backref='password_reset_tokens', lazy='joined')
+    
+    def is_expired(self):
+        """Check if token has expired (1 hour limit)"""
+        from datetime import timedelta
+        return datetime.utcnow() > self.created_at + timedelta(hours=1)
+    
+    def is_valid(self):
+        """Check if token is valid (not used and not expired)"""
+        return self.used_at is None and not self.is_expired()
+    
+    def __repr__(self):
+        return f'<PasswordResetToken {self.id} - User {self.user_id}>'
