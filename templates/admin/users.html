@@ -224,10 +224,31 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">User List</h5>
+                <div class="d-flex align-items-center">
+                    <h5 class="mb-0 me-3">User List</h5>
+                    <div class="dropdown" id="roleFilter">
+                        <button class="btn btn-dark btn-sm dropdown-toggle" type="button" id="roleFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            {% if role_filter == 'worker' %}
+                                Workers
+                            {% elif role_filter == 'foreman' %}
+                                Foremen
+                            {% elif role_filter == 'admin' %}
+                                Admins
+                            {% else %}
+                                All Roles
+                            {% endif %}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="roleFilterDropdown">
+                            <li><a class="dropdown-item {% if role_filter == 'all' %}active{% endif %}" href="{{ url_for('manage_users', role_filter='all', show_inactive='true' if show_inactive else none) }}">All Roles</a></li>
+                            <li><a class="dropdown-item {% if role_filter == 'worker' %}active{% endif %}" href="{{ url_for('manage_users', role_filter='worker', show_inactive='true' if show_inactive else none) }}">Workers</a></li>
+                            <li><a class="dropdown-item {% if role_filter == 'foreman' %}active{% endif %}" href="{{ url_for('manage_users', role_filter='foreman', show_inactive='true' if show_inactive else none) }}">Foremen</a></li>
+                            <li><a class="dropdown-item {% if role_filter == 'admin' %}active{% endif %}" href="{{ url_for('manage_users', role_filter='admin', show_inactive='true' if show_inactive else none) }}">Admins</a></li>
+                        </ul>
+                    </div>
+                </div>
                 <div class="d-flex gap-3 align-items-center">
                     <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="showInactiveToggle" 
+                        <input class="form-check-input" type="checkbox" id="showInactiveToggle"
                                {% if show_inactive %}checked{% endif %}
                                onchange="toggleInactiveUsers(this.checked)">
                         <label class="form-check-label text-white" for="showInactiveToggle">
@@ -449,6 +470,7 @@
         } else {
             currentUrl.searchParams.delete('show_inactive');
         }
+        // Preserve role_filter when toggling inactive
         window.location.href = currentUrl.toString();
     }
 

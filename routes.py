@@ -2962,10 +2962,25 @@ def manage_users():
 
     # Get users for display with optional filtering
     show_inactive = request.args.get('show_inactive') == 'true'
-    if show_inactive:
-        users = User.query.order_by(User.role, User.name).all()
-    else:
-        users = User.query.filter_by(active=True).order_by(User.role, User.name).all()
+    role_filter = request.args.get('role_filter', 'all')
+
+    # Build query with filters
+    users_query = User.query
+
+    # Filter by active status
+    if not show_inactive:
+        users_query = users_query.filter_by(active=True)
+
+    # Filter by role
+    if role_filter == 'worker':
+        users_query = users_query.filter_by(role='worker')
+    elif role_filter == 'foreman':
+        users_query = users_query.filter_by(role='foreman')
+    elif role_filter == 'admin':
+        users_query = users_query.filter_by(role='admin')
+    # For 'all', no role filter is applied
+
+    users = users_query.order_by(User.role, User.name).all()
 
     return render_template('admin/users.html',
                            form=form,
@@ -2973,7 +2988,8 @@ def manage_users():
                            editing=editing,
                            editing_user=editing_user,
                            new_user=new_user,
-                           show_inactive=show_inactive)
+                           show_inactive=show_inactive,
+                           role_filter=role_filter)
 
 
 
