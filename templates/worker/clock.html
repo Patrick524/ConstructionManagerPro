@@ -539,64 +539,44 @@
 
     // Display local time in the clock-in status
     function displayLocalTime() {
-        console.log("🕒 displayLocalTime() function called");
-        
         try {
             // Get the time display element
             const timeDisplay = document.getElementById('localTimeDisplay');
-            console.log("🎯 timeDisplay element:", timeDisplay);
 
             if (timeDisplay) {
-                // Get the UTC timestamp from the data attribute
                 const utcTimeStr = timeDisplay.getAttribute('data-utc-time');
-                console.log("📅 UTC time string:", utcTimeStr);
-
                 if (utcTimeStr) {
-                    // Parse the UTC time string to a Date object
                     const utcDate = new Date(utcTimeStr);
-                    console.log("⏰ Parsed UTC date:", utcDate);
-
-                    // Simple PST conversion (UTC - 8 hours, adjust for DST)
-                    const pstDate = new Date(utcDate.getTime() - (8 * 60 * 60 * 1000));
-                    const pstTimeStr = pstDate.toLocaleTimeString('en-US', {
+                    const pstTimeStr = utcDate.toLocaleTimeString('en-US', {
                         hour: 'numeric',
                         minute: '2-digit',
-                        hour12: true
+                        hour12: true,
+                        timeZone: 'America/Los_Angeles'
                     });
-                    console.log("🌲 Converted PST time:", pstTimeStr);
-
-                    // Update the display with the PST time
                     timeDisplay.textContent = pstTimeStr;
-                    console.log("✅ Updated display element");
                 } else {
-                    console.log("❌ No UTC time string found");
                     timeDisplay.textContent = "No time data";
                 }
-            } else {
-                console.log("❌ localTimeDisplay element not found");
             }
 
             // Handle table times
             const localTimeElements = document.querySelectorAll('.local-time');
-            console.log("📋 Found", localTimeElements.length, "local-time elements");
-            
-            localTimeElements.forEach((el, index) => {
+            localTimeElements.forEach(el => {
                 const utcTimeStr = el.getAttribute('data-utc-time');
                 if (utcTimeStr) {
                     const utcDate = new Date(utcTimeStr);
-                    const pstDate = new Date(utcDate.getTime() - (8 * 60 * 60 * 1000));
-                    const pstTimeStr = pstDate.toLocaleTimeString('en-US', {
+                    const pstTimeStr = utcDate.toLocaleTimeString('en-US', {
                         hour: 'numeric',
                         minute: '2-digit',
-                        hour12: true
+                        hour12: true,
+                        timeZone: 'America/Los_Angeles'
                     });
                     el.textContent = pstTimeStr;
-                    console.log("✅ Updated table time", index, "to", pstTimeStr);
                 }
             });
 
         } catch (error) {
-            console.error("💥 Error in displayLocalTime:", error);
+            console.error("Error in displayLocalTime:", error);
         }
 
         // Convert all times with class "local-time" to PST timezone
@@ -748,31 +728,23 @@
         });
     }
 
-    // Function to update the current time display in PST
+    // Function to update the current time display in Pacific timezone
     function updateCurrentTime() {
-        console.log("⏰ updateCurrentTime() called");
-        
         const currentTimeElements = document.querySelectorAll('#currentTime');
-        console.log("🎯 Found", currentTimeElements.length, "currentTime elements");
-        
+
         if (currentTimeElements.length > 0) {
             const now = new Date();
-            // Simple PST calculation (UTC - 8 hours)  
-            const pstTime = new Date(now.getTime() - (8 * 60 * 60 * 1000));
-            const formattedTime = pstTime.toLocaleTimeString('en-US', {
+            const formattedTime = now.toLocaleTimeString('en-US', {
                 hour: 'numeric',
                 minute: '2-digit',
                 second: '2-digit',
-                hour12: true
+                hour12: true,
+                timeZone: 'America/Los_Angeles'
             });
-            
+
             currentTimeElements.forEach(el => {
                 el.textContent = formattedTime;
             });
-            
-            console.log("⏰ Updated current time to PST:", formattedTime);
-        } else {
-            console.log("❌ No currentTime elements found");
         }
     }
 
@@ -800,9 +772,9 @@
                 // Error codes: 1 = permission denied, 2 = position unavailable, 3 = timeout
                 locationCallback(null);
             },
-            { 
+            {
                 enableHighAccuracy: false, // Use false for faster response on mobile devices
-                timeout: 5000,            // Shorter timeout for faster fallback
+                timeout: 2000,            // 2 second timeout for fast UX
                 maximumAge: 60000         // Allow cached positions up to 1 minute old
             }
         );
@@ -813,108 +785,41 @@
         const form = document.getElementById('clockInForm');
         if (!form) return;
 
-        const locationStatus = document.getElementById('locationStatus');
-        const locationMessage = document.getElementById('locationMessage');
+        const clockInButton = document.getElementById('clockInButton');
 
         form.addEventListener('submit', function(e) {
-            // Prevent the default form submission
             e.preventDefault();
 
-            // Show location status
-            locationStatus.classList.remove('d-none');
-
-            // Get the job ID to check if it has coordinates
+            // Validate job selection
             const jobId = document.getElementById('job_id').value;
-
-            // Ensure a job is selected
             if (!jobId || jobId === "") {
                 alert("Please select a job before clocking in.");
-                locationStatus.classList.add('d-none');
                 return;
             }
 
-            // Show loading message
-            locationMessage.textContent = "Getting your location...";
-            
-            // Set a fallback timer to ensure form submission even if geolocation fails silently
-            const fallbackTimer = setTimeout(() => {
-                console.log("Geolocation fallback timer triggered after 5 seconds");
-                locationMessage.textContent = "Location request timed out. Submitting form without location data.";
-                
-                // Submit the form anyway after a short delay to show the message
-                setTimeout(() => {
-                    form.submit();
-                }, 500);
-            }, 5000);
-            
-            // Variable to track if location callback was received
-            let locationCallbackReceived = false;
+            // Disable button immediately
+            clockInButton.disabled = true;
+            clockInButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Clocking in...';
 
-            // Get user location
-            getUserLocation((locationData) => {
-                // Mark that we received the callback
-                locationCallbackReceived = true;
-                
-                // Clear the fallback timer since we got a response
-                clearTimeout(fallbackTimer);
-                
-                if (locationData) {
-                    // Set hidden field values
-                    document.getElementById('clockInLatitude').value = locationData.latitude;
-                    document.getElementById('clockInLongitude').value = locationData.longitude;
-                    document.getElementById('clockInAccuracy').value = locationData.accuracy;
+            // Submit immediately, GPS captured only if instantly available (cached)
+            let submitted = false;
+            const submitOnce = () => { if (!submitted) { submitted = true; form.submit(); } };
 
-                    locationMessage.textContent = "Location found!";
-
-                    // Get job coordinates from data attributes (instead of API call)
-                    const jobDetailsPanel = document.getElementById('jobDetailsPanel');
-                    const jobLat = jobDetailsPanel ? jobDetailsPanel.getAttribute('data-latitude') : null;
-                    const jobLng = jobDetailsPanel ? jobDetailsPanel.getAttribute('data-longitude') : null;
-
-                    if (jobLat && jobLng) {
-                        // Calculate distance
-                        const distance = calculateDistance(
-                            locationData.latitude, 
-                            locationData.longitude,
-                            parseFloat(jobLat),
-                            parseFloat(jobLng)
-                        );
-
-                        // Show distance info
-                        const distanceInfo = document.getElementById('distanceInfo');
-                        const distanceMessage = document.getElementById('distanceMessage');
-                        if (distanceInfo && distanceMessage) {
-                            distanceInfo.classList.remove('d-none');
-
-                            // Format distance message using miles
-                            const miles = distance.miles;
-                            let formattedDistance;
-                            
-                            if (miles < 0.1) {
-                                // For very short distances (less than 0.1 miles)
-                                formattedDistance = `${(miles * 5280).toFixed(0)} feet`; // 1 mile = 5280 feet
-                            } else {
-                                formattedDistance = `${miles.toFixed(2)} miles`;
-                            }
-
-                            distanceMessage.textContent = `You are ${formattedDistance} from the job site.`;
-                        }
-                    }
-
-                    // Submit the form after a brief delay to show success message
-                    setTimeout(() => {
-                        form.submit();
-                    }, 1000);
-                } else {
-                    // Handle location error
-                    locationMessage.textContent = "Could not get your location. Submitting without location data.";
-
-                    // Submit form anyway after a delay
-                    setTimeout(() => {
-                        form.submit();
-                    }, 1000);
-                }
-            });
+            // Try cached GPS (timeout: 0 means only use cache)
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        document.getElementById('clockInLatitude').value = pos.coords.latitude;
+                        document.getElementById('clockInLongitude').value = pos.coords.longitude;
+                        document.getElementById('clockInAccuracy').value = pos.coords.accuracy;
+                        submitOnce();
+                    },
+                    submitOnce,
+                    { timeout: 100, maximumAge: 300000 }  // Use cache up to 5 min old, 100ms timeout
+                );
+            } else {
+                submitOnce();
+            }
         });
     }
 
@@ -923,61 +828,34 @@
         const form = document.getElementById('clockOutForm');
         if (!form) return;
 
-        const locationStatus = document.getElementById('clockOutLocationStatus');
-        const locationMessage = document.getElementById('clockOutLocationMessage');
+        const clockOutButton = document.getElementById('clockOutButton');
 
         form.addEventListener('submit', function(e) {
-            // Prevent the default form submission
             e.preventDefault();
 
-            // Show location status
-            locationStatus.classList.remove('d-none');
-            locationMessage.textContent = "Getting your location...";
-            
-            // Set a fallback timer to ensure form submission even if geolocation fails silently
-            const fallbackTimer = setTimeout(() => {
-                console.log("Clock-out: Geolocation fallback timer triggered after 5 seconds");
-                locationMessage.textContent = "Location request timed out. Submitting form without location data.";
-                
-                // Submit the form anyway after a short delay to show the message
-                setTimeout(() => {
-                    form.submit();
-                }, 500);
-            }, 5000);
-            
-            // Variable to track if location callback was received
-            let locationCallbackReceived = false;
+            // Disable button immediately
+            clockOutButton.disabled = true;
+            clockOutButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Clocking out...';
 
-            // Get user location
-            getUserLocation((locationData) => {
-                // Mark that we received the callback
-                locationCallbackReceived = true;
-                
-                // Clear the fallback timer since we got a response
-                clearTimeout(fallbackTimer);
-                
-                if (locationData) {
-                    // Set hidden field values
-                    document.getElementById('clockOutLatitude').value = locationData.latitude;
-                    document.getElementById('clockOutLongitude').value = locationData.longitude;
-                    document.getElementById('clockOutAccuracy').value = locationData.accuracy;
+            // Submit immediately, GPS captured only if instantly available (cached)
+            let submitted = false;
+            const submitOnce = () => { if (!submitted) { submitted = true; form.submit(); } };
 
-                    locationMessage.textContent = "Location found!";
-
-                    // Submit the form after a brief delay
-                    setTimeout(() => {
-                        form.submit();
-                    }, 500);
-                } else {
-                    // Handle location error
-                    locationMessage.textContent = "Could not get your location. Submitting without location data.";
-
-                    // Submit form anyway after a delay
-                    setTimeout(() => {
-                        form.submit();
-                    }, 1000);
-                }
-            });
+            // Try cached GPS
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        document.getElementById('clockOutLatitude').value = pos.coords.latitude;
+                        document.getElementById('clockOutLongitude').value = pos.coords.longitude;
+                        document.getElementById('clockOutAccuracy').value = pos.coords.accuracy;
+                        submitOnce();
+                    },
+                    submitOnce,
+                    { timeout: 100, maximumAge: 300000 }
+                );
+            } else {
+                submitOnce();
+            }
         });
     }
 

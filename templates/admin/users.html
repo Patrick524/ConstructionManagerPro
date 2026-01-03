@@ -270,6 +270,7 @@
                                 <th data-sort="email">Email <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="role">Role <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="active">Status <i class="fas fa-sort text-muted"></i></th>
+                                <th>Clock In</th>
                                 <th>Trades</th>
                                 <th data-sort="burden_rate">Burden Rate <i class="fas fa-sort text-muted"></i></th>
                                 <th data-sort="created_at">Created <i class="fas fa-sort text-muted"></i></th>
@@ -292,6 +293,21 @@
                                                 <i class="fas fa-{{ 'check' if user.active else 'times' }} me-1"></i>
                                                 {{ 'Active' if user.active else 'Inactive' }}
                                             </span>
+                                        </td>
+                                        <td>
+                                            {% if user.role == 'worker' %}
+                                                {% if user.use_clock_in %}
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-clock me-1"></i>Timeclock
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">
+                                                        <i class="fas fa-edit me-1"></i>Manual
+                                                    </span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
                                         </td>
                                         <td>
                                             {% if user.role == 'worker' and user.qualified_trades %}
@@ -332,7 +348,7 @@
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="8" class="text-center py-4">
+                                    <td colspan="9" class="text-center py-4">
                                         <i class="fas fa-users fa-3x text-muted mb-3 d-block"></i>
                                         <h5>No users found</h5>
                                         <p class="mb-3">Start by adding your first user using the button above</p>

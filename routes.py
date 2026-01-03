@@ -10,6 +10,8 @@ from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db
 from models import User, Job, LaborActivity, TimeEntry, WeeklyApprovalLock, ClockSession, Trade, job_workers, DeviceLog, PasswordResetToken
 from sqlalchemy import func
+from sqlalchemy.orm import load_only
+from zoneinfo import ZoneInfo
 from forms import (LoginForm, RegistrationForm, TimeEntryForm, ApprovalForm,
                    JobForm, LaborActivityForm, UserManagementForm, ReportForm,
                    WeeklyTimesheetForm, ClockInForm, ClockOutForm, TradeForm,
@@ -1079,7 +1081,6 @@ def worker_clock():
     try:
         # Get active session (if any) - use only() to select specific columns we need
         # This is more resilient during schema transitions
-        from sqlalchemy.orm import load_only
 
         active_session = ClockSession.query.options(
             load_only(ClockSession.id, ClockSession.user_id,
@@ -1182,27 +1183,31 @@ def clock_in():
 
     # Check if already clocked in using SELECT FOR UPDATE to prevent race conditions
     # This locks any existing active session row until the transaction completes
+    # Use of=ClockSession to only lock the clock_session table, not joined tables
     try:
-        from sqlalchemy.orm import joinedload
         active_session = ClockSession.query.filter_by(
             user_id=current_user.id,
             is_active=True,
             clock_out=None
-        ).options(
-            joinedload(ClockSession.job)
-        ).with_for_update().first()
+        ).with_for_update(of=ClockSession).first()
     except Exception as e:
         app.logger.error(
             f"Error querying active sessions in clock_in for user {current_user.id}: {str(e)}"
         )
+        db.session.rollback()
         active_session = None
 
     if active_session:
-        # Format clock-in time in PST for the error message
-        clock_in_pst = active_session.clock_in - timedelta(hours=8)
-        clock_in_time_str = clock_in_pst.strftime('%I:%M %p').lstrip('0')
-        job_code = active_session.job.job_code if active_session.job else 'Unknown'
-        job_name = active_session.job.description if active_session.job else 'Unknown Job'
+        # Load job separately (can't use joinedload with FOR UPDATE)
+        job = Job.query.get(active_session.job_id)
+        # Format clock-in time in Pacific timezone for the error message
+        utc = ZoneInfo('UTC')
+        pacific = ZoneInfo('America/Los_Angeles')
+        clock_in_utc = active_session.clock_in.replace(tzinfo=utc)
+        clock_in_pacific = clock_in_utc.astimezone(pacific)
+        clock_in_time_str = clock_in_pacific.strftime('%I:%M %p').lstrip('0')
+        job_code = job.job_code if job else 'Unknown'
+        job_name = job.description if job else 'Unknown Job'
         flash(
             f'You are already clocked in on {job_code} – {job_name} since {clock_in_time_str}. Please clock out first.',
             'warning')
@@ -1322,7 +1327,6 @@ def clock_in():
 def get_job_details(job_id):
     try:
         # Use only essential columns to be resilient to schema changes
-        from sqlalchemy.orm import load_only
 
         job = Job.query.options(
             load_only(Job.id, Job.description, Job.location, Job.latitude,
@@ -1361,7 +1365,6 @@ def clock_out():
 
     # Get active session - use only critical columns for resilience to schema changes
     try:
-        from sqlalchemy.orm import load_only
         active_session = ClockSession.query.options(
             load_only(ClockSession.id, ClockSession.user_id,
                       ClockSession.job_id, ClockSession.labor_activity_id,

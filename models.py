@@ -210,20 +210,41 @@ class ClockSession(db.Model):
         return round(hours, 2)  # Round to 2 decimal places
     
     def create_time_entry(self):
-        """Convert a completed clock session to a TimeEntry"""
+        """Convert a completed clock session to a TimeEntry.
+        If an entry already exists for the same user/job/activity/date,
+        add hours to it instead of creating a new one.
+        """
         if not self.clock_out:
             return None
-            
+
+        entry_date = self.clock_in.date()
+        session_hours = self.get_duration_hours()
+
+        # Check for existing time entry
+        existing = TimeEntry.query.filter_by(
+            user_id=self.user_id,
+            job_id=self.job_id,
+            labor_activity_id=self.labor_activity_id,
+            date=entry_date
+        ).first()
+
+        if existing:
+            # Add hours to existing entry
+            existing.hours = round(existing.hours + session_hours, 2)
+            if self.notes:
+                existing.notes = f"{existing.notes}; {self.notes}" if existing.notes else self.notes
+            return None  # No new entry to add
+
         # Create a new time entry from this clock session
         time_entry = TimeEntry(
             user_id=self.user_id,
             job_id=self.job_id,
             labor_activity_id=self.labor_activity_id,
-            date=self.clock_in.date(),  # Use the clock-in date
-            hours=self.get_duration_hours(),
+            date=entry_date,
+            hours=session_hours,
             notes=self.notes
         )
-        
+
         return time_entry
         
     def __repr__(self):
