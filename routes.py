@@ -1180,13 +1180,17 @@ def clock_in():
               'warning')
         return redirect(url_for('worker_timesheet'))
 
-    # Check if already clocked in - use only critical columns for resilience to schema changes
+    # Check if already clocked in using SELECT FOR UPDATE to prevent race conditions
+    # This locks any existing active session row until the transaction completes
     try:
-        from sqlalchemy.orm import load_only
-        active_session = ClockSession.query.options(
-            load_only(ClockSession.id, ClockSession.user_id,
-                      ClockSession.is_active)).filter_by(
-                          user_id=current_user.id, is_active=True).first()
+        from sqlalchemy.orm import joinedload
+        active_session = ClockSession.query.filter_by(
+            user_id=current_user.id,
+            is_active=True,
+            clock_out=None
+        ).options(
+            joinedload(ClockSession.job)
+        ).with_for_update().first()
     except Exception as e:
         app.logger.error(
             f"Error querying active sessions in clock_in for user {current_user.id}: {str(e)}"
@@ -1194,8 +1198,13 @@ def clock_in():
         active_session = None
 
     if active_session:
+        # Format clock-in time in PST for the error message
+        clock_in_pst = active_session.clock_in - timedelta(hours=8)
+        clock_in_time_str = clock_in_pst.strftime('%I:%M %p').lstrip('0')
+        job_code = active_session.job.job_code if active_session.job else 'Unknown'
+        job_name = active_session.job.description if active_session.job else 'Unknown Job'
         flash(
-            'You are already clocked in! Please clock out of your current session first.',
+            f'You are already clocked in on {job_code} – {job_name} since {clock_in_time_str}. Please clock out first.',
             'warning')
         return redirect(url_for('worker_clock'))
 
