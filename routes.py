@@ -8,7 +8,7 @@ from functools import wraps
 from flask import render_template, redirect, url_for, flash, request, jsonify, send_file, session, abort
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db
-from models import User, Job, LaborActivity, TimeEntry, WeeklyApprovalLock, ClockSession, Trade, job_workers, DeviceLog, PasswordResetToken
+from models import User, Job, LaborActivity, TimeEntry, WeeklyApprovalLock, ClockSession, Trade, job_workers, DeviceLog, PasswordResetToken, ForemanReviewedTime
 from sqlalchemy import func
 from sqlalchemy.orm import load_only
 from zoneinfo import ZoneInfo
@@ -2021,6 +2021,15 @@ def foreman_enter_time(job_id, user_id):
 @login_required
 @foreman_or_admin_required
 def approve_timesheet(job_id, user_id):
+    """
+    Foreman review workflow with separate submitted vs reviewed time layers.
+
+    Worker submissions (TimeEntry) remain immutable.
+    Foreman creates ForemanReviewedTime records with their interpretation.
+    """
+    from collections import OrderedDict
+    from decimal import Decimal
+
     # Get the worker and job
     worker = User.query.get_or_404(user_id)
     job = Job.query.get_or_404(job_id)
@@ -2038,41 +2047,22 @@ def approve_timesheet(job_id, user_id):
     # Default to current week if no week start provided
     if not form.week_start.data:
         if url_start_date:
-            # Use the start_date from URL with robust parsing
             try:
-                # Try both common formats: %m/%d/%Y and %Y-%m-%d
                 if '/' in url_start_date:
-                    parsed_date = datetime.strptime(url_start_date,
-                                                    '%m/%d/%Y').date()
+                    parsed_date = datetime.strptime(url_start_date, '%m/%d/%Y').date()
                 elif '-' in url_start_date:
-                    parsed_date = datetime.strptime(url_start_date,
-                                                    '%Y-%m-%d').date()
+                    parsed_date = datetime.strptime(url_start_date, '%Y-%m-%d').date()
                 else:
-                    print(
-                        f"WARNING: Invalid date format in start_date: {url_start_date}"
-                    )
                     parsed_date = None
 
-                # Always align to Monday
                 if parsed_date:
                     form.week_start.data = get_week_start(parsed_date)
-                    print(
-                        f"DEBUG: Aligned date {parsed_date} to Monday: {form.week_start.data}"
-                    )
                 else:
-                    # Fall back to current week
-                    today = date.today()
-                    form.week_start.data = get_week_start(today)
-            except ValueError as e:
-                print(
-                    f"WARNING: Error parsing start_date '{url_start_date}': {str(e)}"
-                )
-                # Fall back to current week
-                today = date.today()
-                form.week_start.data = get_week_start(today)
+                    form.week_start.data = get_week_start(date.today())
+            except ValueError:
+                form.week_start.data = get_week_start(date.today())
         else:
-            today = date.today()
-            form.week_start.data = get_week_start(today)
+            form.week_start.data = get_week_start(date.today())
 
     week_start = form.week_start.data
     week_end = week_start + timedelta(days=6)
@@ -2085,111 +2075,321 @@ def approve_timesheet(job_id, user_id):
         flash(
             f'This week was already approved by {existing_approval.approver.name} on {existing_approval.approved_at.strftime("%m/%d/%Y %H:%M")}',
             'warning')
-        # Pass the week_start to maintain the selected date when redirecting
-        # Check if current user is admin and redirect appropriately
         if current_user.is_admin():
-            return redirect(
-                url_for('admin_review_time',
-                        start_date=week_start.strftime('%Y-%m-%d')))
+            return redirect(url_for('admin_review_time', start_date=week_start.strftime('%Y-%m-%d')))
         else:
-            return redirect(
-                url_for('foreman_dashboard',
-                        start_date=week_start.strftime('%m/%d/%Y')))
+            return redirect(url_for('foreman_dashboard', start_date=week_start.strftime('%m/%d/%Y')))
 
-    # Get all time entries for the week
-    entries = TimeEntry.query.filter(
-        TimeEntry.user_id == user_id, TimeEntry.job_id == job_id,
-        TimeEntry.date >= week_start, TimeEntry.date
-        <= week_end).order_by(TimeEntry.date).all()
+    # Get all submitted time entries for the week (worker's raw submissions)
+    submitted_entries = TimeEntry.query.filter(
+        TimeEntry.user_id == user_id,
+        TimeEntry.job_id == job_id,
+        TimeEntry.date >= week_start,
+        TimeEntry.date <= week_end
+    ).options(db.joinedload(TimeEntry.labor_activity)).order_by(TimeEntry.date).all()
 
-    # Check if weekdays (Monday through Friday) have entries
-    days_with_entries = set(entry.date for entry in entries)
-    weekdays = {week_start + timedelta(days=i) for i in range(5)}  # Only Monday through Friday
-    missing_days = weekdays - days_with_entries
+    # Get existing reviewed entries for this week
+    existing_reviews = ForemanReviewedTime.query.filter(
+        ForemanReviewedTime.worker_id == user_id,
+        ForemanReviewedTime.job_id == job_id,
+        ForemanReviewedTime.work_date >= week_start,
+        ForemanReviewedTime.work_date <= week_end
+    ).options(
+        db.joinedload(ForemanReviewedTime.labor_activity)
+    ).all()
 
-    if form.validate_on_submit():
-        # Show a notification about missing days, but still allow approval
-        if missing_days:
-            missing_day_list = ", ".join(
-                [d.strftime('%a %m/%d') for d in sorted(missing_days)])
-            flash(f'Note: Worker has no time entries for: {missing_day_list}',
-                  'warning')
+    # Create lookup dict for existing reviews by time_entry_id
+    reviews_by_entry_id = {r.worker_time_entry_id: r for r in existing_reviews if r.worker_time_entry_id}
 
-        # Approve all time entries
-        for entry in entries:
-            entry.approved = True
-            entry.approved_by = current_user.id
-            entry.approved_at = datetime.utcnow()
+    # Create lookup for foreman-originated entries (no worker submission) by date
+    foreman_originated_by_date = {}
+    for r in existing_reviews:
+        if r.worker_time_entry_id is None:
+            if r.work_date not in foreman_originated_by_date:
+                foreman_originated_by_date[r.work_date] = []
+            foreman_originated_by_date[r.work_date].append(r)
 
-        # Create weekly approval lock
-        approval = WeeklyApprovalLock(user_id=user_id,
-                                      job_id=job_id,
-                                      week_start=week_start,
-                                      approved_by=current_user.id)
-        db.session.add(approval)
-        db.session.commit()
+    # Check if weekdays have entries (including foreman-originated)
+    days_with_entries = set(entry.date for entry in submitted_entries)
+    days_with_foreman_entries = set(foreman_originated_by_date.keys())
+    weekdays = {week_start + timedelta(days=i) for i in range(5)}
+    missing_days = weekdays - days_with_entries - days_with_foreman_entries
 
-        flash(
-            f'Timesheet for {worker.name} on job {job.job_code} successfully approved!',
-            'success')
-        # Pass the week_start to maintain the selected date when redirecting
-        # Check if current user is admin and redirect appropriately
-        if current_user.is_admin():
-            return redirect(
-                url_for('admin_review_time',
-                        start_date=week_start.strftime('%Y-%m-%d')))
-        else:
-            return redirect(
-                url_for('foreman_dashboard',
-                        start_date=week_start.strftime('%m/%d/%Y')))
+    # Get all jobs and labor activities for dropdowns (foreman can reassign)
+    all_jobs = Job.query.filter(Job.status != 'complete').order_by(Job.job_code).all()
+    all_activities = LaborActivity.query.filter_by(is_active=True).order_by(LaborActivity.name).all()
 
-    # Group entries by date for display - convert weekdays to sorted list for proper chronological order
-    weekdays_sorted = sorted(weekdays)  # Sort Monday through Friday chronologically
-    entries_by_date = {}
-    
-    # First, initialize with weekdays in chronological order
+    if request.method == 'POST':
+        # Determine action: save_draft or finalize
+        action = request.form.get('action', 'finalize')
+        is_draft = (action == 'save_draft')
+
+        # Process reviewed time entries from form
+        try:
+            reviewed_count = 0
+            submitted_total = 0
+            reviewed_total = 0
+
+            for entry in submitted_entries:
+                submitted_total += entry.hours
+
+                # Get reviewed values from form
+                reviewed_hours_key = f'reviewed_hours_{entry.id}'
+                reviewed_job_key = f'reviewed_job_{entry.id}'
+                reviewed_activity_key = f'reviewed_activity_{entry.id}'
+                reviewed_notes_key = f'reviewed_notes_{entry.id}'
+
+                reviewed_hours_str = request.form.get(reviewed_hours_key, '')
+                reviewed_job_id = request.form.get(reviewed_job_key, str(job_id))
+                reviewed_activity_id = request.form.get(reviewed_activity_key, str(entry.labor_activity_id))
+                reviewed_notes = request.form.get(reviewed_notes_key, '')
+
+                # Parse reviewed hours (default to submitted if empty)
+                if reviewed_hours_str.strip():
+                    try:
+                        reviewed_hours = Decimal(reviewed_hours_str)
+                    except:
+                        reviewed_hours = Decimal(str(entry.hours))
+                else:
+                    reviewed_hours = Decimal(str(entry.hours))
+
+                reviewed_total += float(reviewed_hours)
+
+                # Parse job and activity IDs
+                try:
+                    reviewed_job_id = int(reviewed_job_id)
+                except:
+                    reviewed_job_id = job_id
+
+                try:
+                    reviewed_activity_id = int(reviewed_activity_id)
+                except:
+                    reviewed_activity_id = entry.labor_activity_id
+
+                # Create or update ForemanReviewedTime record
+                existing_review = reviews_by_entry_id.get(entry.id)
+
+                if existing_review:
+                    # Update existing review
+                    existing_review.reviewed_hours = reviewed_hours
+                    existing_review.job_id = reviewed_job_id
+                    existing_review.labor_activity_id = reviewed_activity_id
+                    existing_review.notes = reviewed_notes if reviewed_notes.strip() else None
+                    existing_review.updated_at = datetime.utcnow()
+                else:
+                    # Create new review
+                    new_review = ForemanReviewedTime(
+                        worker_time_entry_id=entry.id,
+                        worker_id=user_id,
+                        reviewer_id=current_user.id,
+                        work_date=entry.date,
+                        job_id=reviewed_job_id,
+                        labor_activity_id=reviewed_activity_id,
+                        reviewed_hours=reviewed_hours,
+                        notes=reviewed_notes if reviewed_notes.strip() else None
+                    )
+                    db.session.add(new_review)
+
+                reviewed_count += 1
+
+            # Process updates to existing foreman-originated entries
+            for fe in existing_reviews:
+                if fe.worker_time_entry_id is None:  # Foreman-originated
+                    foreman_hours_key = f'foreman_hours_{fe.id}'
+                    foreman_activity_key = f'foreman_activity_{fe.id}'
+                    foreman_notes_key = f'foreman_notes_{fe.id}'
+
+                    foreman_hours_str = request.form.get(foreman_hours_key, '').strip()
+                    foreman_activity_id = request.form.get(foreman_activity_key, '').strip()
+                    foreman_notes = request.form.get(foreman_notes_key, '').strip()
+
+                    if foreman_hours_str:
+                        try:
+                            new_hours = Decimal(foreman_hours_str)
+                            fe.reviewed_hours = new_hours
+                            fe.labor_activity_id = int(foreman_activity_id) if foreman_activity_id else fe.labor_activity_id
+                            fe.notes = foreman_notes if foreman_notes else None
+                            fe.updated_at = datetime.utcnow()
+                            reviewed_total += float(new_hours)
+                        except (ValueError, TypeError):
+                            pass
+
+            # Process new entries for missing days (foreman-originated)
+            # Check each day in the week for new_hours_YYYY-MM-DD fields
+            for i in range(7):  # Check all 7 days of the week
+                check_date = week_start + timedelta(days=i)
+                date_str = check_date.strftime('%Y-%m-%d')
+
+                new_hours_key = f'new_hours_{date_str}'
+                new_activity_key = f'new_activity_{date_str}'
+                new_job_key = f'new_job_{date_str}'
+                new_notes_key = f'new_notes_{date_str}'
+
+                new_hours_str = request.form.get(new_hours_key, '').strip()
+                new_activity_id = request.form.get(new_activity_key, '').strip()
+
+                # Only process if hours are provided (activity is optional)
+                if new_hours_str:
+                    try:
+                        new_hours = Decimal(new_hours_str)
+                        if new_hours > 0:
+                            new_job_id = int(request.form.get(new_job_key, job_id))
+                            new_notes = request.form.get(new_notes_key, '').strip()
+                            new_activity_id_int = int(new_activity_id) if new_activity_id else None
+
+                            # Check if a foreman-originated review already exists for this date/job
+                            existing_foreman_entry = ForemanReviewedTime.query.filter_by(
+                                worker_id=user_id,
+                                work_date=check_date,
+                                job_id=new_job_id,
+                                worker_time_entry_id=None  # Foreman-originated
+                            ).first()
+
+                            if existing_foreman_entry:
+                                # Update existing
+                                existing_foreman_entry.reviewed_hours = new_hours
+                                existing_foreman_entry.labor_activity_id = new_activity_id_int
+                                existing_foreman_entry.notes = new_notes if new_notes else None
+                                existing_foreman_entry.updated_at = datetime.utcnow()
+                            else:
+                                # Create new foreman-originated entry
+                                foreman_entry = ForemanReviewedTime(
+                                    worker_time_entry_id=None,  # No worker submission
+                                    worker_id=user_id,
+                                    reviewer_id=current_user.id,
+                                    work_date=check_date,
+                                    job_id=new_job_id,
+                                    labor_activity_id=new_activity_id_int,
+                                    reviewed_hours=new_hours,
+                                    notes=new_notes if new_notes else None
+                                )
+                                db.session.add(foreman_entry)
+
+                            reviewed_total += float(new_hours)
+                            reviewed_count += 1
+                    except (ValueError, TypeError) as e:
+                        print(f"DEBUG: Error processing new entry for {date_str}: {e}")
+                        pass  # Skip invalid entries
+
+            # Only create approval lock if finalizing (not saving draft)
+            if not is_draft:
+                approval = WeeklyApprovalLock(
+                    user_id=user_id,
+                    job_id=job_id,
+                    week_start=week_start,
+                    approved_by=current_user.id
+                )
+                db.session.add(approval)
+
+            db.session.commit()
+
+            # Show appropriate message based on action
+            if is_draft:
+                flash(
+                    f'Draft saved for {worker.name}. Reviewed: {reviewed_total:.2f} hrs. You can return to edit before finalizing.',
+                    'info')
+                # Stay on the same page for draft saves
+                return redirect(url_for('approve_timesheet', job_id=job_id, user_id=user_id,
+                                       start_date=week_start.strftime('%Y-%m-%d')))
+            else:
+                # Finalized - show summary with any adjustments
+                if abs(submitted_total - reviewed_total) > 0.01:
+                    flash(
+                        f'Timesheet finalized for {worker.name}. Submitted: {submitted_total:.2f} hrs → Reviewed: {reviewed_total:.2f} hrs',
+                        'success')
+                else:
+                    flash(
+                        f'Timesheet for {worker.name} on job {job.job_code} finalized! ({reviewed_total:.2f} hrs)',
+                        'success')
+
+                if current_user.is_admin():
+                    return redirect(url_for('admin_review_time', start_date=week_start.strftime('%Y-%m-%d')))
+                else:
+                    return redirect(url_for('foreman_dashboard', start_date=week_start.strftime('%m/%d/%Y')))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error saving reviewed time: {str(e)}', 'danger')
+            print(f"ERROR in approve_timesheet: {str(e)}")
+
+    # Build entries data for template with submitted and reviewed values side-by-side
+    entries_data = []
+    for entry in submitted_entries:
+        existing_review = reviews_by_entry_id.get(entry.id)
+        entries_data.append({
+            'entry': entry,
+            'submitted_hours': entry.hours,
+            'submitted_job': job,
+            'submitted_activity': entry.labor_activity,
+            'submitted_notes': entry.notes,
+            # Pre-fill reviewed values from existing review or submitted values
+            'reviewed_hours': float(existing_review.reviewed_hours) if existing_review else entry.hours,
+            'reviewed_job_id': existing_review.job_id if existing_review else job_id,
+            'reviewed_activity_id': existing_review.labor_activity_id if existing_review else entry.labor_activity_id,
+            'reviewed_notes': existing_review.notes if existing_review else '',
+        })
+
+    # Group entries by date for display
+    weekdays_sorted = sorted(weekdays)
+    entries_by_date = OrderedDict()
+
     for day in weekdays_sorted:
         entries_by_date[day] = []
 
-    # Then add any entries that fall outside the expected week range
-    for entry in entries:
-        if entry.date in entries_by_date:
-            entries_by_date[entry.date].append(entry)
+    for data in entries_data:
+        entry_date = data['entry'].date
+        if entry_date in entries_by_date:
+            entries_by_date[entry_date].append(data)
         else:
-            # Handle entries that fall outside the expected week range
-            entries_by_date[entry.date] = [entry]
-    
-    # Create ordered dictionary to ensure chronological display in template
-    from collections import OrderedDict
-    entries_by_date_ordered = OrderedDict()
-    
-    # Add weekdays first in chronological order
-    for day in weekdays_sorted:
-        if day in entries_by_date:
-            entries_by_date_ordered[day] = entries_by_date[day]
-    
-    # Add any other dates in chronological order
-    other_dates = sorted([d for d in entries_by_date.keys() if d not in weekdays_sorted])
-    for day in other_dates:
-        entries_by_date_ordered[day] = entries_by_date[day]
+            entries_by_date[entry_date] = [data]
 
-    # Calculate daily and weekly totals
-    daily_totals = {
-        day: sum(entry.hours for entry in day_entries)
-        for day, day_entries in entries_by_date.items()
-    }
-    weekly_total = sum(daily_totals.values())
+    # Add weekend days if they have entries
+    for data in entries_data:
+        entry_date = data['entry'].date
+        if entry_date not in weekdays_sorted and entry_date not in entries_by_date:
+            entries_by_date[entry_date] = [data]
+
+    # Calculate totals
+    submitted_daily_totals = {}
+    reviewed_daily_totals = {}
+
+    for day, day_entries in entries_by_date.items():
+        submitted_daily_totals[day] = sum(d['submitted_hours'] for d in day_entries)
+        reviewed_daily_totals[day] = sum(d['reviewed_hours'] for d in day_entries)
+
+    # Add foreman-originated hours to reviewed totals
+    for day, foreman_entries in foreman_originated_by_date.items():
+        foreman_hours = sum(float(e.reviewed_hours) for e in foreman_entries)
+        if day in reviewed_daily_totals:
+            reviewed_daily_totals[day] += foreman_hours
+        else:
+            reviewed_daily_totals[day] = foreman_hours
+        # No submitted hours for foreman-originated entries
+        if day not in submitted_daily_totals:
+            submitted_daily_totals[day] = 0
+
+    submitted_weekly_total = sum(submitted_daily_totals.values())
+    reviewed_weekly_total = sum(reviewed_daily_totals.values())
+
+    # Check if there are existing reviews (draft state)
+    has_draft = len(existing_reviews) > 0
 
     return render_template('foreman/approve.html',
                            form=form,
                            worker=worker,
                            job=job,
-                           entries_by_date=entries_by_date_ordered,
-                           daily_totals=daily_totals,
-                           weekly_total=weekly_total,
+                           entries_by_date=entries_by_date,
+                           foreman_originated_by_date=foreman_originated_by_date,
+                           submitted_daily_totals=submitted_daily_totals,
+                           reviewed_daily_totals=reviewed_daily_totals,
+                           submitted_weekly_total=submitted_weekly_total,
+                           reviewed_weekly_total=reviewed_weekly_total,
                            missing_days=missing_days,
                            week_start=week_start,
-                           week_end=week_end)
+                           week_end=week_end,
+                           all_jobs=all_jobs,
+                           all_activities=all_activities,
+                           has_draft=has_draft)
 
 
 # Admin routes
@@ -3117,7 +3317,7 @@ def generate_reports():
         if report_type == 'device_audit':
             from models import DeviceLog
             query = db.session.query(
-                DeviceLog.ts.label('timestamp'), 
+                DeviceLog.ts.label('timestamp'),
                 User.name.label('employee_name'),
                 DeviceLog.action,
                 DeviceLog.device_id,
@@ -3132,7 +3332,7 @@ def generate_reports():
             from sqlalchemy import func
             from models import job_workers, Job, User, Trade
             # Query for CURRENT job assignments: GROUP BY job with worker summary
-            
+
             # Database-compatible aggregation function
             engine_name = db.engine.name
             if engine_name == 'postgresql':
@@ -3141,7 +3341,7 @@ def generate_reports():
             else:
                 # SQLite and others: use group_concat
                 worker_agg = func.group_concat(func.distinct(User.name))
-            
+
             query = db.session.query(
                 Job.job_code,
                 Job.description.label('job_name'),
@@ -3158,6 +3358,31 @@ def generate_reports():
             ).group_by(
                 Job.id, Job.job_code, Job.description, Job.location
             )
+        elif report_type == 'payroll':
+            # Payroll uses the new reviewed time workflow
+            # Pull from ForemanReviewedTime (reviewed entries only)
+            data_dicts = utils.get_effective_time_query(
+                start_date, end_date, job_id, user_id, reviewed_only=True
+            )
+            # Convert query results to list of dicts for payroll
+            if hasattr(data_dicts, '__iter__') and not isinstance(data_dicts, (list, dict)):
+                # It's a query result, convert to dicts
+                data_dicts = [
+                    {
+                        'date': row.date,
+                        'hours': float(row.hours),
+                        'worker_name': row.worker_name,
+                        'burden_rate': row.burden_rate,
+                        'job_code': row.job_code,
+                        'job_description': row.job_description,
+                        'activity': row.activity,
+                        'trade_category': row.trade_category,
+                        'approved': True  # All reviewed entries are approved
+                    }
+                    for row in data_dicts
+                ]
+            # Skip the standard query flow for payroll
+            query = None
         elif report_type == 'job_cost':
             query = db.session.query(
                 TimeEntry.id, TimeEntry.date, TimeEntry.hours, TimeEntry.approved,
@@ -3173,7 +3398,7 @@ def generate_reports():
         else:
             query = db.session.query(
                 TimeEntry.date, TimeEntry.hours, TimeEntry.approved,
-                User.name.label('worker_name'), 
+                User.name.label('worker_name'),
                 Job.job_code, Job.description.label('job_description'),
                 LaborActivity.name.label('activity'),
                 LaborActivity.trade_category).join(
@@ -3183,75 +3408,75 @@ def generate_reports():
                             LaborActivity.id).filter(TimeEntry.date >= start_date,
                                                      TimeEntry.date <= end_date)
 
-        # Apply filters
-        if report_type == 'device_audit':
-            # For device audit, user_id filter applies to DeviceLog.user_id
-            if user_id:
-                query = query.filter(DeviceLog.user_id == user_id)
-        elif report_type == 'job_assignment':
-            # For job assignment, only apply job filter - show current assignments
-            if job_id:
-                query = query.filter(Job.id == job_id)
-            # No date or user filtering - show all current assignments
-        else:
-            # For other reports, apply standard TimeEntry filters
-            if job_id:
-                query = query.filter(TimeEntry.job_id == job_id)
+        # Apply filters and execute query (skip for payroll - already handled above)
+        if query is not None:
+            if report_type == 'device_audit':
+                # For device audit, user_id filter applies to DeviceLog.user_id
+                if user_id:
+                    query = query.filter(DeviceLog.user_id == user_id)
+            elif report_type == 'job_assignment':
+                # For job assignment, only apply job filter - show current assignments
+                if job_id:
+                    query = query.filter(Job.id == job_id)
+                # No date or user filtering - show all current assignments
+            else:
+                # For other reports, apply standard TimeEntry filters
+                if job_id:
+                    query = query.filter(TimeEntry.job_id == job_id)
 
-            if user_id:
-                query = query.filter(TimeEntry.user_id == user_id)
+                if user_id:
+                    query = query.filter(TimeEntry.user_id == user_id)
 
-        # Order the results
-        if report_type == 'device_audit':
-            query = query.order_by(DeviceLog.ts.desc())  # Most recent first
-        elif report_type == 'job_assignment':
-            query = query.order_by(Job.job_code)  # Order by job code
-        elif report_type == 'payroll':
-            query = query.order_by(User.name, TimeEntry.date)
-        elif report_type == 'job_labor':
-            query = query.order_by(Job.job_code, TimeEntry.date)
-        elif report_type == 'job_cost':
-            query = query.order_by(Job.job_code, User.name, TimeEntry.date)
-        else:  # employee_hours
-            query = query.order_by(TimeEntry.date, User.name)
+            # Order the results
+            if report_type == 'device_audit':
+                query = query.order_by(DeviceLog.ts.desc())  # Most recent first
+            elif report_type == 'job_assignment':
+                query = query.order_by(Job.job_code)  # Order by job code
+            elif report_type == 'job_labor':
+                query = query.order_by(Job.job_code, TimeEntry.date)
+            elif report_type == 'job_cost':
+                query = query.order_by(Job.job_code, User.name, TimeEntry.date)
+            else:  # employee_hours
+                query = query.order_by(TimeEntry.date, User.name)
 
-        # Execute the query
-        results = query.all()
+            # Execute the query
+            results = query.all()
 
-        # Create pandas dataframe from results
-        if report_type == 'device_audit':
-            columns = [
-                'timestamp', 'employee_name', 'action', 'device_id', 
-                'latitude', 'longitude', 'user_agent'
-            ]
-        elif report_type == 'job_assignment':
-            columns = [
-                'job_code', 'job_name', 'location', 'assigned_workers', 'worker_count'
-            ]
-        elif report_type == 'job_cost':
-            columns = [
-                'id', 'date', 'hours', 'approved', 'worker_name', 'burden_rate', 'job_code',
-                'job_description', 'activity', 'trade_category'
-            ]
-        else:
-            columns = [
-                'date', 'hours', 'approved', 'worker_name', 'job_code',
-                'job_description', 'activity', 'trade_category'
-            ]
-        df = pd.DataFrame(results, columns=columns)
+            # Create pandas dataframe from results
+            if report_type == 'device_audit':
+                columns = [
+                    'timestamp', 'employee_name', 'action', 'device_id',
+                    'latitude', 'longitude', 'user_agent'
+                ]
+            elif report_type == 'job_assignment':
+                columns = [
+                    'job_code', 'job_name', 'location', 'assigned_workers', 'worker_count'
+                ]
+            elif report_type == 'job_cost':
+                columns = [
+                    'id', 'date', 'hours', 'approved', 'worker_name', 'burden_rate', 'job_code',
+                    'job_description', 'activity', 'trade_category'
+                ]
+            else:
+                columns = [
+                    'date', 'hours', 'approved', 'worker_name', 'job_code',
+                    'job_description', 'activity', 'trade_category'
+                ]
+            df = pd.DataFrame(results, columns=columns)
 
-        # For job cost reports, add cost calculations
-        if report_type == 'job_cost':
-            # Calculate total cost for each row (hours * burden_rate)
-            df['total_cost'] = df.apply(lambda row: 
-                float(row['hours']) * float(row['burden_rate']) if row['burden_rate'] else 0.0, axis=1)
-            
-            # Add formatted columns for display
-            df['burden_rate_formatted'] = df['burden_rate'].apply(lambda x: f"${float(x):,.2f}" if x else "N/A")
-            df['total_cost_formatted'] = df['total_cost'].apply(lambda x: f"${x:,.2f}")
+            # For job cost reports, add cost calculations
+            if report_type == 'job_cost':
+                # Calculate total cost for each row (hours * burden_rate)
+                df['total_cost'] = df.apply(lambda row:
+                    float(row['hours']) * float(row['burden_rate']) if row['burden_rate'] else 0.0, axis=1)
 
-        # Convert DataFrame to list of dictionaries for report generation
-        data_dicts = df.to_dict('records')
+                # Add formatted columns for display
+                df['burden_rate_formatted'] = df['burden_rate'].apply(lambda x: f"${float(x):,.2f}" if x else "N/A")
+                df['total_cost_formatted'] = df['total_cost'].apply(lambda x: f"${x:,.2f}")
+
+            # Convert DataFrame to list of dictionaries for report generation
+            data_dicts = df.to_dict('records')
+        # else: data_dicts already set for payroll report type above
 
         # Get common info for both formats
         report_titles = {

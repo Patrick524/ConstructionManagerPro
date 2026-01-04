@@ -270,6 +270,54 @@ class DeviceLog(db.Model):
         return f'<DeviceLog {self.user_id} - {self.action} - {self.ts}>'
 
 
+class ForemanReviewedTime(db.Model):
+    """Foreman's reviewed/adjusted time entries - separate from worker submissions.
+
+    This table stores the foreman's interpretation of worker time. The original
+    worker submissions in TimeEntry remain immutable. Foremen can adjust hours,
+    job, labor activity freely - the reviewed time may differ significantly from
+    what the worker submitted.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Link to original worker submission (nullable for foreman-originated entries)
+    worker_time_entry_id = db.Column(db.Integer, db.ForeignKey('time_entry.id'), nullable=True)
+
+    # Core fields
+    worker_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    reviewer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    work_date = db.Column(db.Date, nullable=False)
+    job_id = db.Column(db.Integer, db.ForeignKey('job.id'), nullable=False)
+    labor_activity_id = db.Column(db.Integer, db.ForeignKey('labor_activity.id'), nullable=True)
+
+    # Reviewed values (foreman's interpretation)
+    reviewed_hours = db.Column(db.Numeric(5, 2), nullable=False)
+    notes = db.Column(db.Text, nullable=True)  # Foreman's explanation of adjustment
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    worker_time_entry = db.relationship('TimeEntry', foreign_keys=[worker_time_entry_id],
+                                        backref='foreman_reviews', lazy='joined')
+    worker = db.relationship('User', foreign_keys=[worker_id],
+                            backref='reviewed_time_entries', lazy='joined')
+    reviewer = db.relationship('User', foreign_keys=[reviewer_id],
+                              backref='time_reviews_given', lazy='joined')
+    job = db.relationship('Job', backref='foreman_reviewed_times', lazy='joined')
+    labor_activity = db.relationship('LaborActivity', backref='foreman_reviewed_times', lazy='joined')
+
+    # Unique constraint: one review per worker/date/job/activity combo
+    __table_args__ = (
+        db.UniqueConstraint('worker_id', 'work_date', 'job_id', 'labor_activity_id',
+                           name='unique_reviewed_time'),
+    )
+
+    def __repr__(self):
+        return f'<ForemanReviewedTime {self.worker_id} - {self.work_date} - {self.reviewed_hours}h>'
+
+
 class PasswordResetToken(db.Model):
     """Password reset tokens for forgot password functionality"""
     id = db.Column(db.Integer, primary_key=True)

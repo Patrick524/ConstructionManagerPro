@@ -3,8 +3,138 @@ import csv
 import io
 import math
 from flask import url_for
-from models import TimeEntry, User, Job, LaborActivity, WeeklyApprovalLock
+from models import TimeEntry, User, Job, LaborActivity, WeeklyApprovalLock, ForemanReviewedTime
 from app import db
+from sqlalchemy import literal, union_all, case
+from decimal import Decimal
+
+
+def get_effective_time_query(start_date, end_date, job_id=None, user_id=None, reviewed_only=False):
+    """
+    Build a query that returns effective time entries:
+    - Uses ForemanReviewedTime (reviewed hours) when available
+    - Falls back to TimeEntry (submitted hours) when no review exists
+
+    Args:
+        start_date: Start date for the report
+        end_date: End date for the report
+        job_id: Optional job filter
+        user_id: Optional user filter
+        reviewed_only: If True, only return reviewed entries (for payroll)
+
+    Returns:
+        List of dicts with: date, hours, worker_name, job_code, job_description,
+                           activity, trade_category, is_reviewed, reviewer_notes
+    """
+    # Query 1: Reviewed entries from ForemanReviewedTime
+    reviewed_query = db.session.query(
+        ForemanReviewedTime.work_date.label('date'),
+        ForemanReviewedTime.reviewed_hours.label('hours'),
+        User.name.label('worker_name'),
+        User.burden_rate,
+        Job.job_code,
+        Job.description.label('job_description'),
+        LaborActivity.name.label('activity'),
+        LaborActivity.trade_category,
+        literal(True).label('is_reviewed'),
+        ForemanReviewedTime.notes.label('reviewer_notes')
+    ).join(
+        User, ForemanReviewedTime.worker_id == User.id
+    ).join(
+        Job, ForemanReviewedTime.job_id == Job.id
+    ).join(
+        LaborActivity, ForemanReviewedTime.labor_activity_id == LaborActivity.id
+    ).filter(
+        ForemanReviewedTime.work_date >= start_date,
+        ForemanReviewedTime.work_date <= end_date
+    )
+
+    if job_id:
+        reviewed_query = reviewed_query.filter(ForemanReviewedTime.job_id == job_id)
+    if user_id:
+        reviewed_query = reviewed_query.filter(ForemanReviewedTime.worker_id == user_id)
+
+    if reviewed_only:
+        # For payroll, only return reviewed entries
+        return reviewed_query.order_by(User.name, ForemanReviewedTime.work_date).all()
+
+    # Query 2: Unreviewed entries from TimeEntry (where no ForemanReviewedTime exists)
+    # Get IDs of entries that have been reviewed
+    reviewed_entry_ids = db.session.query(
+        ForemanReviewedTime.worker_time_entry_id
+    ).filter(
+        ForemanReviewedTime.worker_time_entry_id.isnot(None)
+    ).subquery()
+
+    unreviewed_query = db.session.query(
+        TimeEntry.date.label('date'),
+        TimeEntry.hours.label('hours'),
+        User.name.label('worker_name'),
+        User.burden_rate,
+        Job.job_code,
+        Job.description.label('job_description'),
+        LaborActivity.name.label('activity'),
+        LaborActivity.trade_category,
+        literal(False).label('is_reviewed'),
+        literal(None).label('reviewer_notes')
+    ).join(
+        User, TimeEntry.user_id == User.id
+    ).join(
+        Job, TimeEntry.job_id == Job.id
+    ).join(
+        LaborActivity, TimeEntry.labor_activity_id == LaborActivity.id
+    ).filter(
+        TimeEntry.date >= start_date,
+        TimeEntry.date <= end_date,
+        ~TimeEntry.id.in_(reviewed_entry_ids)  # Exclude reviewed entries
+    )
+
+    if job_id:
+        unreviewed_query = unreviewed_query.filter(TimeEntry.job_id == job_id)
+    if user_id:
+        unreviewed_query = unreviewed_query.filter(TimeEntry.user_id == user_id)
+
+    # Combine both queries
+    reviewed_results = reviewed_query.all()
+    unreviewed_results = unreviewed_query.all()
+
+    # Convert to list of dicts and combine
+    all_results = []
+
+    for row in reviewed_results:
+        all_results.append({
+            'date': row.date,
+            'hours': float(row.hours) if isinstance(row.hours, Decimal) else row.hours,
+            'worker_name': row.worker_name,
+            'burden_rate': row.burden_rate,
+            'job_code': row.job_code,
+            'job_description': row.job_description,
+            'activity': row.activity,
+            'trade_category': row.trade_category,
+            'is_reviewed': True,
+            'reviewer_notes': row.reviewer_notes,
+            'approved': True  # Reviewed entries are considered approved
+        })
+
+    for row in unreviewed_results:
+        all_results.append({
+            'date': row.date,
+            'hours': float(row.hours) if isinstance(row.hours, Decimal) else row.hours,
+            'worker_name': row.worker_name,
+            'burden_rate': row.burden_rate,
+            'job_code': row.job_code,
+            'job_description': row.job_description,
+            'activity': row.activity,
+            'trade_category': row.trade_category,
+            'is_reviewed': False,
+            'reviewer_notes': None,
+            'approved': False  # Unreviewed entries are not approved
+        })
+
+    # Sort by worker name then date
+    all_results.sort(key=lambda x: (x['worker_name'], x['date']))
+
+    return all_results
 
 def calculate_distance(lat1, lon1, lat2, lon2):
     """

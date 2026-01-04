@@ -1,35 +1,129 @@
 {% extends "base.html" %}
 
-{% block title %}Approve Timesheet - Construction Timesheet{% endblock %}
+{% block title %}Review Timesheet - Construction Timesheet{% endblock %}
 
 {% block extra_css %}
 <style>
-/* Alternating row colors for the Time Entries for Review table only */
-.card .table tbody tr:nth-child(odd):not(.table-danger) {
+/* Side-by-side layout for submitted vs reviewed */
+.submitted-col {
+    background-color: #1e293b !important;
+    border-right: 2px solid #475569;
+}
+
+.reviewed-col {
+    background-color: #1a2332 !important;
+}
+
+/* Header styling */
+.submitted-header {
+    background-color: #334155 !important;
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+.reviewed-header {
+    background-color: #1e3a5f !important;
+    color: #60a5fa;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+/* Row styling */
+.entry-row:nth-child(odd) .submitted-col {
     background-color: #1a1f2e !important;
-    color: #ffffff;
 }
 
-.card .table tbody tr:nth-child(even):not(.table-danger) {
-    background-color: #334155;
-    color: #ffffff;
+.entry-row:nth-child(even) .submitted-col {
+    background-color: #1e293b !important;
 }
 
-/* Hover effect for Time Entries table */
-.card .table tbody tr:hover:not(.table-danger) {
-    background-color: #475569 !important;
-    color: #ffffff;
+.entry-row:nth-child(odd) .reviewed-col {
+    background-color: #162032 !important;
 }
 
-/* Preserve table-danger styling for missing entries */
-.card .table tbody tr.table-danger {
-    background-color: #dc3545 !important;
-    color: #ffffff;
+.entry-row:nth-child(even) .reviewed-col {
+    background-color: #1a2332 !important;
 }
 
-.card .table tbody tr.table-danger:hover {
-    background-color: #c82333 !important;
-    color: #ffffff;
+/* Missing day styling */
+.missing-row {
+    background-color: rgba(220, 53, 69, 0.15) !important;
+}
+
+.missing-badge {
+    background-color: #dc3545;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Editable input styling */
+.reviewed-input {
+    background-color: #0f172a !important;
+    border: 1px solid #334155 !important;
+    color: #e2e8f0 !important;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.reviewed-input:focus {
+    background-color: #1e293b !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25) !important;
+    color: #ffffff !important;
+}
+
+.reviewed-input.hours-input {
+    width: 70px;
+    text-align: right;
+}
+
+.reviewed-input.notes-input {
+    width: 100%;
+}
+
+/* Totals row styling */
+.totals-row {
+    background-color: #334155 !important;
+    font-weight: 600;
+}
+
+.totals-row td {
+    border-top: 2px solid #475569 !important;
+}
+
+/* Adjustment indicator */
+.adjustment-indicator {
+    font-size: 0.75rem;
+    color: #fbbf24;
+}
+
+/* Day column styling */
+.day-col {
+    background-color: #0f172a !important;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
+/* Quick approval card */
+.review-summary-card {
+    background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%);
+    border: 1px solid #3b82f6;
+}
+
+/* Submitted vs Reviewed labels */
+.section-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.7;
 }
 </style>
 {% endblock %}
@@ -38,7 +132,7 @@
 <div class="row mb-4">
     <div class="col-md-8">
         <h1 class="page-title">
-            <i class="fas fa-clipboard-check text-primary me-2"></i>Approve Timesheet
+            <i class="fas fa-clipboard-check text-primary me-2"></i>Review Timesheet
         </h1>
     </div>
     <div class="col-md-4">
@@ -71,156 +165,352 @@
     </div>
 </div>
 
-<!-- Quick Approval Card -->
-<div class="row mb-4">
-    <div class="col-lg-12">
-        <div class="card bg-light">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Quick Approval</h5>
-                        <p class="mb-0 text-muted">Total Hours: <strong>{{ weekly_total }} hrs</strong> for the week</p>
-                    </div>
-                    <form method="POST" action="{{ url_for('approve_timesheet', job_id=job.id, user_id=worker.id, start_date=week_start.strftime('%Y-%m-%d')) }}">
-                        {{ form.hidden_tag() }}
-                        <div class="d-none">
-                            {{ form.job_id() }}
-                            {{ form.user_id() }}
-                            {{ form.week_start() }}
+<!-- Main Review Form -->
+<form method="POST" action="{{ url_for('approve_timesheet', job_id=job.id, user_id=worker.id, start_date=week_start.strftime('%Y-%m-%d')) }}">
+    {{ form.hidden_tag() }}
+    <div class="d-none">
+        {{ form.job_id() }}
+        {{ form.user_id() }}
+        {{ form.week_start() }}
+    </div>
+
+    <!-- Summary Card with Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="card review-summary-card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <h5 class="mb-1">
+                                <i class="fas fa-balance-scale me-2"></i>Review Summary
+                                {% if has_draft %}
+                                    <span class="badge bg-warning text-dark ms-2" style="font-size: 0.6rem; vertical-align: middle;">
+                                        <i class="fas fa-edit me-1"></i>DRAFT
+                                    </span>
+                                {% endif %}
+                            </h5>
+                            <p class="mb-0 text-muted small">Compare submitted time against your reviewed values</p>
                         </div>
-                        <div class="d-flex">
-                            <button type="submit" class="btn btn-primary btn-lg me-2">
-                                <i class="fas fa-clipboard-check me-2"></i>Approve Timesheet
+                        <div class="col-md-4 text-center">
+                            <div class="d-flex justify-content-center gap-4">
+                                <div>
+                                    <span class="section-label text-muted">Submitted</span>
+                                    <h4 class="mb-0" id="submitted-total">{{ "%.2f"|format(submitted_weekly_total) }} hrs</h4>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-arrow-right text-muted"></i>
+                                </div>
+                                <div>
+                                    <span class="section-label text-info">Reviewed</span>
+                                    <h4 class="mb-0 text-info" id="reviewed-total">{{ "%.2f"|format(reviewed_weekly_total) }} hrs</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <!-- Save Draft button -->
+                            <button type="submit" name="action" value="save_draft" class="btn btn-outline-info btn-lg">
+                                <i class="fas fa-save me-2"></i>Save Draft
+                            </button>
+                            <!-- Finalize button -->
+                            <button type="submit" name="action" value="finalize" class="btn btn-success btn-lg ms-2">
+                                <i class="fas fa-lock me-2"></i>Finalize
                             </button>
                             {% if current_user.is_admin() %}
-                                <a href="{{ url_for('admin_review_time', start_date=week_start.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-lg">
+                                <a href="{{ url_for('admin_review_time', start_date=week_start.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-lg ms-2">
                                     Cancel
                                 </a>
                             {% else %}
-                                <a href="{{ url_for('foreman_dashboard', start_date=week_start.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-lg">
+                                <a href="{{ url_for('foreman_dashboard', start_date=week_start.strftime('%Y-%m-%d')) }}" class="btn btn-outline-secondary btn-lg ms-2">
                                     Cancel
                                 </a>
                             {% endif %}
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="row">
-    <div class="col-lg-8">
-        <div class="card mb-4">
-            <div class="card-header bg-secondary text-white">
-                <h5 class="mb-0">Time Entries for Review.</h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th>Day</th>
-                                <th>Date</th>
-                                <th>Labor Activity</th>
-                                <th>Hours</th>
-                                <th>Notes</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for day, day_entries in entries_by_date.items() %}
-                                {% if day_entries %}
-                                    {% for entry in day_entries %}
-                                        <tr>
-                                            {% if loop.first %}
-                                                <td rowspan="{{ day_entries|length }}">{{ day.strftime('%a') }}</td>
-                                                <td rowspan="{{ day_entries|length }}">{{ day.strftime('%b %d') }}</td>
-                                            {% endif %}
-                                            <td>{{ entry.labor_activity.name }}</td>
-                                            <td>{{ entry.hours }}</td>
-                                            <td>{{ entry.notes or '-' }}</td>
+    <div class="row">
+        <div class="col-lg-9">
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-columns me-2"></i>Submitted vs Reviewed Time</h5>
+                    <small class="text-light opacity-75">Edit reviewed values as needed</small>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2" class="day-col align-middle" style="width: 60px;">Day</th>
+                                    <th rowspan="2" class="day-col align-middle" style="width: 80px;">Date</th>
+                                    <!-- Submitted columns -->
+                                    <th colspan="3" class="submitted-header text-center">
+                                        <i class="fas fa-user me-1"></i>Worker Submitted
+                                    </th>
+                                    <!-- Reviewed columns -->
+                                    <th colspan="3" class="reviewed-header text-center">
+                                        <i class="fas fa-user-tie me-1"></i>Foreman Reviewed
+                                    </th>
+                                </tr>
+                                <tr>
+                                    <!-- Submitted sub-headers -->
+                                    <th class="submitted-header" style="width: 180px;">Activity</th>
+                                    <th class="submitted-header text-end" style="width: 70px;">Hours</th>
+                                    <th class="submitted-header" style="width: 120px;">Notes</th>
+                                    <!-- Reviewed sub-headers -->
+                                    <th class="reviewed-header" style="width: 180px;">Activity</th>
+                                    <th class="reviewed-header text-end" style="width: 90px;">Hours</th>
+                                    <th class="reviewed-header" style="width: 150px;">Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for day, day_entries in entries_by_date.items() %}
+                                    {% if day_entries %}
+                                        {# Day has worker submissions #}
+                                        {% for data in day_entries %}
+                                            <tr class="entry-row">
+                                                {% if loop.first %}
+                                                    <td rowspan="{{ day_entries|length }}" class="day-col">{{ day.strftime('%a') }}</td>
+                                                    <td rowspan="{{ day_entries|length }}" class="day-col">{{ day.strftime('%b %d') }}</td>
+                                                {% endif %}
+                                                <!-- Submitted values (read-only) -->
+                                                <td class="submitted-col">{{ data.submitted_activity.name }}</td>
+                                                <td class="submitted-col text-end">{{ "%.2f"|format(data.submitted_hours) }}</td>
+                                                <td class="submitted-col small text-muted">{{ data.submitted_notes or '-' }}</td>
+                                                <!-- Reviewed values (editable) -->
+                                                <td class="reviewed-col">
+                                                    <select name="reviewed_activity_{{ data.entry.id }}" class="form-select form-select-sm reviewed-input">
+                                                        {% for activity in all_activities %}
+                                                            <option value="{{ activity.id }}" {% if activity.id == data.reviewed_activity_id %}selected{% endif %}>
+                                                                {{ activity.name }}
+                                                            </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </td>
+                                                <td class="reviewed-col">
+                                                    <input type="number"
+                                                           name="reviewed_hours_{{ data.entry.id }}"
+                                                           class="form-control form-control-sm reviewed-input hours-input"
+                                                           value="{{ "%.2f"|format(data.reviewed_hours) }}"
+                                                           step="0.25"
+                                                           min="0"
+                                                           max="24"
+                                                           onchange="updateTotals()">
+                                                </td>
+                                                <td class="reviewed-col">
+                                                    <input type="text"
+                                                           name="reviewed_notes_{{ data.entry.id }}"
+                                                           class="form-control form-control-sm reviewed-input notes-input"
+                                                           value="{{ data.reviewed_notes or '' }}"
+                                                           placeholder="Adjustment note...">
+                                                    <!-- Hidden field for job (keeping same job for now) -->
+                                                    <input type="hidden" name="reviewed_job_{{ data.entry.id }}" value="{{ data.reviewed_job_id }}">
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% elif day in foreman_originated_by_date %}
+                                        {# Day has foreman-originated entries but no worker submissions #}
+                                        {% set foreman_entries = foreman_originated_by_date[day] %}
+                                        {% for fe in foreman_entries %}
+                                            <tr class="entry-row" style="background-color: #1e3a2e !important;">
+                                                {% if loop.first %}
+                                                    <td rowspan="{{ foreman_entries|length }}" class="day-col">{{ day.strftime('%a') }}</td>
+                                                    <td rowspan="{{ foreman_entries|length }}" class="day-col">{{ day.strftime('%b %d') }}</td>
+                                                {% endif %}
+                                                <!-- No worker submission -->
+                                                <td class="submitted-col text-center text-muted" colspan="3">
+                                                    <span class="badge bg-secondary">Foreman Added</span>
+                                                </td>
+                                                <!-- Foreman-originated values (editable) -->
+                                                <td class="reviewed-col">
+                                                    <select name="foreman_activity_{{ fe.id }}" class="form-select form-select-sm reviewed-input">
+                                                        <option value="">-- None --</option>
+                                                        {% for activity in all_activities %}
+                                                            <option value="{{ activity.id }}" {% if fe.labor_activity_id and activity.id == fe.labor_activity_id %}selected{% endif %}>
+                                                                {{ activity.name }}
+                                                            </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </td>
+                                                <td class="reviewed-col">
+                                                    <input type="number"
+                                                           name="foreman_hours_{{ fe.id }}"
+                                                           class="form-control form-control-sm reviewed-input hours-input"
+                                                           value="{{ "%.2f"|format(fe.reviewed_hours) }}"
+                                                           step="0.25"
+                                                           min="0"
+                                                           max="24"
+                                                           onchange="updateTotals()">
+                                                </td>
+                                                <td class="reviewed-col">
+                                                    <input type="text"
+                                                           name="foreman_notes_{{ fe.id }}"
+                                                           class="form-control form-control-sm reviewed-input notes-input"
+                                                           value="{{ fe.notes or '' }}"
+                                                           placeholder="Note...">
+                                                    <input type="hidden" name="foreman_job_{{ fe.id }}" value="{{ fe.job_id }}">
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        {# Day is missing - allow foreman to add entry #}
+                                        <tr class="missing-row entry-row">
+                                            <td class="day-col">{{ day.strftime('%a') }}</td>
+                                            <td class="day-col">{{ day.strftime('%b %d') }}</td>
+                                            <td colspan="3" class="submitted-col text-center">
+                                                <span class="missing-badge">Missing</span>
+                                                <span class="ms-2 text-muted small">No time submitted</span>
+                                            </td>
+                                            <!-- Editable fields for foreman to add time -->
+                                            <td class="reviewed-col">
+                                                <select name="new_activity_{{ day.strftime('%Y-%m-%d') }}" class="form-select form-select-sm reviewed-input">
+                                                    <option value="">-- Select --</option>
+                                                    {% for activity in all_activities %}
+                                                        <option value="{{ activity.id }}">{{ activity.name }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </td>
+                                            <td class="reviewed-col">
+                                                <input type="number"
+                                                       name="new_hours_{{ day.strftime('%Y-%m-%d') }}"
+                                                       class="form-control form-control-sm reviewed-input hours-input"
+                                                       value=""
+                                                       step="0.25"
+                                                       min="0"
+                                                       max="24"
+                                                       placeholder="0.00"
+                                                       onchange="updateTotals()">
+                                            </td>
+                                            <td class="reviewed-col">
+                                                <input type="text"
+                                                       name="new_notes_{{ day.strftime('%Y-%m-%d') }}"
+                                                       class="form-control form-control-sm reviewed-input notes-input"
+                                                       value=""
+                                                       placeholder="Note...">
+                                                <!-- Hidden field for job -->
+                                                <input type="hidden" name="new_job_{{ day.strftime('%Y-%m-%d') }}" value="{{ job.id }}">
+                                            </td>
                                         </tr>
-                                    {% endfor %}
-                                {% else %}
-                                    <tr class="table-danger">
-                                        <td>{{ day.strftime('%a') }}</td>
-                                        <td>{{ day.strftime('%b %d') }}</td>
-                                        <td colspan="3" class="text-center">
-                                            <span class="missing-badge">Missing</span> No time entered
-                                        </td>
-                                    </tr>
-                                {% endif %}
-                            {% endfor %}
-                        </tbody>
-                        <tfoot>
-                            <tr class="table-active fw-bold">
-                                <td colspan="3" class="text-end">Daily Totals:</td>
-                                <td colspan="2">
-                                    {% for day, total in daily_totals.items() %}
-                                        {{ day.strftime('%a') }}: {{ total }} hrs<br>
-                                    {% endfor %}
-                                </td>
-                            </tr>
-                            <tr class="table-primary fw-bold">
-                                <td colspan="3" class="text-end">Weekly Total:</td>
-                                <td colspan="2">{{ weekly_total }} hrs</td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="totals-row">
+                                    <td colspan="2" class="text-end day-col"><strong>Totals:</strong></td>
+                                    <td class="submitted-col"></td>
+                                    <td class="submitted-col text-end">
+                                        <strong id="submitted-footer-total">{{ "%.2f"|format(submitted_weekly_total) }}</strong>
+                                    </td>
+                                    <td class="submitted-col"></td>
+                                    <td class="reviewed-col"></td>
+                                    <td class="reviewed-col text-end">
+                                        <strong class="text-info" id="reviewed-footer-total">{{ "%.2f"|format(reviewed_weekly_total) }}</strong>
+                                    </td>
+                                    <td class="reviewed-col">
+                                        <span id="adjustment-indicator" class="adjustment-indicator">
+                                            {% if submitted_weekly_total != reviewed_weekly_total %}
+                                                <i class="fas fa-exclamation-triangle me-1"></i>Adjusted
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Review Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Job:</strong> {{ job.job_code }}<br>
+                        <small class="text-muted">{{ job.description }}</small>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Worker:</strong> {{ worker.name }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Week:</strong><br>
+                        {{ week_start.strftime('%b %d') }} - {{ week_end.strftime('%b %d, %Y') }}
+                    </div>
+                    <hr>
+
+                    {% if missing_days %}
+                        <div class="alert alert-warning py-2">
+                            <h6 class="alert-heading mb-1">
+                                <i class="fas fa-exclamation-triangle me-1"></i>Missing Days
+                            </h6>
+                            <ul class="mb-0 ps-3 small">
+                                {% for day in missing_days|sort %}
+                                    <li>{{ day.strftime('%A, %b %d') }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success py-2">
+                            <i class="fas fa-check-circle me-1"></i>All weekdays have entries
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-body bg-light">
+                    <h6><i class="fas fa-lightbulb me-2 text-warning"></i>Review Tips</h6>
+                    <ul class="mb-0 small ps-3">
+                        <li>Edit hours in the "Reviewed" column</li>
+                        <li>Add notes to explain adjustments</li>
+                        <li>Change activity if miscoded</li>
+                        <li>Original submissions remain unchanged</li>
+                    </ul>
+                    <hr class="my-2">
+                    <h6 class="mt-2"><i class="fas fa-info-circle me-2 text-info"></i>Workflow</h6>
+                    <ul class="mb-0 small ps-3">
+                        <li><strong>Save Draft:</strong> Save progress, return later to continue editing</li>
+                        <li><strong>Finalize:</strong> Lock timesheet, include in payroll</li>
+                    </ul>
                 </div>
             </div>
         </div>
     </div>
-    
-    <div class="col-lg-4">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Approval Details</h5>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <strong>Job:</strong> {{ job.job_code }} - {{ job.description }}<br>
-                    <strong>Worker:</strong> {{ worker.name }}<br>
-                    <strong>Week Starting:</strong> {{ week_start.strftime('%b %d, %Y') }}
-                </div>
-                <hr>
-                
-                {% if missing_days %}
-                    <div class="alert alert-warning">
-                        <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Missing Days</h5>
-                        <p>The following days are missing time entries:</p>
-                        <ul>
-                            {% for day in missing_days %}
-                                <li>{{ day.strftime('%A, %b %d') }}</li>
-                            {% endfor %}
-                        </ul>
-                        <p class="mb-0"><small class="text-muted">You can still approve this timesheet.</small></p>
-                    </div>
-                {% else %}
-                    <div class="alert alert-success">
-                        <i class="fas fa-check-circle me-2"></i>All weekdays (Monday-Friday) have time entries
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-        
-        <div class="card mt-4">
-            <div class="card-body bg-light">
-                <h5><i class="fas fa-info-circle me-2"></i>Important Notes</h5>
-                <ul class="mb-0 mt-2">
-                    <li>Approval locks the timesheet for editing</li>
-                    <li>Admin will be notified after approval</li>
-                    <li>You can approve timesheets with missing entries</li>
-                    <li>Check for accurate hours and activities</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
+</form>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // No validation script needed anymore - button always enabled
+function updateTotals() {
+    // Recalculate reviewed totals when hours change
+    let reviewedTotal = 0;
+    document.querySelectorAll('.hours-input').forEach(function(input) {
+        const value = parseFloat(input.value) || 0;
+        reviewedTotal += value;
+    });
+
+    // Update the displayed totals
+    document.getElementById('reviewed-total').textContent = reviewedTotal.toFixed(2) + ' hrs';
+    document.getElementById('reviewed-footer-total').textContent = reviewedTotal.toFixed(2);
+
+    // Show/hide adjustment indicator
+    const submittedTotal = parseFloat('{{ submitted_weekly_total }}');
+    const indicator = document.getElementById('adjustment-indicator');
+    if (Math.abs(submittedTotal - reviewedTotal) > 0.01) {
+        indicator.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Adjusted';
+    } else {
+        indicator.innerHTML = '';
+    }
+}
+
+// Add event listeners to all hours inputs
+document.querySelectorAll('.hours-input').forEach(function(input) {
+    input.addEventListener('input', updateTotals);
+    input.addEventListener('change', updateTotals);
+});
 </script>
 {% endblock %}
