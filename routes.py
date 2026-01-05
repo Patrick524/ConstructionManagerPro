@@ -3809,58 +3809,99 @@ def admin_gps_compliance():
         start_datetime = datetime.combine(start_date, time.min)
         end_datetime = datetime.combine(end_date, time.max)
         
-        # Query clock sessions with GPS data within date range
+        # Query clock sessions where EITHER clock-in OR clock-out is a violation (> 0.5 miles)
+        from sqlalchemy import or_
         clock_sessions = ClockSession.query.filter(
             ClockSession.clock_in >= start_datetime,
             ClockSession.clock_in <= end_datetime,
-            ClockSession.clock_in_distance_mi.isnot(None),
-            ClockSession.clock_in_distance_mi > 0.5  # Only violations > 0.5 miles
+            or_(
+                db.and_(ClockSession.clock_in_distance_mi.isnot(None), ClockSession.clock_in_distance_mi > 0.5),
+                db.and_(ClockSession.clock_out_distance_mi.isnot(None), ClockSession.clock_out_distance_mi > 0.5)
+            )
         ).options(
             db.joinedload(ClockSession.user),
-            db.joinedload(ClockSession.job)
+            db.joinedload(ClockSession.job),
+            db.joinedload(ClockSession.labor_activity)
         ).all()
-        
+
         # Categorize violations
         fraud_risk = []  # 5+ miles
-        major = []       # 2-5 miles  
+        major = []       # 2-5 miles
         minor = []       # 0.5-2 miles
         worker_counts = {}
-        
+
         total_clock_ins = ClockSession.query.filter(
             ClockSession.clock_in >= start_datetime,
             ClockSession.clock_in <= end_datetime
         ).count()
-        
+
         for session in clock_sessions:
-            distance = session.clock_in_distance_mi
-            # Flag poor GPS accuracy (>100 meters)
-            poor_gps_accuracy = session.clock_in_accuracy and session.clock_in_accuracy > 100
-            
+            # Get distances (default to 0 if None for comparison)
+            clock_in_distance = session.clock_in_distance_mi or 0
+            clock_out_distance = session.clock_out_distance_mi or 0
+
+            # Use the worst (maximum) distance for categorization
+            worst_distance = max(clock_in_distance, clock_out_distance)
+
+            # Determine violation status for each event
+            clock_in_status = 'compliant'
+            if clock_in_distance >= 5.0:
+                clock_in_status = 'fraud_risk'
+            elif clock_in_distance >= 2.0:
+                clock_in_status = 'major'
+            elif clock_in_distance >= 0.5:
+                clock_in_status = 'minor'
+
+            clock_out_status = 'compliant'
+            if clock_out_distance >= 5.0:
+                clock_out_status = 'fraud_risk'
+            elif clock_out_distance >= 2.0:
+                clock_out_status = 'major'
+            elif clock_out_distance >= 0.5:
+                clock_out_status = 'minor'
+
+            # Calculate hours worked
+            hours_worked = session.get_duration_hours() if session.clock_out else None
+
             violation_data = {
+                'session_id': session.id,
                 'worker_name': session.user.name,
                 'job_code': session.job.job_code,
                 'job_description': session.job.description,
-                'distance': round(distance, 2),
-                'datetime': session.clock_in,
-                'location': session.job.location or 'No location set',
-                'clock_in_latitude': session.clock_in_latitude,
-                'clock_in_longitude': session.clock_in_longitude,
+                'job_location': session.job.location or 'No address set',
+                'labor_activity': session.labor_activity.name if session.labor_activity else 'Unknown',
                 'job_latitude': session.job.latitude,
                 'job_longitude': session.job.longitude,
-                'gps_accuracy': round(session.clock_in_accuracy, 1) if session.clock_in_accuracy else None,
-                'poor_gps_accuracy': poor_gps_accuracy
+                # Clock-in data
+                'clock_in_time': session.clock_in,
+                'clock_in_distance': round(clock_in_distance, 2) if clock_in_distance else None,
+                'clock_in_status': clock_in_status,
+                'clock_in_latitude': session.clock_in_latitude,
+                'clock_in_longitude': session.clock_in_longitude,
+                'clock_in_accuracy': round(session.clock_in_accuracy, 1) if session.clock_in_accuracy else None,
+                # Clock-out data
+                'clock_out_time': session.clock_out,
+                'clock_out_distance': round(clock_out_distance, 2) if clock_out_distance else None,
+                'clock_out_status': clock_out_status,
+                'clock_out_latitude': session.clock_out_latitude,
+                'clock_out_longitude': session.clock_out_longitude,
+                'clock_out_accuracy': round(session.clock_out_accuracy, 1) if session.clock_out_accuracy else None,
+                # Session info
+                'hours_worked': round(hours_worked, 2) if hours_worked else None,
+                'is_active': session.is_active,
+                'worst_distance': round(worst_distance, 2)
             }
-            
+
             # Count violations per worker
             if session.user.name not in worker_counts:
                 worker_counts[session.user.name] = {'total': 0, 'fraud_risk': 0, 'major': 0, 'minor': 0}
             worker_counts[session.user.name]['total'] += 1
-            
-            # Categorize by distance
-            if distance >= 5.0:
+
+            # Categorize by worst distance
+            if worst_distance >= 5.0:
                 fraud_risk.append(violation_data)
                 worker_counts[session.user.name]['fraud_risk'] += 1
-            elif distance >= 2.0:
+            elif worst_distance >= 2.0:
                 major.append(violation_data)
                 worker_counts[session.user.name]['major'] += 1
             else:
@@ -3890,9 +3931,9 @@ def admin_gps_compliance():
         }
         
         violations_data = {
-            'fraud_risk': sorted(fraud_risk, key=lambda x: x['distance'], reverse=True),
-            'major': sorted(major, key=lambda x: x['distance'], reverse=True),
-            'minor': sorted(minor, key=lambda x: x['distance'], reverse=True),
+            'fraud_risk': sorted(fraud_risk, key=lambda x: x['worst_distance'], reverse=True),
+            'major': sorted(major, key=lambda x: x['worst_distance'], reverse=True),
+            'minor': sorted(minor, key=lambda x: x['worst_distance'], reverse=True),
             'worker_summary': sorted(worker_counts.items(), key=lambda x: x[1]['total'], reverse=True)
         }
         
