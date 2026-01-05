@@ -42,7 +42,11 @@ Jobs:
 Workers:
 - Worker trade qualifications stored (used to constrain job/trade visibility)
 - Burden rate ($/hr) stored for job costing calculations
-- Per-worker toggle: Use Clock In/Out System exists but not enforced
+- Time entry method: Each worker is configured as either "timeclock" or "manual":
+  - Timeclock workers (`use_clock_in=True`): Use clock-in/clock-out system with GPS capture
+  - Manual workers (`use_clock_in=False`): Use quick daily entry form (date + job + activity + hours)
+  - The toggle is stored in User.use_clock_in boolean field
+  - UI shows appropriate interface based on worker's configured method
 
 Timekeeping:
 - Two source tables: TimeEntry (manual hours) and ClockSession (clock in/out events)
@@ -110,6 +114,31 @@ Pull latest: cd /opt/ConstructionManagerPro && git pull origin main
 Activate venv: source /opt/ConstructionManagerPro/venv/bin/activate
 Run migrations: flask db upgrade
 
+## Tests
+
+Playwright end-to-end tests in `tests/` directory. Run against live app at https://app.buildertimepro.com.
+
+Test files:
+- `conftest.py` - Shared fixtures, login helper, test credentials
+- `test_auth.py` - Login flow tests (worker + foreman login, invalid password)
+- `test_foreman_review.py` - Foreman review workflow (dashboard, review screen, save draft, finalize, UI elements)
+- `test_manual_time_entry.py` - Data generation script (enters 30 days of time entries, slow)
+
+Test credentials (in conftest.py):
+- Worker: worker1@example.com / password123
+- Foreman: foreman@example.com / password123
+
+Run tests:
+- All tests: `./venv/bin/pytest tests/ -v`
+- Auth tests only: `./venv/bin/pytest tests/test_auth.py -v`
+- Foreman review tests: `./venv/bin/pytest tests/test_foreman_review.py -v`
+- Skip slow data generation: `./venv/bin/pytest tests/ -v --ignore=tests/test_manual_time_entry.py`
+
+Notes:
+- Tests use previous week's data (current week may not have entries)
+- Foreman review tests navigate to weeks with actual worker time data
+- Playwright browsers installed via: `/opt/ConstructionManagerPro/venv/bin/playwright install`
+
 ## Operational notes
 
 - No login rate limiting
@@ -120,7 +149,6 @@ Run migrations: flask db upgrade
 
 - Overlapping clock sessions not prevented
 - Duplicate time between manual + clock possible
-- use_clock_in toggle exists but not strictly enforced
 - No GPS accuracy/precision captured
 
 ## Suggested improvements
