@@ -442,22 +442,62 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize modal event listeners
     const modal = document.getElementById('gpsViolationModal');
-    modal.addEventListener('shown.bs.modal', function() {
-        // Invalidate map size when modal is shown
-        if (violationMap) {
-            setTimeout(() => {
-                violationMap.invalidateSize();
-            }, 100);
-        }
-    });
+    if (modal) {
+        modal.addEventListener('shown.bs.modal', function() {
+            // Invalidate map size when modal is shown
+            if (violationMap) {
+                setTimeout(() => {
+                    violationMap.invalidateSize();
+                }, 100);
+            }
+        });
 
-    modal.addEventListener('hidden.bs.modal', function() {
-        // Clean up map when modal is closed
-        if (violationMap) {
-            violationMap.remove();
-            violationMap = null;
-        }
-    });
+        modal.addEventListener('hidden.bs.modal', function() {
+            // Clean up map when modal is closed
+            if (violationMap) {
+                violationMap.remove();
+                violationMap = null;
+            }
+        });
+    }
+
+    // Worker filter functionality
+    const workerFilter = document.getElementById('workerFilter');
+    if (workerFilter) {
+        workerFilter.addEventListener('change', function() {
+            const selectedWorker = this.value;
+            const tables = document.querySelectorAll('#gps-compliance table tbody');
+            let visibleCount = 0;
+            let totalCount = 0;
+
+            tables.forEach(tbody => {
+                const rows = tbody.querySelectorAll('tr');
+                rows.forEach(row => {
+                    const workerCell = row.querySelector('td:first-child');
+                    if (workerCell) {
+                        totalCount++;
+                        const workerName = workerCell.textContent.trim();
+                        if (!selectedWorker || workerName === selectedWorker) {
+                            row.style.display = '';
+                            visibleCount++;
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                });
+            });
+
+            // Update filter count display
+            const filterCount = document.getElementById('filterCount');
+            if (filterCount) {
+                if (selectedWorker) {
+                    filterCount.textContent = `Showing ${visibleCount} of ${totalCount} violations`;
+                } else {
+                    filterCount.textContent = '';
+                }
+            }
+        });
+    }
 });
 
 function showViolationMap(iconElement) {
