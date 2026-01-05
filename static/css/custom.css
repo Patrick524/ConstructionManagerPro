@@ -29,33 +29,128 @@
     border-radius: 0.25rem;
 }
 
-/* Trade-specific color coding */
-.trade-drywall {
-    border-left: 4px solid var(--bs-primary);
+/* Trade-specific color coding - cards get left border */
+.card.trade-drywall {
+    border-left: 4px solid #4a90d9;
 }
 
-.trade-electrical {
-    border-left: 4px solid var(--bs-warning);
+.card.trade-electrical {
+    border-left: 4px solid #f0ad4e;
 }
 
-.trade-plumbing {
-    border-left: 4px solid var(--bs-info);
+.card.trade-plumbing {
+    border-left: 4px solid #5bc0de;
 }
 
-.trade-carpentry {
-    border-left: 4px solid var(--bs-success);
+.card.trade-carpentry {
+    border-left: 4px solid #5cb85c;
 }
 
-.trade-painting {
-    border-left: 4px solid var(--bs-purple);
+.card.trade-painting {
+    border-left: 4px solid #9b59b6;
 }
 
-.trade-masonry {
-    border-left: 4px solid var(--bs-orange);
+.card.trade-masonry {
+    border-left: 4px solid #e67e22;
 }
 
-.trade-other {
-    border-left: 4px solid var(--bs-secondary);
+.card.trade-hvac {
+    border-left: 4px solid #1abc9c;
+}
+
+.card.trade-roofing {
+    border-left: 4px solid #e74c3c;
+}
+
+.card.trade-concrete {
+    border-left: 4px solid #95a5a6;
+}
+
+.card.trade-other {
+    border-left: 4px solid #6c757d;
+}
+
+/* Trade badges - colored backgrounds */
+.badge.trade-drywall {
+    background-color: #4a90d9 !important;
+    color: #fff !important;
+}
+
+.badge.trade-electrical {
+    background-color: #f0ad4e !important;
+    color: #000 !important;
+}
+
+.badge.trade-plumbing {
+    background-color: #5bc0de !important;
+    color: #000 !important;
+}
+
+.badge.trade-carpentry {
+    background-color: #5cb85c !important;
+    color: #fff !important;
+}
+
+.badge.trade-painting {
+    background-color: #9b59b6 !important;
+    color: #fff !important;
+}
+
+.badge.trade-masonry {
+    background-color: #e67e22 !important;
+    color: #fff !important;
+}
+
+.badge.trade-hvac {
+    background-color: #1abc9c !important;
+    color: #fff !important;
+}
+
+.badge.trade-roofing {
+    background-color: #e74c3c !important;
+    color: #fff !important;
+}
+
+.badge.trade-concrete {
+    background-color: #95a5a6 !important;
+    color: #000 !important;
+}
+
+.badge.trade-other {
+    background-color: #6c757d !important;
+    color: #fff !important;
+}
+
+/* Softer amber color for Incomplete badge */
+.badge.bg-amber {
+    background-color: #f0ad4e !important;
+    color: #000 !important;
+}
+
+/* Progress bar color coding by completion */
+.progress-bar.progress-low {
+    background-color: #dc3545 !important;
+}
+
+.progress-bar.progress-medium {
+    background-color: #f0ad4e !important;
+}
+
+.progress-bar.progress-high {
+    background-color: #28a745 !important;
+}
+
+/* Solid green Review button */
+.btn-review {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+    color: #fff !important;
+}
+
+.btn-review:hover {
+    background-color: #218838 !important;
+    border-color: #1e7e34 !important;
+    color: #fff !important;
 }
 
 /* Common page structures */

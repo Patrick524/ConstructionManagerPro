@@ -116,25 +116,22 @@
                                                 <td>{{ worker_data.total_hours }}</td>
                                                 <td>
                                                     <div class="progress" style="height: 20px;">
-                                                        {% if worker_data.days_with_entries == 0 %}
-                                                            <div class="progress-bar bg-danger" 
-                                                                role="progressbar" 
-                                                                style="width: 100%;" 
-                                                                aria-valuenow="{{ worker_data.days_with_entries }}" 
-                                                                aria-valuemin="0" 
-                                                                aria-valuemax="7">
-                                                                {{ worker_data.days_with_entries }}/7
-                                                            </div>
+                                                        {% set pct = (worker_data.days_with_entries / 7 * 100)|int %}
+                                                        {% if worker_data.days_with_entries <= 2 %}
+                                                            {% set progress_class = 'progress-low' %}
+                                                        {% elif worker_data.days_with_entries <= 5 %}
+                                                            {% set progress_class = 'progress-medium' %}
                                                         {% else %}
-                                                            <div class="progress-bar bg-{{ 'success' if worker_data.days_with_entries == 7 else 'warning' }}" 
-                                                                role="progressbar" 
-                                                                style="width: {{ (worker_data.days_with_entries / 7 * 100)|int }}%;" 
-                                                                aria-valuenow="{{ worker_data.days_with_entries }}" 
-                                                                aria-valuemin="0" 
-                                                                aria-valuemax="7">
-                                                                {{ worker_data.days_with_entries }}/7
-                                                            </div>
+                                                            {% set progress_class = 'progress-high' %}
                                                         {% endif %}
+                                                        <div class="progress-bar {{ progress_class }}"
+                                                            role="progressbar"
+                                                            style="width: {{ pct if pct > 0 else 100 }}%;"
+                                                            aria-valuenow="{{ worker_data.days_with_entries }}"
+                                                            aria-valuemin="0"
+                                                            aria-valuemax="7">
+                                                            {{ worker_data.days_with_entries }}/7
+                                                        </div>
                                                     </div>
                                                 </td>
                                                 <td>
@@ -143,15 +140,15 @@
                                                     {% elif worker_data.has_all_days %}
                                                         <span class="badge bg-primary">Ready for Approval</span>
                                                     {% elif worker_data.days_with_entries > 0 and worker_data.days_with_entries < 5 %}
-                                                        <span class="badge bg-warning text-dark">Incomplete</span>
+                                                        <span class="badge bg-amber">Incomplete</span>
                                                     {% else %}
                                                         <span class="badge bg-secondary">Pending</span>
                                                     {% endif %}
                                                 </td>
                                                 <td>
                                                     <div class="d-flex gap-1">
-                                                        <a href="{{ url_for('approve_timesheet', job_id=job_item.job.id, user_id=worker_data.worker.id, start_date=start_date.strftime('%Y-%m-%d')) }}" 
-                                                           class="btn btn-sm {{ 'btn-success' if worker_data.is_approved else 'btn-outline-primary' }}"
+                                                        <a href="{{ url_for('approve_timesheet', job_id=job_item.job.id, user_id=worker_data.worker.id, start_date=start_date.strftime('%Y-%m-%d')) }}"
+                                                           class="btn btn-sm {{ 'btn-success' if worker_data.is_approved else 'btn-review' }}"
                                                            {{ 'disabled' if worker_data.is_approved else '' }}
                                                            title="{{ 'Approved' if worker_data.is_approved else 'Review timesheet' }}">
                                                             {% if worker_data.is_approved %}
@@ -199,9 +196,10 @@
             <div class="card-body" style="background-color: #1f1f2e; color: #e0e0e0;">
                 <div class="row">
                     <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Status Badges</h6>
                         <div class="list-group mb-3">
                             <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
-                                <span class="badge bg-warning me-3 px-3 py-2 fs-6 fw-bold">Incomplete</span>
+                                <span class="badge bg-amber me-3 px-3 py-2 fs-6 fw-bold">Incomplete</span>
                                 <span class="fw-bold">Worker has submitted time for fewer than 5 days</span>
                             </div>
                             <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
@@ -213,25 +211,58 @@
                                 <span class="fw-bold">Time has been approved and is now locked</span>
                             </div>
                         </div>
+                        <h6 class="text-muted mb-2">Progress Bar Colors</h6>
+                        <div class="list-group mb-3">
+                            <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
+                                <div class="progress me-3" style="width: 60px; height: 20px;">
+                                    <div class="progress-bar progress-low" style="width: 100%;">0-2</div>
+                                </div>
+                                <span class="fw-bold">Needs attention (0-2 days)</span>
+                            </div>
+                            <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
+                                <div class="progress me-3" style="width: 60px; height: 20px;">
+                                    <div class="progress-bar progress-medium" style="width: 100%;">3-5</div>
+                                </div>
+                                <span class="fw-bold">In progress (3-5 days)</span>
+                            </div>
+                            <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
+                                <div class="progress me-3" style="width: 60px; height: 20px;">
+                                    <div class="progress-bar progress-high" style="width: 100%;">6-7</div>
+                                </div>
+                                <span class="fw-bold">Complete (6-7 days)</span>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="list-group">
+                        <h6 class="text-muted mb-2">Actions & Icons</h6>
+                        <div class="list-group mb-3">
+                            <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
+                                <a class="btn btn-sm btn-review me-3"><i class="fas fa-clipboard-check me-1"></i>Review</a>
+                                <span class="fw-bold">Click to review and approve timesheet</span>
+                            </div>
                             <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
                                 <i class="fas fa-clock text-info me-3 fa-lg"></i>
-                                <span class="fw-bold">Click the <i class="fas fa-clock"></i> icon to enter time on behalf of a worker.</span>
+                                <span class="fw-bold">Click to enter time on behalf of a worker</span>
                             </div>
                             <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
                                 <i class="fas fa-sticky-note text-warning me-3 fa-lg"></i>
-                                <span class="fw-bold">The <i class="fas fa-sticky-note text-warning"></i> icon indicates that a worker has added notes to their time entries.</span>
-                            </div>
-                            <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
-                                <i class="fas fa-exclamation-triangle text-warning me-3 fa-lg"></i>
-                                <span class="fw-bold">You can now approve timesheets with missing entries.</span>
+                                <span class="fw-bold">Worker has added notes to time entries</span>
                             </div>
                             <div class="list-group-item d-flex align-items-center" style="background-color: #1f1f2e; color: #e0e0e0;">
                                 <i class="fas fa-lock text-secondary me-3 fa-lg"></i>
-                                <span class="fw-bold">Once approved, time entries are locked and cannot be modified.</span>
+                                <span class="fw-bold">Approved time is locked from edits</span>
                             </div>
+                        </div>
+                        <h6 class="text-muted mb-2">Trade Colors</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge trade-drywall">Drywall</span>
+                            <span class="badge trade-electrical">Electrical</span>
+                            <span class="badge trade-plumbing">Plumbing</span>
+                            <span class="badge trade-carpentry">Carpentry</span>
+                            <span class="badge trade-painting">Painting</span>
+                            <span class="badge trade-masonry">Masonry</span>
+                            <span class="badge trade-hvac">HVAC</span>
+                            <span class="badge trade-roofing">Roofing</span>
                         </div>
                     </div>
                 </div>
