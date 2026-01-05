@@ -55,8 +55,21 @@ def get_effective_time_query(start_date, end_date, job_id=None, user_id=None, re
         reviewed_query = reviewed_query.filter(ForemanReviewedTime.worker_id == user_id)
 
     if reviewed_only:
-        # For payroll, only return reviewed entries
-        return reviewed_query.order_by(User.name, ForemanReviewedTime.work_date).all()
+        # For payroll, only return reviewed entries - convert to dicts
+        results = reviewed_query.order_by(User.name, ForemanReviewedTime.work_date).all()
+        return [{
+            'date': row.date,
+            'hours': float(row.hours) if isinstance(row.hours, Decimal) else row.hours,
+            'worker_name': row.worker_name,
+            'burden_rate': row.burden_rate,
+            'job_code': row.job_code,
+            'job_description': row.job_description,
+            'activity': row.activity,
+            'trade_category': row.trade_category,
+            'is_reviewed': True,
+            'reviewer_notes': row.reviewer_notes,
+            'approved': True
+        } for row in results]
 
     # Query 2: Unreviewed entries from TimeEntry (where no ForemanReviewedTime exists)
     # Get IDs of entries that have been reviewed

@@ -3330,7 +3330,7 @@ def generate_reports():
             )
         elif report_type == 'job_assignment':
             from sqlalchemy import func
-            from models import job_workers, Job, User, Trade
+            # Note: User, Job, Trade already imported at top of file
             # Query for CURRENT job assignments: GROUP BY job with worker summary
 
             # Database-compatible aggregation function
@@ -3870,9 +3870,16 @@ def admin_gps_compliance():
         # Calculate summary statistics
         total_violations = len(clock_sessions)
         compliant_count = total_clock_ins - total_violations
-        
+
+        # Calculate average distance from all violations
+        if clock_sessions:
+            avg_distance = sum(session.clock_in_distance_mi for session in clock_sessions) / len(clock_sessions)
+        else:
+            avg_distance = None
+
         executive_summary = {
             'total_clock_ins': total_clock_ins,
+            'avg_distance': avg_distance,
             'compliant_count': compliant_count,
             'compliant_percentage': round((compliant_count / total_clock_ins * 100) if total_clock_ins > 0 else 0, 1),
             'violations_count': total_violations,

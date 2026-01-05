@@ -146,6 +146,34 @@
             {% if violations_data %}
             <hr>
 
+            <!-- Worker Filter -->
+            <div class="d-flex align-items-center mb-3">
+                <label for="workerFilter" class="me-2 text-nowrap"><i class="fas fa-filter me-1"></i>Filter by Worker:</label>
+                <select id="workerFilter" class="form-select form-select-sm" style="max-width: 250px;">
+                    <option value="">All Workers</option>
+                    {% set workers = [] %}
+                    {% for v in violations_data.fraud_risk %}
+                        {% if v.worker_name not in workers %}
+                            {% set _ = workers.append(v.worker_name) %}
+                        {% endif %}
+                    {% endfor %}
+                    {% for v in violations_data.major %}
+                        {% if v.worker_name not in workers %}
+                            {% set _ = workers.append(v.worker_name) %}
+                        {% endif %}
+                    {% endfor %}
+                    {% for v in violations_data.minor %}
+                        {% if v.worker_name not in workers %}
+                            {% set _ = workers.append(v.worker_name) %}
+                        {% endif %}
+                    {% endfor %}
+                    {% for worker in workers|sort %}
+                        <option value="{{ worker }}">{{ worker }}</option>
+                    {% endfor %}
+                </select>
+                <span id="filterCount" class="ms-3 text-muted small"></span>
+            </div>
+
             <!-- Fraud Risk Violations -->
             {% if violations_data.fraud_risk %}
             <section class="mb-3">
@@ -202,12 +230,10 @@
                         <thead class="table-dark">
                             <tr>
                                 <th>Worker</th>
-                                <th>Job</th>
-                                <th>Distance (mi)</th>
-                                <th>GPS Accuracy</th>
+                                <th>Job Site</th>
+                                <th>Distance</th>
                                 <th>Date/Time</th>
-                                <th>Clock-in Coordinates</th>
-                                <th>Job Location</th>
+                                <th>Map</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -219,27 +245,20 @@
                                     <small class="text-muted">{{ violation.job_description }}</small>
                                 </td>
                                 <td><span class="badge bg-warning">{{ violation.distance }}</span></td>
+                                <td>{{ violation.datetime.strftime('%m/%d/%y %I:%M %p') }}</td>
                                 <td>
-                                    {% if violation.gps_accuracy %}
-                                        {% if violation.poor_gps_accuracy %}
-                                            <span class="badge bg-warning text-dark">{{ violation.gps_accuracy }}m</span>
-                                            <small class="text-warning d-block">Poor Signal</small>
-                                        {% else %}
-                                            <span class="badge bg-success">{{ violation.gps_accuracy }}m</span>
-                                        {% endif %}
-                                    {% else %}
-                                        <span class="text-muted">N/A</span>
-                                    {% endif %}
+                                    <span class="text-2xl violation-map-icon" style="cursor: pointer; font-size: 1.5rem;"
+                                          title="View location on map"
+                                          data-worker-name="{{ violation.worker_name }}"
+                                          data-job-code="{{ violation.job_code }}"
+                                          data-job-description="{{ violation.job_description }}"
+                                          data-distance="{{ violation.distance }}"
+                                          data-datetime="{{ violation.datetime.strftime('%m/%d/%y %I:%M %p') }}"
+                                          data-job-lat="{{ violation.job_latitude }}"
+                                          data-job-lng="{{ violation.job_longitude }}"
+                                          data-clock-lat="{{ violation.clock_in_latitude }}"
+                                          data-clock-lng="{{ violation.clock_in_longitude }}">🗺️</span>
                                 </td>
-                                <td>{{ violation.datetime.strftime('%m/%d/%Y %I:%M %p') }}</td>
-                                <td>
-                                    {% if violation.clock_in_latitude and violation.clock_in_longitude %}
-                                        <small>{{ "%.4f"|format(violation.clock_in_latitude) }}, {{ "%.4f"|format(violation.clock_in_longitude) }}</small>
-                                    {% else %}
-                                        <span class="text-muted">N/A</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ violation.location }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -258,12 +277,10 @@
                         <thead class="table-dark">
                             <tr>
                                 <th>Worker</th>
-                                <th>Job</th>
-                                <th>Distance (mi)</th>
-                                <th>GPS Accuracy</th>
+                                <th>Job Site</th>
+                                <th>Distance</th>
                                 <th>Date/Time</th>
-                                <th>Clock-in Coordinates</th>
-                                <th>Job Location</th>
+                                <th>Map</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -275,27 +292,20 @@
                                     <small class="text-muted">{{ violation.job_description }}</small>
                                 </td>
                                 <td><span class="badge bg-info">{{ violation.distance }}</span></td>
+                                <td>{{ violation.datetime.strftime('%m/%d/%y %I:%M %p') }}</td>
                                 <td>
-                                    {% if violation.gps_accuracy %}
-                                        {% if violation.poor_gps_accuracy %}
-                                            <span class="badge bg-warning text-dark">{{ violation.gps_accuracy }}m</span>
-                                            <small class="text-warning d-block">Poor Signal</small>
-                                        {% else %}
-                                            <span class="badge bg-success">{{ violation.gps_accuracy }}m</span>
-                                        {% endif %}
-                                    {% else %}
-                                        <span class="text-muted">N/A</span>
-                                    {% endif %}
+                                    <span class="text-2xl violation-map-icon" style="cursor: pointer; font-size: 1.5rem;"
+                                          title="View location on map"
+                                          data-worker-name="{{ violation.worker_name }}"
+                                          data-job-code="{{ violation.job_code }}"
+                                          data-job-description="{{ violation.job_description }}"
+                                          data-distance="{{ violation.distance }}"
+                                          data-datetime="{{ violation.datetime.strftime('%m/%d/%y %I:%M %p') }}"
+                                          data-job-lat="{{ violation.job_latitude }}"
+                                          data-job-lng="{{ violation.job_longitude }}"
+                                          data-clock-lat="{{ violation.clock_in_latitude }}"
+                                          data-clock-lng="{{ violation.clock_in_longitude }}">🗺️</span>
                                 </td>
-                                <td>{{ violation.datetime.strftime('%m/%d/%Y %I:%M %p') }}</td>
-                                <td>
-                                    {% if violation.clock_in_latitude and violation.clock_in_longitude %}
-                                        <small>{{ "%.4f"|format(violation.clock_in_latitude) }}, {{ "%.4f"|format(violation.clock_in_longitude) }}</small>
-                                    {% else %}
-                                        <span class="text-muted">N/A</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ violation.location }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>

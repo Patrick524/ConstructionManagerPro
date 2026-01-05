@@ -122,22 +122,69 @@ Test files:
 - `conftest.py` - Shared fixtures, login helper, test credentials
 - `test_auth.py` - Login flow tests (worker + foreman login, invalid password)
 - `test_foreman_review.py` - Foreman review workflow (dashboard, review screen, save draft, finalize, UI elements)
+- `test_admin_reports.py` - Admin reports preview tests (all 6 report types with various date ranges)
+- `test_gps_compliance.py` - GPS compliance report tests (11 tests: page access, violation detection, categorization)
 - `test_manual_time_entry.py` - Data generation script (enters 30 days of time entries, slow)
 
 Test credentials (in conftest.py):
 - Worker: worker1@example.com / password123
 - Foreman: foreman@example.com / password123
+- Admin: admin@example.com / password123
 
 Run tests:
 - All tests: `./venv/bin/pytest tests/ -v`
 - Auth tests only: `./venv/bin/pytest tests/test_auth.py -v`
 - Foreman review tests: `./venv/bin/pytest tests/test_foreman_review.py -v`
+- Admin reports tests: `./venv/bin/pytest tests/test_admin_reports.py -v`
+- GPS compliance tests: `./venv/bin/pytest tests/test_gps_compliance.py -v`
 - Skip slow data generation: `./venv/bin/pytest tests/ -v --ignore=tests/test_manual_time_entry.py`
 
 Notes:
 - Tests use previous week's data (current week may not have entries)
 - Foreman review tests navigate to weeks with actual worker time data
+- Admin reports tests use summer 2025 date ranges (July 2025 has most data: 102 entries)
+- GPS compliance tests use past 30 days of clock session data with known violations
 - Playwright browsers installed via: `/opt/ConstructionManagerPro/venv/bin/playwright install`
+
+## GPS Compliance Test Data
+
+Script: `scripts/generate_gps_test_data.py`
+
+Generates test data for GPS compliance testing:
+- Creates 4 test workers: Mike Rodriguez, Danny O'Brien, Carlos Hernandez, Tommy Wilson
+- Generates 100 clock sessions over past 30 days
+- 90 compliant sessions (GPS within 0.3 miles of job site)
+- 10 violation sessions distributed across categories:
+  - 3 Fraud Risk (5-15 miles away)
+  - 4 Major (2-5 miles away)
+  - 3 Minor (1-2 miles away)
+
+Run: `./venv/bin/python scripts/generate_gps_test_data.py`
+
+Test workers created with `use_clock_in=True` and emails @example.com.
+
+## Reports
+
+Admin reports available at `/admin/reports` with preview + export (CSV/PDF):
+- **Payroll** - Uses ForemanReviewedTime (reviewed entries only); QuickBooks-compatible CSV format
+- **Employee Hours** - All time entries by employee
+- **Job Labor** - Time entries grouped by job
+- **Job Cost** - Labor cost calculations using burden rates
+- **Job Assignment** - Current worker-to-job assignments (no date range needed)
+- **Device Audit Log** - Clock in/out device fingerprints for fraud detection
+
+GPS Compliance Report (`/admin/gps_compliance`):
+- Separate page from main reports hub
+- Analyzes clock sessions to detect workers clocking in away from job sites
+- Violation categories by distance: Minor (0.5-2 mi), Major (2-5 mi), Fraud Risk (5+ mi)
+- Shows executive summary, violation counts, worker violation summary
+- Drill-down with Leaflet maps showing clock-in location vs job site
+
+Report data flow:
+- Payroll report queries `ForemanReviewedTime` table (only foreman-approved entries)
+- GPS compliance queries `ClockSession` table with distance calculations
+- Other reports query `TimeEntry` table directly
+- All reports convert SQLAlchemy rows to dicts before passing to PDF/CSV generators
 
 ## Operational notes
 
@@ -159,8 +206,13 @@ Notes:
 - Add external DB backup strategy (scheduled pg_dump)
 - Capture GPS accuracy metadata
 
+## Recent bug fixes (Jan 2026)
+
+- Fixed payroll report error: `get_effective_time_query()` now converts SQLAlchemy rows to dicts when `reviewed_only=True`
+- Fixed reports `UnboundLocalError`: Removed redundant local import of `User` in job_assignment block that shadowed global import
+
 ## Code style
 
-- Place all imports at the top of files, never inside functions
+- Place all imports at the top of files, never inside functions (avoid shadowing global imports with local imports in conditionals)
 - Use PST timezone for all user-facing timestamps
 ```
