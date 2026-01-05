@@ -175,10 +175,19 @@ Admin reports available at `/admin/reports` with preview + export (CSV/PDF):
 
 GPS Compliance Report (`/admin/gps_compliance`):
 - Separate page from main reports hub
-- Analyzes clock sessions to detect workers clocking in away from job sites
-- Violation categories by distance: Minor (0.5-2 mi), Major (2-5 mi), Fraud Risk (5+ mi)
-- Shows executive summary, violation counts, worker violation summary
-- Drill-down with Leaflet maps showing clock-in location vs job site
+- Detects violations on EITHER clock-in OR clock-out (catches workers who forget to clock out and do it from home)
+- Session flagged if either event exceeds 0.5 miles from job site
+- Categorized by worst distance: Minor (0.5-2 mi), Major (2-5 mi), Fraud Risk (5+ mi)
+- Each violation row shows:
+  - Clock-in time + distance (color-coded badge)
+  - Clock-out time + distance (or "Still Active" / "No GPS")
+  - Hours worked
+- Map drill-down shows 3 markers:
+  - Red = Job site (expected location)
+  - Blue = Clock-in location
+  - Green = Clock-out location
+- Executive summary, violation counts, worker violation summary
+- Worker filter to focus on specific employees
 
 Report data flow:
 - Payroll report queries `ForemanReviewedTime` table (only foreman-approved entries)
