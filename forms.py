@@ -65,26 +65,6 @@ class LoginForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
 
-class RegistrationForm(FlaskForm):
-    """Form for user registration"""
-    name = StringField('Full Name', validators=[DataRequired(), Length(min=2, max=100)])
-    email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
-    confirm_password = PasswordField('Confirm Password', 
-                                    validators=[DataRequired(), EqualTo('password')])
-    role = SelectField('Role', choices=[
-        ('worker', 'Field Worker'),
-        ('foreman', 'Foreman'),
-        ('admin', 'Administrator')
-    ], validators=[DataRequired()])
-    submit = SubmitField('Register')
-    
-    def validate_email(self, email):
-        email_val = email.data.lower() if email.data else ''
-        user = User.query.filter_by(email=email_val).first()
-        if user:
-            raise ValidationError('Email already registered. Please use a different email.')
-
 class TimeEntryForm(FlaskForm):
     """Form for daily time entry"""
     job_id = SelectField('Job', coerce=int, validators=[DataRequired()])

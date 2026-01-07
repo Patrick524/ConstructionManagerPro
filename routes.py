@@ -12,7 +12,7 @@ from models import User, Job, LaborActivity, TimeEntry, WeeklyApprovalLock, Cloc
 from sqlalchemy import func
 from sqlalchemy.orm import load_only
 from zoneinfo import ZoneInfo
-from forms import (LoginForm, RegistrationForm, TimeEntryForm, ApprovalForm,
+from forms import (LoginForm, TimeEntryForm, ApprovalForm,
                    JobForm, LaborActivityForm, UserManagementForm, ReportForm,
                    WeeklyTimesheetForm, ClockInForm, ClockOutForm, TradeForm,
                    JobWorkersForm, GPSComplianceReportForm, ForgotPasswordForm, ResetPasswordForm)
@@ -224,29 +224,6 @@ def login():
     if request.method == 'POST' and not form.validate():
         flash('Please check your input and try again.', 'warning')
     return render_template('login.html', form=form)
-
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    # In a production environment, you might want to restrict registration
-    # or require admin approval for new accounts
-    if current_user.is_authenticated:
-        return redirect(url_for('login'))
-
-    form = RegistrationForm()
-    if form.validate_on_submit():
-        email = form.email.data.lower() if form.email.data else ''
-        user = User(name=form.name.data,
-                    email=email,
-                    role=form.role.data)
-        user.set_password(form.password.data)
-        db.session.add(user)
-        db.session.commit()
-
-        flash('Your account has been created! You can now log in.', 'success')
-        return redirect(url_for('login'))
-
-    return render_template('register.html', form=form)
 
 
 @app.route('/forgot-password', methods=['GET', 'POST'])
