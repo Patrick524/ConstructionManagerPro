@@ -36,6 +36,7 @@ from webauthn.helpers.structs import (
     AuthenticatorAttachment,
     ResidentKeyRequirement,
     PublicKeyCredentialDescriptor,
+    AttestationConveyancePreference,
 )
 from webauthn.helpers import bytes_to_base64url, base64url_to_bytes
 
@@ -4444,7 +4445,7 @@ def passkey_register_begin():
             resident_key=ResidentKeyRequirement.PREFERRED,
             user_verification=UserVerificationRequirement.REQUIRED,  # Require Face ID/Touch ID
         ),
-        attestation="none",  # No attestation needed
+        attestation=AttestationConveyancePreference.NONE,  # No attestation needed
     )
 
     # Store challenge in session for verification
