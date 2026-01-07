@@ -127,34 +127,21 @@ Playwright end-to-end tests in `tests/` directory. Run against live app at https
 
 Test files:
 - `conftest.py` - Shared fixtures, login helper, test credentials
-- `test_auth.py` - Login flow tests (worker + foreman login, invalid password)
-- `test_foreman_review.py` - Foreman review workflow (dashboard, review screen, save draft, finalize, UI elements)
-- `test_admin_reports.py` - Admin reports preview tests (all 6 report types with various date ranges)
-- `test_gps_compliance.py` - GPS compliance report tests (11 tests: page access, violation detection, categorization)
-- `test_system_message.py` - System message visibility tests (10 tests: all 3 roles + admin settings page)
-- `test_passkey.py` - Passkey/WebAuthn tests (7 tests: iOS-only visibility, management page access, menu link)
-- `test_manual_time_entry.py` - Data generation script (enters 30 days of time entries, slow)
+- `test_auth.py` - Login flows
+- `test_foreman_review.py` - Foreman review workflow
+- `test_admin_reports.py` - Admin reports preview
+- `test_gps_compliance.py` - GPS compliance report
+- `test_system_message.py` - System message visibility
+- `test_passkey.py` - Passkey iOS-only visibility
+- `test_manual_time_entry.py` - Data generation (slow, often skipped)
 
-Test credentials (in conftest.py):
-- Worker: worker1@example.com / password123
-- Foreman: foreman@example.com / password123
-- Admin: admin@example.com / password123
+Test credentials: worker1@example.com / foreman@example.com / admin@example.com (all use password123)
 
 Run tests:
-- All tests: `./venv/bin/pytest tests/ -v`
-- Auth tests only: `./venv/bin/pytest tests/test_auth.py -v`
-- Foreman review tests: `./venv/bin/pytest tests/test_foreman_review.py -v`
-- Admin reports tests: `./venv/bin/pytest tests/test_admin_reports.py -v`
-- GPS compliance tests: `./venv/bin/pytest tests/test_gps_compliance.py -v`
-- System message tests: `./venv/bin/pytest tests/test_system_message.py -v`
-- Skip slow data generation: `./venv/bin/pytest tests/ -v --ignore=tests/test_manual_time_entry.py`
-
-Notes:
-- Tests use previous week's data (current week may not have entries)
-- Foreman review tests navigate to weeks with actual worker time data
-- Admin reports tests use summer 2025 date ranges (July 2025 has most data: 102 entries)
-- GPS compliance tests use past 30 days of clock session data with known violations
-- Playwright browsers installed via: `/opt/ConstructionManagerPro/venv/bin/playwright install`
+- All: `./venv/bin/pytest tests/ -v`
+- Single file: `./venv/bin/pytest tests/test_auth.py -v`
+- Skip slow: `./venv/bin/pytest tests/ -v --ignore=tests/test_manual_time_entry.py`
+- Install browsers: `/opt/ConstructionManagerPro/venv/bin/playwright install`
 
 ## GPS Compliance Test Data
 
