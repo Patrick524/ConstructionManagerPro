@@ -238,6 +238,14 @@
                                         </div>
                                     </div>
                                 </li>
+                                {% if current_user.is_worker() %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('worker_passkeys') }}">
+                                        <i class="fas fa-fingerprint me-1"></i>Passkey Settings
+                                    </a>
+                                </li>
+                                {% endif %}
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <a class="dropdown-item" href="{{ url_for('logout') }}">
