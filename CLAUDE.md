@@ -9,6 +9,10 @@ Worker time capture via two modes:
 - Manual time entry (quick daily entry: date + job + labor activity + hours)
 - Clock-in / clock-out sessions (GPS captured when available)
 
+Worker authentication:
+- Password login (all users)
+- Passkey login via Face ID / Touch ID (Workers only, iPhone/iPad)
+
 Foreman weekly review + approval:
 - Foreman views time week-by-week and can enter/edit time on behalf of workers
 - Weekly status concepts (e.g., incomplete vs ready for approval)
@@ -64,6 +68,7 @@ GPS storage:
 Backend:
 - Python / Flask / SQLAlchemy / PostgreSQL (Neon hosted)
 - Flask-Login auth (Worker/Foreman/Admin)
+- py_webauthn for passkey (WebAuthn) authentication
 - Flask-Migrate for migrations (manual flask db upgrade)
 - APScheduler background job (auto clock-out sessions after 8 hours)
 - Flask-Mail + SMTP2GO for password reset email
@@ -101,6 +106,7 @@ utils.py - CSV/PDF/email helpers
 scheduler.py - APScheduler auto clock-out job
 templates/ - Jinja2 templates (admin/, foreman/, worker/)
 static/ - CSS/JS assets
+static/js/passkey.js - WebAuthn client-side JavaScript
 
 ## Background jobs
 
@@ -220,6 +226,48 @@ Key files:
 - `routes.py` - admin_settings route, inject_system_message context processor
 - `templates/admin/settings.html` - Settings page with message form
 - `templates/base.html` - System message banner display
+
+## Passkey Authentication (WebAuthn)
+
+Passwordless login for Workers using Face ID / Touch ID on iPhone/iPad.
+
+Features:
+- Workers can register multiple passkeys (e.g., phone + iPad)
+- Passkey management page at `/worker/passkeys` (accessible from user dropdown menu)
+- Login page shows "Sign in with Passkey" button on supported devices
+- Platform authenticator only (no security keys) - enforces biometric verification
+- Password login remains available as fallback
+
+Security:
+- Uses WebAuthn with `attestation=none` (no attestation data stored)
+- User verification required (Face ID / Touch ID)
+- Signature counter validation prevents replay attacks
+- Challenges stored server-side in Flask sessions
+- Only Workers can register/use passkeys (role enforced)
+
+Database:
+- `PasskeyCredential` model stores: credential_id, public_key, sign_count, name, transports, last_used_at
+- Linked to User via user_id foreign key
+
+API Endpoints:
+- `POST /passkey/register/begin` - Generate registration options (requires login)
+- `POST /passkey/register/finish` - Verify and store credential (requires login)
+- `POST /passkey/auth/begin` - Generate authentication challenge (public, requires email)
+- `POST /passkey/auth/finish` - Verify assertion and log in (public)
+- `POST /passkey/delete/<id>` - Remove a passkey (requires login)
+- `GET /worker/passkeys` - Passkey management page (requires login)
+
+Key files:
+- `models.py` - PasskeyCredential model
+- `routes.py` - WebAuthn endpoints (passkey_register_begin, passkey_auth_begin, etc.)
+- `static/js/passkey.js` - Client-side WebAuthn API wrapper
+- `templates/worker/passkeys.html` - Passkey management UI
+- `templates/login.html` - Passkey sign-in button
+
+Limitations:
+- iPhone/iPad only (platform authenticator requirement)
+- Workers only (Foremen and Admins use password login)
+- Requires HTTPS in production (WebAuthn requirement)
 
 ## Operational notes
 
