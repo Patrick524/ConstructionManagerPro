@@ -4,7 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}BuilderTime Pro{% endblock %}</title>
-    
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="{% block meta_description %}BuilderTime Pro - Construction timesheet software for crews. Track time, manage jobs, GPS compliance, and streamline payroll for your construction business.{% endblock %}">
+    <meta name="keywords" content="construction timesheet, time tracking, construction crew management, GPS time clock, payroll software, construction app">
+    <meta name="author" content="BuilderTime Pro">
+    <link rel="canonical" href="https://app.buildertimepro.com{{ request.path }}">
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="{% block og_title %}BuilderTime Pro - Construction Timesheet Software{% endblock %}">
+    <meta property="og:description" content="Track time. Get paid. Built for construction crews.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://app.buildertimepro.com{{ request.path }}">
+    <meta property="og:site_name" content="BuilderTime Pro">
+
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
     
