@@ -37,6 +37,7 @@ from webauthn.helpers.structs import (
     ResidentKeyRequirement,
     PublicKeyCredentialDescriptor,
     AttestationConveyancePreference,
+    AuthenticatorTransport,
 )
 from webauthn.helpers import bytes_to_base64url, base64url_to_bytes
 
@@ -4389,8 +4390,11 @@ def get_webauthn_config():
     rp_id = request.host.split(':')[0]  # Remove port if present
 
     # Determine if we're using HTTPS
-    if request.is_secure or request.headers.get('X-Forwarded-Proto') == 'https':
-        origin = f"https://{request.host}"
+    # For production domain, always use HTTPS (behind NGINX proxy)
+    if (rp_id == 'app.buildertimepro.com' or
+        request.is_secure or
+        request.headers.get('X-Forwarded-Proto') == 'https'):
+        origin = f"https://{rp_id}"
     else:
         origin = f"http://{request.host}"
 
@@ -4483,6 +4487,10 @@ def passkey_register_finish():
         if not credential_data:
             return jsonify({'error': 'No credential data received.'}), 400
 
+        # Debug logging
+        print(f"DEBUG passkey_register_finish: rp_id={rp_id}, expected_origin={expected_origin}")
+        print(f"DEBUG passkey_register_finish: request.host={request.host}, X-Forwarded-Proto={request.headers.get('X-Forwarded-Proto')}")
+
         # Verify the registration response
         verification = verify_registration_response(
             credential=credential_data,
@@ -4572,11 +4580,20 @@ def passkey_auth_begin():
     # Build allow_credentials list
     allow_credentials = []
     for cred in credentials:
-        transports = json.loads(cred.transports) if cred.transports else None
+        # Convert transport strings to enum values
+        transport_enums = None
+        if cred.transports:
+            transport_strings = json.loads(cred.transports)
+            transport_enums = []
+            for t in transport_strings:
+                try:
+                    transport_enums.append(AuthenticatorTransport(t))
+                except ValueError:
+                    pass  # Skip unknown transports
         allow_credentials.append(
             PublicKeyCredentialDescriptor(
                 id=cred.credential_id,
-                transports=transports,
+                transports=transport_enums,
             )
         )
 
