@@ -79,6 +79,18 @@
 <script src="{{ url_for('static', filename='js/passkey.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async function() {
+    // Check if device is iOS (iPhone or iPad)
+    function isIOSDevice() {
+        const ua = navigator.userAgent;
+        return /iPhone|iPad|iPod/.test(ua) ||
+               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPad with iOS 13+
+    }
+
+    // Only show passkey option on iOS devices
+    if (!isIOSDevice()) {
+        return;
+    }
+
     // Check if passkeys are supported on this device
     const isSupported = PasskeyAuth.isSupported();
     const hasPlatformAuth = await PasskeyAuth.isPlatformAvailable();

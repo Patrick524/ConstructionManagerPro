@@ -136,6 +136,24 @@ document.addEventListener('DOMContentLoaded', async function() {
     const registerForm = document.getElementById('passkey-register-form');
     const resultDiv = document.getElementById('passkey-register-result');
 
+    // Check if device is iOS (iPhone or iPad)
+    function isIOSDevice() {
+        const ua = navigator.userAgent;
+        return /iPhone|iPad|iPod/.test(ua) ||
+               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPad with iOS 13+
+    }
+
+    if (!isIOSDevice()) {
+        supportMessage.innerHTML = `
+            <div class="alert alert-info mb-0">
+                <i class="fas fa-mobile-alt me-2"></i>
+                <strong>iPhone Required:</strong> Passkey registration is only available on iPhone or iPad.
+                Please visit this page on your iOS device to register a passkey.
+            </div>
+        `;
+        return;
+    }
+
     // Check if passkeys are supported
     const isSupported = PasskeyAuth.isSupported();
     const hasPlatformAuth = await PasskeyAuth.isPlatformAvailable();
