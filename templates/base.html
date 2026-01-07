@@ -98,6 +98,26 @@
             z-index: 1030;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+
+        /* System Message Banner */
+        .system-message-banner {
+            background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+            color: white;
+            padding: 12px 0;
+            font-weight: 500;
+            text-align: center;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1020;
+        }
+
+        /* Add padding to footer when system message is shown */
+        body:has(.system-message-banner) .footer {
+            margin-bottom: 50px;
+        }
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -183,9 +203,15 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link {% if request.endpoint == 'admin_gps_compliance' %}active{% endif %}" 
+                                <a class="nav-link {% if request.endpoint == 'admin_gps_compliance' %}active{% endif %}"
                                    href="{{ url_for('admin_gps_compliance') }}">
                                     <i class="fas fa-map-marker-alt me-1"></i>GPS Compliance
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'admin_settings' %}active{% endif %}"
+                                   href="{{ url_for('admin_settings') }}">
+                                    <i class="fas fa-cog me-1"></i>Settings
                                 </a>
                             </li>
                         {% endif %}
@@ -269,6 +295,18 @@
         {% block content %}{% endblock %}
     </div>
     
+    <!-- System Message Banner -->
+    {% if system_message %}
+    <div class="system-message-banner">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-center">
+                <i class="fas fa-bullhorn me-2"></i>
+                <span>{{ system_message }}</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Footer -->
     <footer class="footer mt-5 py-3 bg-dark">
         <div class="container">

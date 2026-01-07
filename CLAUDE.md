@@ -20,6 +20,7 @@ Admin configuration + reporting:
 - Manage Users (role, active/inactive, burden rate for costing, per-worker use clock-in/out toggle, worker trade qualifications)
 - Manage Trades and Labor Activities (customizable to match company services; activities grouped by trade; disable instead of delete)
 - Reports hub supports preview + export (CSV/PDF): Payroll, Job Labor, Employee Hours, Job Cost, Job Assignment, GPS Compliance, Device Audit Log
+- System Message: configurable announcement banner visible to selected roles
 
 ## Compliance features
 
@@ -124,6 +125,7 @@ Test files:
 - `test_foreman_review.py` - Foreman review workflow (dashboard, review screen, save draft, finalize, UI elements)
 - `test_admin_reports.py` - Admin reports preview tests (all 6 report types with various date ranges)
 - `test_gps_compliance.py` - GPS compliance report tests (11 tests: page access, violation detection, categorization)
+- `test_system_message.py` - System message visibility tests (10 tests: all 3 roles + admin settings page)
 - `test_manual_time_entry.py` - Data generation script (enters 30 days of time entries, slow)
 
 Test credentials (in conftest.py):
@@ -137,6 +139,7 @@ Run tests:
 - Foreman review tests: `./venv/bin/pytest tests/test_foreman_review.py -v`
 - Admin reports tests: `./venv/bin/pytest tests/test_admin_reports.py -v`
 - GPS compliance tests: `./venv/bin/pytest tests/test_gps_compliance.py -v`
+- System message tests: `./venv/bin/pytest tests/test_system_message.py -v`
 - Skip slow data generation: `./venv/bin/pytest tests/ -v --ignore=tests/test_manual_time_entry.py`
 
 Notes:
@@ -194,6 +197,29 @@ Report data flow:
 - GPS compliance queries `ClockSession` table with distance calculations
 - Other reports query `TimeEntry` table directly
 - All reports convert SQLAlchemy rows to dicts before passing to PDF/CSV generators
+
+## System Message
+
+Admin-configurable announcement banner displayed at the bottom of all screens.
+
+Features:
+- Access via Settings link in admin navigation (`/admin/settings`)
+- Text input for custom message (e.g., "Timesheets due Monday 8am.")
+- Three checkboxes to control visibility per role: Admin, Foreman, Worker
+- Fixed position banner at bottom of page (blue gradient, visible but not intrusive)
+- Live preview on settings page
+- Message persists until admin clears or changes it
+
+Database:
+- `SystemMessage` model stores: message_text, show_to_admin, show_to_foreman, show_to_worker, updated_at, updated_by
+- Single row (singleton pattern) - only one system message at a time
+- Injected into all templates via Flask context processor
+
+Key files:
+- `models.py` - SystemMessage model
+- `routes.py` - admin_settings route, inject_system_message context processor
+- `templates/admin/settings.html` - Settings page with message form
+- `templates/base.html` - System message banner display
 
 ## Operational notes
 

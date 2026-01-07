@@ -340,3 +340,57 @@ class PasswordResetToken(db.Model):
     
     def __repr__(self):
         return f'<PasswordResetToken {self.id} - User {self.user_id}>'
+
+
+class SystemMessage(db.Model):
+    """System-wide message displayed to users based on role visibility settings"""
+    id = db.Column(db.Integer, primary_key=True)
+    message_text = db.Column(db.Text, nullable=True)
+    show_to_admin = db.Column(db.Boolean, default=False)
+    show_to_foreman = db.Column(db.Boolean, default=False)
+    show_to_worker = db.Column(db.Boolean, default=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+
+    # Relationship
+    updater = db.relationship('User', backref='system_message_updates', lazy='joined')
+
+    def is_visible_to(self, role):
+        """Check if message should be visible to a given role"""
+        if not self.message_text:
+            return False
+        if role == 'admin':
+            return self.show_to_admin
+        elif role == 'foreman':
+            return self.show_to_foreman
+        elif role == 'worker':
+            return self.show_to_worker
+        return False
+
+    def __repr__(self):
+        return f'<SystemMessage {self.id}>'
+
+
+class PasskeyCredential(db.Model):
+    """WebAuthn passkey credentials for passwordless authentication (Workers only)"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    # WebAuthn credential data
+    credential_id = db.Column(db.LargeBinary, nullable=False, unique=True)  # Raw credential ID bytes
+    public_key = db.Column(db.LargeBinary, nullable=False)  # COSE-encoded public key
+    sign_count = db.Column(db.Integer, nullable=False, default=0)  # Signature counter for replay protection
+
+    # Credential metadata
+    name = db.Column(db.String(100), nullable=False, default='My iPhone')  # User-friendly name
+    transports = db.Column(db.String(200), nullable=True)  # JSON array of transports (e.g., ["internal"])
+
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_used_at = db.Column(db.DateTime, nullable=True)
+
+    # Relationships
+    user = db.relationship('User', backref=db.backref('passkey_credentials', lazy='dynamic'))
+
+    def __repr__(self):
+        return f'<PasskeyCredential {self.id} - User {self.user_id}>'

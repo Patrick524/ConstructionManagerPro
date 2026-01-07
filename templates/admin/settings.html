@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Construction Timesheet{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="page-title">
+            <i class="fas fa-cog text-primary me-2"></i>Settings
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-bullhorn me-2"></i>System Message</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">
+                    Configure a message to display at the bottom of all screens. Use this for important announcements like timesheet deadlines.
+                </p>
+
+                <form method="POST" action="{{ url_for('admin_settings') }}">
+                    <div class="mb-4">
+                        <label for="message_text" class="form-label">Message Text</label>
+                        <textarea
+                            name="message_text"
+                            id="message_text"
+                            class="form-control"
+                            rows="3"
+                            placeholder="e.g., Time Cards Due - Monday, Jan. 12, 8:00 AM"
+                        >{{ system_msg.message_text or '' }}</textarea>
+                        <div class="form-text">Leave empty to hide the system message.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Show Message To:</label>
+                        <div class="d-flex flex-wrap gap-4">
+                            <div class="form-check">
+                                <input
+                                    type="checkbox"
+                                    class="form-check-input"
+                                    name="show_to_admin"
+                                    id="show_to_admin"
+                                    {% if system_msg.show_to_admin %}checked{% endif %}
+                                >
+                                <label class="form-check-label" for="show_to_admin">
+                                    <i class="fas fa-user-shield me-1 text-danger"></i>Admin
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input
+                                    type="checkbox"
+                                    class="form-check-input"
+                                    name="show_to_foreman"
+                                    id="show_to_foreman"
+                                    {% if system_msg.show_to_foreman %}checked{% endif %}
+                                >
+                                <label class="form-check-label" for="show_to_foreman">
+                                    <i class="fas fa-hard-hat me-1 text-warning"></i>Foreman
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input
+                                    type="checkbox"
+                                    class="form-check-input"
+                                    name="show_to_worker"
+                                    id="show_to_worker"
+                                    {% if system_msg.show_to_worker %}checked{% endif %}
+                                >
+                                <label class="form-check-label" for="show_to_worker">
+                                    <i class="fas fa-user me-1 text-info"></i>Worker
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-text">Select which roles should see the system message.</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </form>
+            </div>
+            {% if system_msg.updated_at %}
+            <div class="card-footer text-muted">
+                <small>
+                    <i class="fas fa-clock me-1"></i>
+                    Last updated: {{ system_msg.updated_at.strftime('%b %d, %Y at %I:%M %p') }}
+                    {% if system_msg.updater %}
+                        by {{ system_msg.updater.name }}
+                    {% endif %}
+                </small>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-eye me-2"></i>Preview</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">
+                    The message will appear at the bottom of all screens like this:
+                </p>
+                <div id="message-preview" class="system-message-banner-preview" style="{% if not system_msg.message_text %}display: none;{% endif %}">
+                    <i class="fas fa-bullhorn me-2"></i>
+                    <span id="preview-text">{{ system_msg.message_text or 'Your message will appear here' }}</span>
+                </div>
+                <div id="no-message-preview" class="text-muted text-center py-3" style="{% if system_msg.message_text %}display: none;{% endif %}">
+                    <i class="fas fa-eye-slash fa-2x mb-2 d-block"></i>
+                    No message configured
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .system-message-banner-preview {
+        background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 6px;
+        font-weight: 500;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(13, 110, 253, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Live preview of the message
+    document.getElementById('message_text').addEventListener('input', function() {
+        const text = this.value.trim();
+        const previewBanner = document.getElementById('message-preview');
+        const noPreview = document.getElementById('no-message-preview');
+        const previewText = document.getElementById('preview-text');
+
+        if (text) {
+            previewText.textContent = text;
+            previewBanner.style.display = 'block';
+            noPreview.style.display = 'none';
+        } else {
+            previewBanner.style.display = 'none';
+            noPreview.style.display = 'block';
+        }
+    });
+</script>
+{% endblock %}

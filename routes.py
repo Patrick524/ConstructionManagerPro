@@ -8,7 +8,7 @@ from functools import wraps
 from flask import render_template, redirect, url_for, flash, request, jsonify, send_file, session, abort
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db
-from models import User, Job, LaborActivity, TimeEntry, WeeklyApprovalLock, ClockSession, Trade, job_workers, DeviceLog, PasswordResetToken, ForemanReviewedTime
+from models import User, Job, LaborActivity, TimeEntry, WeeklyApprovalLock, ClockSession, Trade, job_workers, DeviceLog, PasswordResetToken, ForemanReviewedTime, SystemMessage, PasskeyCredential
 from sqlalchemy import func
 from sqlalchemy.orm import load_only
 from zoneinfo import ZoneInfo
@@ -22,6 +22,22 @@ from app import mail
 import secrets
 import pandas as pd
 import utils
+import json
+from webauthn import (
+    generate_registration_options,
+    verify_registration_response,
+    generate_authentication_options,
+    verify_authentication_response,
+    options_to_json,
+)
+from webauthn.helpers.structs import (
+    AuthenticatorSelectionCriteria,
+    UserVerificationRequirement,
+    AuthenticatorAttachment,
+    ResidentKeyRequirement,
+    PublicKeyCredentialDescriptor,
+)
+from webauthn.helpers import bytes_to_base64url, base64url_to_bytes
 
 
 # Context processor to provide the current datetime to all templates
@@ -29,6 +45,18 @@ import utils
 def inject_now():
     """Inject the current datetime into all templates"""
     return {'now': datetime.utcnow()}
+
+
+# Context processor to provide system message to all templates
+@app.context_processor
+def inject_system_message():
+    """Inject the system message into all templates if visible for current user's role"""
+    system_message = None
+    if current_user.is_authenticated:
+        msg = SystemMessage.query.first()
+        if msg and msg.message_text and msg.is_visible_to(current_user.role):
+            system_message = msg.message_text
+    return {'system_message': system_message}
 
 
 # Template filter to encode binary data as base64
@@ -4153,6 +4181,33 @@ def geocode():
         return jsonify({'error': 'Could not geocode address'}), 404
 
 
+@app.route('/admin/settings', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_settings():
+    """Admin settings page for system message configuration"""
+    # Get or create the system message record
+    system_msg = SystemMessage.query.first()
+    if not system_msg:
+        system_msg = SystemMessage()
+        db.session.add(system_msg)
+        db.session.commit()
+
+    if request.method == 'POST':
+        # Update the system message
+        system_msg.message_text = request.form.get('message_text', '').strip() or None
+        system_msg.show_to_admin = 'show_to_admin' in request.form
+        system_msg.show_to_foreman = 'show_to_foreman' in request.form
+        system_msg.show_to_worker = 'show_to_worker' in request.form
+        system_msg.updated_by = current_user.id
+
+        db.session.commit()
+        flash('System message updated successfully.', 'success')
+        return redirect(url_for('admin_settings'))
+
+    return render_template('admin/settings.html', system_msg=system_msg)
+
+
 @app.route('/api/time_entries/<date>/<int:job_id>')
 @login_required
 def get_time_entries(date, job_id):
@@ -4317,3 +4372,329 @@ def debug_route():
     """Debug route to test rendering and basic functionality"""
     form = LoginForm()
     return render_template('login.html', form=form)
+
+
+# =============================================================================
+# WebAuthn Passkey Routes (Workers Only)
+# =============================================================================
+
+def get_webauthn_config():
+    """Get WebAuthn RP ID and origin from request or environment.
+
+    Returns the relying party ID (domain) and expected origin.
+    Auto-detects from request headers in production.
+    """
+    # Get from request headers (preferred in production)
+    rp_id = request.host.split(':')[0]  # Remove port if present
+
+    # Determine if we're using HTTPS
+    if request.is_secure or request.headers.get('X-Forwarded-Proto') == 'https':
+        origin = f"https://{request.host}"
+    else:
+        origin = f"http://{request.host}"
+
+    return rp_id, origin
+
+
+# --- Worker Passkey Management Page ---
+
+@app.route('/worker/passkeys')
+@login_required
+@worker_required
+def worker_passkeys():
+    """Worker passkey management page - list and manage passkeys"""
+    passkeys = PasskeyCredential.query.filter_by(user_id=current_user.id).all()
+    return render_template('worker/passkeys.html', passkeys=passkeys)
+
+
+# --- Passkey Registration Routes ---
+
+@app.route('/passkey/register/begin', methods=['POST'])
+@login_required
+@worker_required
+def passkey_register_begin():
+    """Begin passkey registration - generate registration options.
+
+    This endpoint:
+    1. Generates a random challenge
+    2. Stores the challenge in the session
+    3. Returns WebAuthn registration options for the browser
+
+    Only workers can register passkeys.
+    """
+    rp_id, expected_origin = get_webauthn_config()
+
+    # Get existing credentials for this user (to exclude from registration)
+    existing_credentials = PasskeyCredential.query.filter_by(user_id=current_user.id).all()
+    exclude_credentials = [
+        PublicKeyCredentialDescriptor(id=cred.credential_id)
+        for cred in existing_credentials
+    ]
+
+    # Generate registration options
+    options = generate_registration_options(
+        rp_id=rp_id,
+        rp_name="BuilderTime Pro",
+        user_id=str(current_user.id).encode('utf-8'),
+        user_name=current_user.email,
+        user_display_name=current_user.name,
+        exclude_credentials=exclude_credentials,
+        authenticator_selection=AuthenticatorSelectionCriteria(
+            authenticator_attachment=AuthenticatorAttachment.PLATFORM,  # Platform only (iPhone)
+            resident_key=ResidentKeyRequirement.PREFERRED,
+            user_verification=UserVerificationRequirement.REQUIRED,  # Require Face ID/Touch ID
+        ),
+        attestation="none",  # No attestation needed
+    )
+
+    # Store challenge in session for verification
+    session['passkey_registration_challenge'] = bytes_to_base64url(options.challenge)
+    session['passkey_registration_user_id'] = current_user.id
+
+    # Return options as JSON
+    return jsonify(json.loads(options_to_json(options)))
+
+
+@app.route('/passkey/register/finish', methods=['POST'])
+@login_required
+@worker_required
+def passkey_register_finish():
+    """Finish passkey registration - verify and store the credential.
+
+    This endpoint:
+    1. Verifies the attestation response from the browser
+    2. Stores the credential public key and metadata
+    3. Returns success or error
+    """
+    # Check session for challenge
+    if 'passkey_registration_challenge' not in session:
+        return jsonify({'error': 'Registration session expired. Please try again.'}), 400
+
+    if session.get('passkey_registration_user_id') != current_user.id:
+        return jsonify({'error': 'Invalid session. Please try again.'}), 400
+
+    rp_id, expected_origin = get_webauthn_config()
+
+    try:
+        # Get the credential response from the request
+        credential_data = request.get_json()
+
+        if not credential_data:
+            return jsonify({'error': 'No credential data received.'}), 400
+
+        # Verify the registration response
+        verification = verify_registration_response(
+            credential=credential_data,
+            expected_challenge=base64url_to_bytes(session['passkey_registration_challenge']),
+            expected_rp_id=rp_id,
+            expected_origin=expected_origin,
+        )
+
+        # Get passkey name from request (default to "My iPhone")
+        passkey_name = credential_data.get('passkey_name', 'My iPhone')
+        if not passkey_name or len(passkey_name.strip()) == 0:
+            passkey_name = 'My iPhone'
+        passkey_name = passkey_name[:100]  # Limit to 100 chars
+
+        # Get transports if available
+        transports = credential_data.get('response', {}).get('transports', [])
+        transports_json = json.dumps(transports) if transports else None
+
+        # Store the credential
+        new_credential = PasskeyCredential(
+            user_id=current_user.id,
+            credential_id=verification.credential_id,
+            public_key=verification.credential_public_key,
+            sign_count=verification.sign_count,
+            name=passkey_name,
+            transports=transports_json,
+        )
+        db.session.add(new_credential)
+        db.session.commit()
+
+        # Clear the session
+        session.pop('passkey_registration_challenge', None)
+        session.pop('passkey_registration_user_id', None)
+
+        return jsonify({
+            'success': True,
+            'message': 'Passkey registered successfully!',
+            'credential_id': new_credential.id,
+        })
+
+    except Exception as e:
+        print(f"Passkey registration error: {e}")
+        return jsonify({'error': f'Registration failed: {str(e)}'}), 400
+
+
+# --- Passkey Authentication Routes ---
+
+@app.route('/passkey/auth/begin', methods=['POST'])
+def passkey_auth_begin():
+    """Begin passkey authentication - generate authentication options.
+
+    This endpoint:
+    1. Looks up the user by email
+    2. Gets their registered passkeys
+    3. Generates an authentication challenge
+    4. Returns WebAuthn authentication options
+    """
+    data = request.get_json()
+    email = data.get('email', '').lower().strip()
+
+    if not email:
+        return jsonify({'error': 'Email is required.'}), 400
+
+    # Find the user
+    user = User.query.filter_by(email=email).first()
+
+    if not user:
+        # Don't reveal if user exists - return generic error
+        return jsonify({'error': 'No passkeys registered for this account.'}), 400
+
+    # Only workers can use passkeys
+    if user.role != 'worker':
+        return jsonify({'error': 'Passkey login is only available for worker accounts.'}), 400
+
+    # Check if user is active
+    if not user.active:
+        return jsonify({'error': 'This account has been deactivated.'}), 400
+
+    # Get user's registered passkeys
+    credentials = PasskeyCredential.query.filter_by(user_id=user.id).all()
+
+    if not credentials:
+        return jsonify({'error': 'No passkeys registered for this account.'}), 400
+
+    rp_id, expected_origin = get_webauthn_config()
+
+    # Build allow_credentials list
+    allow_credentials = []
+    for cred in credentials:
+        transports = json.loads(cred.transports) if cred.transports else None
+        allow_credentials.append(
+            PublicKeyCredentialDescriptor(
+                id=cred.credential_id,
+                transports=transports,
+            )
+        )
+
+    # Generate authentication options
+    options = generate_authentication_options(
+        rp_id=rp_id,
+        allow_credentials=allow_credentials,
+        user_verification=UserVerificationRequirement.REQUIRED,
+    )
+
+    # Store challenge and user info in session
+    session['passkey_auth_challenge'] = bytes_to_base64url(options.challenge)
+    session['passkey_auth_user_id'] = user.id
+
+    return jsonify(json.loads(options_to_json(options)))
+
+
+@app.route('/passkey/auth/finish', methods=['POST'])
+def passkey_auth_finish():
+    """Finish passkey authentication - verify assertion and log in.
+
+    This endpoint:
+    1. Verifies the authentication assertion
+    2. Updates the signature counter
+    3. Logs the user in
+    """
+    # Check session for challenge
+    if 'passkey_auth_challenge' not in session:
+        return jsonify({'error': 'Authentication session expired. Please try again.'}), 400
+
+    user_id = session.get('passkey_auth_user_id')
+    if not user_id:
+        return jsonify({'error': 'Invalid session. Please try again.'}), 400
+
+    rp_id, expected_origin = get_webauthn_config()
+
+    try:
+        credential_data = request.get_json()
+
+        if not credential_data:
+            return jsonify({'error': 'No credential data received.'}), 400
+
+        # Get the credential ID from the response
+        raw_id = credential_data.get('rawId')
+        if not raw_id:
+            return jsonify({'error': 'Invalid credential response.'}), 400
+
+        # Find the credential in the database
+        credential_id_bytes = base64url_to_bytes(raw_id)
+        credential = PasskeyCredential.query.filter_by(
+            credential_id=credential_id_bytes,
+            user_id=user_id
+        ).first()
+
+        if not credential:
+            return jsonify({'error': 'Passkey not recognized.'}), 400
+
+        # Verify the authentication response
+        verification = verify_authentication_response(
+            credential=credential_data,
+            expected_challenge=base64url_to_bytes(session['passkey_auth_challenge']),
+            expected_rp_id=rp_id,
+            expected_origin=expected_origin,
+            credential_public_key=credential.public_key,
+            credential_current_sign_count=credential.sign_count,
+        )
+
+        # Update the signature counter (replay protection)
+        credential.sign_count = verification.new_sign_count
+        credential.last_used_at = datetime.utcnow()
+        db.session.commit()
+
+        # Get the user and log them in
+        user = User.query.get(user_id)
+
+        if not user or not user.active:
+            return jsonify({'error': 'Account not available.'}), 400
+
+        login_user(user)
+
+        # Clear session
+        session.pop('passkey_auth_challenge', None)
+        session.pop('passkey_auth_user_id', None)
+
+        # Determine redirect URL based on user settings
+        if user.use_clock_in:
+            redirect_url = url_for('worker_clock')
+        else:
+            redirect_url = url_for('worker_timesheet')
+
+        return jsonify({
+            'success': True,
+            'message': 'Login successful!',
+            'redirect': redirect_url,
+        })
+
+    except Exception as e:
+        print(f"Passkey authentication error: {e}")
+        return jsonify({'error': f'Authentication failed: {str(e)}'}), 400
+
+
+# --- Passkey Deletion Route ---
+
+@app.route('/passkey/delete/<int:credential_id>', methods=['POST'])
+@login_required
+@worker_required
+def passkey_delete(credential_id):
+    """Delete a registered passkey."""
+    credential = PasskeyCredential.query.filter_by(
+        id=credential_id,
+        user_id=current_user.id
+    ).first()
+
+    if not credential:
+        flash('Passkey not found.', 'danger')
+        return redirect(url_for('worker_passkeys'))
+
+    db.session.delete(credential)
+    db.session.commit()
+
+    flash(f'Passkey "{credential.name}" has been removed.', 'success')
+    return redirect(url_for('worker_passkeys'))
