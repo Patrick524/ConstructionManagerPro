@@ -132,6 +132,7 @@ Test files:
 - `test_admin_reports.py` - Admin reports preview tests (all 6 report types with various date ranges)
 - `test_gps_compliance.py` - GPS compliance report tests (11 tests: page access, violation detection, categorization)
 - `test_system_message.py` - System message visibility tests (10 tests: all 3 roles + admin settings page)
+- `test_passkey.py` - Passkey/WebAuthn tests (7 tests: iOS-only visibility, management page access, menu link)
 - `test_manual_time_entry.py` - Data generation script (enters 30 days of time entries, slow)
 
 Test credentials (in conftest.py):
@@ -146,6 +147,7 @@ Run tests:
 - Admin reports tests: `./venv/bin/pytest tests/test_admin_reports.py -v`
 - GPS compliance tests: `./venv/bin/pytest tests/test_gps_compliance.py -v`
 - System message tests: `./venv/bin/pytest tests/test_system_message.py -v`
+- Passkey tests: `./venv/bin/pytest tests/test_passkey.py -v`
 - Skip slow data generation: `./venv/bin/pytest tests/ -v --ignore=tests/test_manual_time_entry.py`
 
 Notes:
