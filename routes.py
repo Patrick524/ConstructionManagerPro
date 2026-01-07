@@ -267,7 +267,7 @@ def forgot_password():
                 )
                 msg.body = f'''Hello {user.name},
 
-You requested a password reset for your Construction Timesheet account.
+You requested a password reset for your BuilderTime Pro account.
 
 Click the link below to reset your password (valid for 1 hour):
 {reset_url}
@@ -275,17 +275,17 @@ Click the link below to reset your password (valid for 1 hour):
 If you did not request this reset, please ignore this email.
 
 Best regards,
-Construction Timesheet System
+BuilderTime Pro
 '''
                 msg.html = f'''
 <p>Hello {user.name},</p>
-<p>You requested a password reset for your Construction Timesheet account.</p>
+<p>You requested a password reset for your BuilderTime Pro account.</p>
 <p>Click the link below to reset your password (valid for 1 hour):</p>
 <p><a href="{reset_url}" style="background-color: #0d6efd; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a></p>
 <p>Or copy and paste this URL into your browser:</p>
 <p>{reset_url}</p>
 <p>If you did not request this reset, please ignore this email.</p>
-<p>Best regards,<br>Construction Timesheet System</p>
+<p>Best regards,<br>BuilderTime Pro</p>
 '''
                 mail.send(msg)
                 print(f"DEBUG: Password reset email sent to {user.email}")
@@ -3608,13 +3608,13 @@ def generate_reports():
                 Date Range: {start_date.strftime('%m/%d/%Y')} to {end_date.strftime('%m/%d/%Y')}
                 Report Type: {report_titles.get(report_type, 'Report')}
 
-                This is an automated email from the Construction Timesheet Management System.
+                This is an automated email from BuilderTime Pro.
                 """
 
                 # Send email with CSV attachment
                 email_sent = utils.send_email_with_attachment(
                     recipient_email=recipient_email,
-                    subject=f"Construction Timesheet: {report_title}",
+                    subject=f"BuilderTime Pro: {report_title}",
                     body=email_body,
                     attachment_data=io.BytesIO(csv_data.encode('utf-8')),
                     attachment_filename=filename,
@@ -3707,7 +3707,7 @@ def generate_reports():
                 Date Range: {start_date.strftime('%m/%d/%Y')} to {end_date.strftime('%m/%d/%Y')}
                 Report Type: {report_titles.get(report_type, 'Report')}
 
-                This is an automated email from the Construction Timesheet Management System.
+                This is an automated email from BuilderTime Pro.
                 """
 
                 # Send email with PDF attachment - handle bytes vs buffer
@@ -3718,7 +3718,7 @@ def generate_reports():
                     
                 email_sent = utils.send_email_with_attachment(
                     recipient_email=recipient_email,
-                    subject=f"Construction Timesheet: {report_title}",
+                    subject=f"BuilderTime Pro: {report_title}",
                     body=email_body,
                     attachment_data=attachment_data,
                     attachment_filename=filename,

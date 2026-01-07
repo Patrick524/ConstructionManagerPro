@@ -632,7 +632,7 @@ def generate_pdf_report(data, columns, title="Report"):
         canvas.drawString(page_x_position, y_position, page_num)
         
         # Add footer
-        footer_text = "Construction Timesheet Management System © 2025"
+        footer_text = "BuilderTime Pro © 2026"
         canvas.setFont('Helvetica', 7)
         canvas.setFillColor(colors.Color(0.75, 0.75, 0.75))
         # Position at bottom-right with 0.5 inch margin

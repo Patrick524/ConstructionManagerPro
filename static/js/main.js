@@ -1,5 +1,5 @@
 /**
- * Main JavaScript for Construction Timesheet application
+ * Main JavaScript for BuilderTime Pro
  */
 
 document.addEventListener('DOMContentLoaded', function() {
