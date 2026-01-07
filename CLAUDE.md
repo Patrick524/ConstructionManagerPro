@@ -147,7 +147,6 @@ Run tests:
 - Admin reports tests: `./venv/bin/pytest tests/test_admin_reports.py -v`
 - GPS compliance tests: `./venv/bin/pytest tests/test_gps_compliance.py -v`
 - System message tests: `./venv/bin/pytest tests/test_system_message.py -v`
-- Passkey tests: `./venv/bin/pytest tests/test_passkey.py -v`
 - Skip slow data generation: `./venv/bin/pytest tests/ -v --ignore=tests/test_manual_time_entry.py`
 
 Notes:
